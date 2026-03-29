@@ -1,1 +1,3 @@
 checkpoint.pth
+venv/
+__pycache__/

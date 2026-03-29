@@ -8,7 +8,7 @@ import logging
 from pathlib import Path
 
 import torch
-from data import DataState
+from flow_matching.examples.text.data.data import DataState
 
 from torch import nn
 from torch.optim import Optimizer

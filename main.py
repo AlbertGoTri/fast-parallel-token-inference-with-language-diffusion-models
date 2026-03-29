@@ -1,9 +1,10 @@
 # main.py
 # Script para generar texto usando el checkpoint y la función generate_samples
-
+import sys
+sys.path.append("C:/Users/Gotri/Documents/tfg/flow_matching")
 import torch
 from logic import generate, flow
-from model import Transformer
+from flow_matching.examples.text.model.transformer import Transformer
 from transformers import CLIPTokenizer
 from omegaconf import OmegaConf
 
@@ -11,8 +12,9 @@ from omegaconf import OmegaConf
 cfg = OmegaConf.load("config_text.yaml")
 
 def main():
-    # Inicializar el tokenizer (ajusta la ruta si es necesario)
+    # Inicializar el tokenizer
     tokenizer = CLIPTokenizer.from_pretrained("/gpfs/projects/bsc70/bsc193242/Models/clip-vit-large-patch14")
+    print("Reached here")
     vocab_size = tokenizer.vocab_size
     tokenizer.add_tokens(["<MASK>"])
     masked = True

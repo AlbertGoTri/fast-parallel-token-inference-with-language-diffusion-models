@@ -10,17 +10,17 @@ import os
 import hydra
 import torch
 import torch.distributed as dist
-from data import data_streaming as data
+from flow_matching.examples.text.data import data as data
 from flow_matching.loss import MixturePathGeneralizedKL
 
 from logic import evaluate, flow, generate, training
 from logic.state import TrainState
-from model import Transformer
+from flow_matching.examples.text.model.transformer import Transformer
 from omegaconf import DictConfig, OmegaConf
 from torch import optim
 from torch.nn.parallel import DistributedDataParallel as DDP
 from transformers import GPT2TokenizerFast, CLIPTokenizer
-from utils import checkpointing, logging
+from flow_matching.examples.text.utils import checkpointing, logging
 
 
 def run_train(rank: int, cfg: OmegaConf) -> None:
