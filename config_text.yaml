@@ -1,0 +1,88 @@
+defaults:
+  - _self_
+  - override hydra/launcher: submitit_slurm
+
+compute:
+  ngpus: 4
+  nodes: 1 # currently doesn't support multinode training
+
+load_dir: False
+steps: False
+
+logging:
+  log_freq: 100
+  log_lr_every: ${logging.log_freq}
+  log_file_name: stdout.log
+  enable_wandb: True
+  entity: zrfnz
+  project: flow_matching
+  group: null
+
+data:
+  train: python-code
+  streaming: True
+  valid: wikitext
+  cache_dir: /apps/ai-hub/datasets/Fineweb-Edu_Dataset/fineweb-edu
+  num_workers: 18
+
+training:
+  batch_size: 32 # / 4 = 8
+  snapshot: 10000 # 25k
+  eval_freq: 50000 # 50k
+  perplexity_freq: 50000 # 50k  
+  seed: 123
+  tokenizer: clip
+
+eval:
+  batch_size: 256 # / 4 = 64
+  sample_batch_size: 16
+  perplexity: True
+  perplexity_batch_size: 16
+
+optim:
+  weight_decay: 0.03
+  optimizer: AdamW
+  lr: 3e-4
+  beta1: 0.9
+  beta2: 0.95
+  eps: 1e-8
+  warmup: 2500
+  grad_clip: 1.
+  eta_min_ratio: 0.1
+  fused: false
+  n_iters: 500000
+  log_lr_every: ${logging.log_lr_every}
+
+flow:
+  source_distribution: mask  # [uniform, mask]
+  loss_function: generalized_kl  # [cross_entropy, generalized_kl]
+  exponent: 1.
+  scheduler_type: cond_ot # [polynomial, cond_ot]
+  sampling_steps: 1024
+
+model:
+  hidden_size: 768
+  cond_dim: 128
+  length: 1024
+  n_blocks: 24
+  n_heads: 12
+  dropout: 0.1
+  compile: false
+
+hydra_dir: /gpfs/projects/bsc70/bsc131047/flow_matching/examples/text/runs/text
+
+hydra:
+  run:
+    dir: ${hydra_dir}/${now:%Y.%m.%d}/fineweb_mask_cond-ot_generalized-kl_clip
+  sweep:
+    dir: ${hydra_dir}/${now:%Y.%m.%d}/${now:%H%M%S}
+    subdir: ${hydra.job.num}
+  launcher:
+    max_num_timeout: 100000
+    timeout_min: 2880
+    partition: learn
+    qos: accs_bsccs 
+    gpus_per_node: ${compute.ngpus}
+    mem_gb: 256
+    cpus_per_task: 80
+    nodes: ${compute.nodes}
