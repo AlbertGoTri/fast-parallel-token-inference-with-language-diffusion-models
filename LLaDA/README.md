@@ -49,7 +49,6 @@ and `generate.py` respectively, for conditional likelihood evaluation and condit
 
 You can directly run `python chat.py` to have multi-round conversations with LLaDA-8B-Instruct.
 
-
 ## Gradio demo 
 Thank you very much to [apolinário](https://github.com/apolinario) for helping us create this amazing demo!
 

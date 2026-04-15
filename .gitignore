@@ -15,13 +15,11 @@ llada_env/
 
 # =============================================================
 # TRAYECTORIAS CACHEADAS DEL TEACHER
-# (generadas por 01_cache_teacher.py, regenerables)
 # =============================================================
 trayectorias_llada/
 
 # =============================================================
 # PESOS LORA ENTRENADOS
-# (regenerables ejecutando 02_train_student.py)
 # =============================================================
 llada_student_lora/
 
@@ -57,4 +55,28 @@ data/
 # =============================================================
 *.log
 *.tmp
-*.txt
+
+# =============================================================
+# PROFILING AND TRACES
+# =============================================================
+profiling/
+*.json.gz
+*trace.json
+*summary.txt
+
+# =============================================================
+# LATEX BUILD ARTIFACTS
+# =============================================================
+thesis/*.aux
+thesis/*.bbl
+thesis/*.bcf
+thesis/*.blg
+thesis/*.fdb_latexmk
+thesis/*.fls
+thesis/*.lof
+thesis/*.lot
+thesis/*.out
+thesis/*.run.xml
+thesis/*.snm
+thesis/*.synctex.gz
+thesis/*.toc

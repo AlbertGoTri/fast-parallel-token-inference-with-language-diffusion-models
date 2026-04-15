@@ -75,49 +75,67 @@ STEPS = 128
 GEN_LENGTH = 64
 BLOCK_LENGTH = 64
 
+from torch.profiler import profile, record_function, ProfilerActivity, schedule
+
 print(f"\nIniciando generación de caché en: {CACHE_DIR}")
 print(f"target_step={TARGET_STEP} (mitad del proceso de difusion)")
 print("-" * 50)
 
+os.makedirs("profiling", exist_ok=True)
+
 with torch.no_grad():
-    for i, texto in enumerate(textos_prueba):
-        prompt_content = f"Resume o continúa este texto de forma breve:\n{texto[:200]}"
-        conversation = [{"role": "user", "content": prompt_content}]
+    with profile(
+        activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
+        schedule=schedule(wait=1, warmup=1, active=1, repeat=1),
+        record_shapes=False
+    ) as prof:
+        for i, texto in enumerate(textos_prueba):
+            prompt_content = f"Resume o continúa este texto de forma breve:\n{texto[:200]}"
+            conversation = [{"role": "user", "content": prompt_content}]
 
-        input_ids = tokenizer.apply_chat_template(
-            conversation,
-            add_generation_prompt=True,
-            return_tensors="pt"
-        ).to("cuda")
+            input_ids = tokenizer.apply_chat_template(
+                conversation,
+                add_generation_prompt=True,
+                return_tensors="pt"
+            ).to("cuda")
 
-        prompt_len = input_ids.shape[1]
-        print(f"[*] Procesando ejemplo {i+1}/10 (prompt_len={prompt_len})...")
+            prompt_len = input_ids.shape[1]
+            print(f"[*] Procesando ejemplo {i+1}/10 (prompt_len={prompt_len})...")
 
-        try:
-            estado_x, teacher_logits, attn_mask = generate_and_cache_trajectory(
-                model,
-                input_ids,
-                steps=STEPS,
-                gen_length=GEN_LENGTH,
-                block_length=BLOCK_LENGTH,
-                target_step=TARGET_STEP,
-            )
+            try:
+                with record_function(f"generate_trajectory_{i}"):
+                    estado_x, teacher_logits, attn_mask = generate_and_cache_trajectory(
+                        model,
+                        input_ids,
+                        steps=STEPS,
+                        gen_length=GEN_LENGTH,
+                        block_length=BLOCK_LENGTH,
+                        target_step=TARGET_STEP,
+                    )
 
-            file_path = os.path.join(CACHE_DIR, f"batch_{i}.pt")
-            torch.save({
-                'input_x': estado_x.cpu(),
-                'target_logits': teacher_logits.cpu(),
-                'attn_mask': attn_mask.cpu() if attn_mask is not None else None,
-                'prompt_len': prompt_len,
-                'target_step': TARGET_STEP,
-            }, file_path)
+                file_path = os.path.join(CACHE_DIR, f"batch_{i}.pt")
+                torch.save({
+                    'input_x': estado_x.cpu(),
+                    'target_logits': teacher_logits.cpu(),
+                    'attn_mask': attn_mask.cpu() if attn_mask is not None else None,
+                    'prompt_len': prompt_len,
+                    'target_step': TARGET_STEP,
+                }, file_path)
 
-            print(f"    [OK] Guardado en {file_path}")
+                print(f"    [OK] Guardado en {file_path}")
 
-        except Exception as e:
-            print(f"    [ERROR] Fallo en el ejemplo {i+1}: {e}")
-            import traceback
-            traceback.print_exc()
+            except Exception as e:
+                print(f"    [ERROR] Fallo en el ejemplo {i+1}: {e}")
+                import traceback
+                traceback.print_exc()
+            
+            prof.step()
+
+# Exportar resultados del profiling
+prof.export_chrome_trace("profiling/01_cache_teacher_trace.json")
+with open("profiling/01_cache_teacher_summary.txt", "w") as f:
+    f.write(prof.key_averages().table(sort_by="cuda_time_total", row_limit=20))
+print("Resultados de profiling guardados en la carpeta 'profiling/'")
 
 print("-" * 50)
 print(f"PROCESO FINALIZADO. Se han generado {len(os.listdir(CACHE_DIR))} archivos de trayectoria.")

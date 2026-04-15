@@ -79,22 +79,33 @@ input_ids = tokenizer.apply_chat_template(
     return_tensors="pt"
 ).to("cuda")
 
+from torch.profiler import profile, record_function, ProfilerActivity, schedule
 print(f"\nPrompt: {prompt}")
 print("Running generation...")
 
 from generate import generate
 
+os.makedirs("profiling", exist_ok=True)
+
 with torch.no_grad():
-    output = generate(
-        model,
-        input_ids,
-        steps=128,
-        gen_length=128,
-        block_length=32,
-        temperature=0.0,
-        cfg_scale=0.0,
-        remasking="low_confidence",
-    )
+    with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], record_shapes=False) as prof:
+        with record_function("generate_inference"):
+            output = generate(
+                model,
+                input_ids,
+                steps=128,
+                gen_length=128,
+                block_length=32,
+                temperature=0.0,
+                cfg_scale=0.0,
+                remasking="low_confidence",
+            )
 
 response = tokenizer.decode(output[0][input_ids.shape[1]:], skip_special_tokens=True)
 print(f"\n--- Output ({model_label}) ---\n{response}")
+
+# Exportar resultados del profiling
+prof.export_chrome_trace("profiling/run_llada_local_trace.json")
+with open("profiling/run_llada_local_summary.txt", "w") as f:
+    f.write(prof.key_averages().table(sort_by="cuda_time_total", row_limit=20))
+print("\nResultados de profiling guardados en la carpeta 'profiling/'")

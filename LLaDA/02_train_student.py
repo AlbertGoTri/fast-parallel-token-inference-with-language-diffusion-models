@@ -83,51 +83,67 @@ except Exception:
     )
     print("Usando AdamW estandar")
 
+from torch.profiler import profile, record_function, ProfilerActivity, schedule
 archivos_cache = glob.glob(os.path.join(CACHE_DIR, "*.pt"))
 print(f"Encontradas {len(archivos_cache)} trayectorias. Iniciando destilacion...\n")
 
-for epoch in range(1):
-    for i, archivo in enumerate(archivos_cache):
-        torch.cuda.empty_cache()
+os.makedirs("profiling", exist_ok=True)
 
-        trayectoria = torch.load(archivo, weights_only=True)
+with profile(
+    activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
+    schedule=schedule(wait=1, warmup=1, active=1, repeat=1),
+    record_shapes=False
+) as prof:
+    for epoch in range(1):
+        for i, archivo in enumerate(archivos_cache):
+            torch.cuda.empty_cache()
 
-        input_x = trayectoria['input_x'].to("cuda")
-        target_logits = trayectoria['target_logits'].to("cuda").to(torch.float16)
-        attn_mask = trayectoria['attn_mask'].to("cuda") if trayectoria['attn_mask'] is not None else None
-        prompt_len = trayectoria.get('prompt_len', 0)
+            trayectoria = torch.load(archivo, weights_only=True)
 
-        optimizer.zero_grad()
+            input_x = trayectoria['input_x'].to("cuda")
+            target_logits = trayectoria['target_logits'].to("cuda").to(torch.float16)
+            attn_mask = trayectoria['attn_mask'].to("cuda") if trayectoria['attn_mask'] is not None else None
+            prompt_len = trayectoria.get('prompt_len', 0)
 
-        with torch.autocast(device_type="cuda", dtype=torch.float16):
-            student_salida = student_model(input_x, attention_mask=attn_mask)
-            student_logits = student_salida.logits
+            optimizer.zero_grad()
 
-            student_logits_gen = student_logits[:, prompt_len:, :]
-            target_logits_gen = target_logits[:, prompt_len:, :]
+            with record_function(f"train_step_epoch_{epoch}_batch_{i}"):
+                with torch.autocast(device_type="cuda", dtype=torch.float16):
+                    student_salida = student_model(input_x, attention_mask=attn_mask)
+                    student_logits = student_salida.logits
 
-            loss = F.kl_div(
-                F.log_softmax(student_logits_gen / TEMPERATURE, dim=-1),
-                F.softmax(target_logits_gen / TEMPERATURE, dim=-1),
-                reduction="batchmean"
-            ) * (TEMPERATURE ** 2)
+                    student_logits_gen = student_logits[:, prompt_len:, :]
+                    target_logits_gen = target_logits[:, prompt_len:, :]
 
-        loss.backward()
+                    loss = F.kl_div(
+                        F.log_softmax(student_logits_gen / TEMPERATURE, dim=-1),
+                        F.softmax(target_logits_gen / TEMPERATURE, dim=-1),
+                        reduction="batchmean"
+                    ) * (TEMPERATURE ** 2)
 
-        torch.nn.utils.clip_grad_norm_(
-            [p for p in student_model.parameters() if p.requires_grad],
-            max_norm=1.0
-        )
+                loss.backward()
 
-        optimizer.step()
+                torch.nn.utils.clip_grad_norm_(
+                    [p for p in student_model.parameters() if p.requires_grad],
+                    max_norm=1.0
+                )
 
-        vram = torch.cuda.memory_allocated(0) / 1024**3
-        print(f"Epoca {epoch+1} | Lote {i+1}/{len(archivos_cache)} | Loss KL: {loss.item():.4f} | VRAM: {vram:.2f} GB")
+                optimizer.step()
 
-        del input_x, target_logits, student_logits, loss
-        if attn_mask is not None:
-            del attn_mask
-        torch.cuda.empty_cache()
+            vram = torch.cuda.memory_allocated(0) / 1024**3
+            print(f"Epoca {epoch+1} | Lote {i+1}/{len(archivos_cache)} | Loss KL: {loss.item():.4f} | VRAM: {vram:.2f} GB")
+
+            del input_x, target_logits, student_logits, loss
+            if attn_mask is not None:
+                del attn_mask
+            torch.cuda.empty_cache()
+            prof.step()
+
+# Exportar resultados del profiling
+prof.export_chrome_trace("profiling/02_train_student_trace.json")
+with open("profiling/02_train_student_summary.txt", "w") as f:
+    f.write(prof.key_averages().table(sort_by="cuda_time_total", row_limit=20))
+print("Resultados de profiling guardados en la carpeta 'profiling/'")
 
 os.makedirs(SAVE_DIR, exist_ok=True)
 student_model.save_pretrained(SAVE_DIR)
