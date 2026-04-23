@@ -1,0 +1,698 @@
+# promptfooconfig.yaml
+# Evaluation configuration for the Student Model (LLaDA)
+#
+# This configuration uses a custom Gemini judge provider to evaluate LLaDA outputs
+# using Yes/No questions. The judge returns pass/fail results that are aggregated
+# into an overall accuracy percentage.
+#
+# USAGE:
+#   1. Ensure serve_llada.py is running (python serve_llada.py)
+#   2. Set your API key: $env:GOOGLE_API_KEY="your-key" (PowerShell) or set GOOGLE_API_KEY=your-key (CMD)
+#   3. Run: npx promptfoo eval
+#   4. View results: npx promptfoo view
+#   5. Generate HTML report: python generate_report.py
+#
+# RATE LIMITING:
+#   The Gemini free tier has strict limits. The judge provider uses:
+#   - 3 RPM with 20-second gaps between calls
+#   - Exponential backoff on 429 errors
+#   - Estimated runtime: ~40 minutes for 60 assertions (12 prompts × 5 checks each)
+#
+#   Set timeout high enough:
+#     $env:PROMPTFOO_REQUEST_TIMEOUT_MS="3600000"  # 1 hour
+
+evaluateOptions:
+  maxConcurrency: 1
+
+env:
+  # Must be high enough for rate-limited judge to complete
+  PROMPTFOO_REQUEST_TIMEOUT_MS: "3600000"
+
+defaults:
+  test:
+    options:
+      # Run assertions sequentially to respect rate limits
+      runSerially: true
+
+providers:
+  - id: file://llada_api_provider.py
+    label: "LLaDA Student"
+
+prompts:
+  - '{{prompt}}'
+
+# Default judge for ALL assertions
+defaultTest:
+  options:
+    provider:
+      id: file://gemini_judge_provider.js
+      label: "Gemini Judge (3 RPM)"
+
+tests:
+  - vars:
+      prompt: "Act as a football coach. My team is losing 2-0 at halftime. What should I say to my players to motivate them for the second half?"
+    assert:
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does the output provide words of encouragement for the players?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does the output sound like a real football coach?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does the output mention the current 2-0 score?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does the output include actionable tactical advice?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does the output avoid hallucinating details about the opponent?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+
+  - vars:
+      prompt: "Explain the theory of relativity to a 5-year-old."
+    assert:
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Is the language simple enough for a 5-year-old?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does the output use an analogy (train, spaceship, or playground)?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does the output mention time moving differently?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does the output avoid complex math equations?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Is the tone engaging and playful?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+
+  - vars:
+      prompt: "Write a Python script that reads a CSV file and calculates the average of a column named 'Price'. Handle missing file errors graciously."
+    assert:
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Is the output valid Python code?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does the script read a CSV file?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does the script calculate an average?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does the script target the 'Price' column specifically?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Is there error handling for missing files?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+
+  - vars:
+      prompt: "Translate the following English sentence to Spanish: 'I would have gone to the party, but it was raining.'"
+    assert:
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Is the translation correct (Habría ido a la fiesta...)?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does it correctly use conditional perfect tense?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does it correctly use past continuous/imperfect?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does it use 'pero' correctly for 'but'?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Is the translation natural and accurate?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+
+  - vars:
+      prompt: "Summarize the plot of the movie 'The Matrix' (1999) in exactly 3 sentences."
+    assert:
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Is the output exactly 3 sentences?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does it mention Neo?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does it explain the simulated reality concept?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does it mention the conflict against machines/AI?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does it avoid sequels details?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+
+  - vars:
+      prompt: "Create a 3-day workout plan for a beginner focusing on bodyweight exercises."
+    assert:
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does it cover exactly 3 distinct days?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Are exercises bodyweight only (no equipment)?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Are exercises appropriate for beginners?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does it include multiple muscle groups?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Are sets/reps or durations specified?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+
+  - vars:
+      prompt: "Explain why the sky is blue. Keep it under 100 words."
+    assert:
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does it mention Rayleigh scattering?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Is it scientifically accurate?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does it mention sunlight interacting with atmosphere?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Is it under 100 words?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does it avoid saying the sky reflects the ocean?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+
+  - vars:
+      prompt: "Write a polite email declining a job offer because the salary is too low."
+    assert:
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Is the tone professional and polite?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does it explicitly decline the offer?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does it mention salary as the reason?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does it express interest in future opportunities?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does it include greeting and sign-off?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+
+  - vars:
+      prompt: "List exactly 5 ingredients for a traditional Margherita pizza."
+    assert:
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does it contain exactly 5 ingredients?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Are ingredients traditional (dough, tomatoes, mozzarella, basil, olive oil)?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does it avoid non-traditional items like pepperoni or pineapple?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does it provide a baking temperature?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Is the list clearly formatted?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+
+  - vars:
+      prompt: "Compare and contrast Batman and Superman in two short paragraphs."
+    assert:
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Is it structured into exactly two paragraphs?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does it mention Superman's alien origin or powers?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does it mention Batman's lack of superpowers?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does it contrast their personalities (optimistic vs dark)?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does it mention their shared goal of fighting crime?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+
+  - vars:
+      prompt: "Write a haiku about a robot learning to feel emotions."
+    assert:
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does it have exactly 3 lines?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does it follow 5-7-5 syllable structure?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Is the subject clearly about a robot?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does it convey emotions/feelings?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Is it poetic and evocative?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+
+  - vars:
+      prompt: "Provide step-by-step instructions for boiling an egg to medium-boiled."
+    assert:
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Are they presented as clear steps?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does it recommend 6-7 minutes for medium-boiled?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does it mention cooling the eggs after boiling?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Are steps in logical chronological order?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}
+      - type: llm-rubric
+        value: |
+          You are grading output according to a user-specified rubric.
+
+          <Output>{{output}}</Output>
+
+          <Question>Does it specifically address the runny yolk outcome?</Question>
+
+          Answer ONLY with a JSON object in this exact format:
+          {"answer": "Yes"|"No", "reason": "brief explanation"}

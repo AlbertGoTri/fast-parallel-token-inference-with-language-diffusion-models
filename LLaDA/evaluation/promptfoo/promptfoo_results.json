@@ -1,0 +1,1333 @@
+{
+  "evalId": "eval-8c5-2026-04-23T11:25:55",
+  "results": {
+    "version": 3,
+    "timestamp": "2026-04-23T11:25:55.935Z",
+    "prompts": [
+      {
+        "id": "effa18501e44aafd9bc42a2f64ffc9b6350f94025520ca2ed382f9bdc4b6e982",
+        "raw": "{{prompt}}",
+        "label": "{{prompt}}",
+        "provider": "LLaDA Student",
+        "metrics": {
+          "score": 0,
+          "testPassCount": 0,
+          "testFailCount": 0,
+          "testErrorCount": 12,
+          "assertPassCount": 0,
+          "assertFailCount": 0,
+          "totalLatencyMs": 720566,
+          "tokenUsage": {
+            "prompt": 0,
+            "completion": 0,
+            "cached": 0,
+            "total": 0,
+            "numRequests": 12,
+            "completionDetails": {
+              "reasoning": 0,
+              "acceptedPrediction": 0,
+              "rejectedPrediction": 0,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0
+            },
+            "assertions": {
+              "total": 0,
+              "prompt": 0,
+              "completion": 0,
+              "cached": 0,
+              "numRequests": 0,
+              "completionDetails": {
+                "reasoning": 0,
+                "acceptedPrediction": 0,
+                "rejectedPrediction": 0,
+                "cacheReadInputTokens": 0,
+                "cacheCreationInputTokens": 0
+              }
+            }
+          },
+          "namedScores": {},
+          "namedScoresCount": {},
+          "namedScoreWeights": {},
+          "cost": 0
+        }
+      }
+    ],
+    "results": [
+      {
+        "cost": 0,
+        "error": "ERROR: Request timed out after 60 seconds.",
+        "gradingResult": null,
+        "id": "fe81609a-8948-452a-98ca-ed7e4cdb4349",
+        "latencyMs": 60254,
+        "namedScores": {},
+        "prompt": {
+          "raw": "Act as a football coach. My team is losing 2-0 at halftime. What should I say to my players to motivate them for the second half?",
+          "label": "{{prompt}}",
+          "config": {
+            "provider": {
+              "id": "file://gemini_judge_provider.js",
+              "label": "Gemini Judge (3 RPM)"
+            }
+          }
+        },
+        "promptId": "effa18501e44aafd9bc42a2f64ffc9b6350f94025520ca2ed382f9bdc4b6e982",
+        "promptIdx": 0,
+        "provider": {
+          "id": "file://llada_api_provider.py",
+          "label": "LLaDA Student"
+        },
+        "response": {
+          "error": "ERROR: Request timed out after 60 seconds.",
+          "output": "[Timeout - model generation took too long]",
+          "cached": false
+        },
+        "score": 0,
+        "success": false,
+        "testCase": {
+          "vars": {
+            "prompt": "Act as a football coach. My team is losing 2-0 at halftime. What should I say to my players to motivate them for the second half?"
+          },
+          "assert": [
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does the output provide words of encouragement for the players?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does the output sound like a real football coach?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does the output mention the current 2-0 score?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does the output include actionable tactical advice?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does the output avoid hallucinating details about the opponent?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            }
+          ],
+          "options": {
+            "provider": {
+              "id": "file://gemini_judge_provider.js",
+              "label": "Gemini Judge (3 RPM)"
+            }
+          },
+          "metadata": {}
+        },
+        "testIdx": 0,
+        "vars": {
+          "prompt": "Act as a football coach. My team is losing 2-0 at halftime. What should I say to my players to motivate them for the second half?"
+        },
+        "metadata": {
+          "_promptfooFileMetadata": {}
+        },
+        "failureReason": 2
+      },
+      {
+        "cost": 0,
+        "error": "ERROR: Request timed out after 60 seconds.",
+        "gradingResult": null,
+        "id": "7b523fe1-2ec8-47e3-9207-ce3b8b4c2d5d",
+        "latencyMs": 60041,
+        "namedScores": {},
+        "prompt": {
+          "raw": "Explain the theory of relativity to a 5-year-old.",
+          "label": "{{prompt}}",
+          "config": {
+            "provider": {
+              "id": "file://gemini_judge_provider.js",
+              "label": "Gemini Judge (3 RPM)"
+            }
+          }
+        },
+        "promptId": "effa18501e44aafd9bc42a2f64ffc9b6350f94025520ca2ed382f9bdc4b6e982",
+        "promptIdx": 0,
+        "provider": {
+          "id": "file://llada_api_provider.py",
+          "label": "LLaDA Student"
+        },
+        "response": {
+          "error": "ERROR: Request timed out after 60 seconds.",
+          "output": "[Timeout - model generation took too long]",
+          "cached": false
+        },
+        "score": 0,
+        "success": false,
+        "testCase": {
+          "vars": {
+            "prompt": "Explain the theory of relativity to a 5-year-old."
+          },
+          "assert": [
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Is the language simple enough for a 5-year-old?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does the output use an analogy (train, spaceship, or playground)?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does the output mention time moving differently?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does the output avoid complex math equations?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Is the tone engaging and playful?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            }
+          ],
+          "options": {
+            "provider": {
+              "id": "file://gemini_judge_provider.js",
+              "label": "Gemini Judge (3 RPM)"
+            }
+          },
+          "metadata": {}
+        },
+        "testIdx": 1,
+        "vars": {
+          "prompt": "Explain the theory of relativity to a 5-year-old."
+        },
+        "metadata": {
+          "_promptfooFileMetadata": {}
+        },
+        "failureReason": 2
+      },
+      {
+        "cost": 0,
+        "error": "ERROR: Request timed out after 60 seconds.",
+        "gradingResult": null,
+        "id": "f9074f9f-bc7c-4fd1-8382-6672053e706a",
+        "latencyMs": 60032,
+        "namedScores": {},
+        "prompt": {
+          "raw": "Write a Python script that reads a CSV file and calculates the average of a column named 'Price'. Handle missing file errors graciously.",
+          "label": "{{prompt}}",
+          "config": {
+            "provider": {
+              "id": "file://gemini_judge_provider.js",
+              "label": "Gemini Judge (3 RPM)"
+            }
+          }
+        },
+        "promptId": "effa18501e44aafd9bc42a2f64ffc9b6350f94025520ca2ed382f9bdc4b6e982",
+        "promptIdx": 0,
+        "provider": {
+          "id": "file://llada_api_provider.py",
+          "label": "LLaDA Student"
+        },
+        "response": {
+          "error": "ERROR: Request timed out after 60 seconds.",
+          "output": "[Timeout - model generation took too long]",
+          "cached": false
+        },
+        "score": 0,
+        "success": false,
+        "testCase": {
+          "vars": {
+            "prompt": "Write a Python script that reads a CSV file and calculates the average of a column named 'Price'. Handle missing file errors graciously."
+          },
+          "assert": [
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Is the output valid Python code?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does the script read a CSV file?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does the script calculate an average?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does the script target the 'Price' column specifically?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Is there error handling for missing files?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            }
+          ],
+          "options": {
+            "provider": {
+              "id": "file://gemini_judge_provider.js",
+              "label": "Gemini Judge (3 RPM)"
+            }
+          },
+          "metadata": {}
+        },
+        "testIdx": 2,
+        "vars": {
+          "prompt": "Write a Python script that reads a CSV file and calculates the average of a column named 'Price'. Handle missing file errors graciously."
+        },
+        "metadata": {
+          "_promptfooFileMetadata": {}
+        },
+        "failureReason": 2
+      },
+      {
+        "cost": 0,
+        "error": "ERROR: Request timed out after 60 seconds.",
+        "gradingResult": null,
+        "id": "7b674e77-bd31-46d6-bdbe-aa0880847c13",
+        "latencyMs": 60033,
+        "namedScores": {},
+        "prompt": {
+          "raw": "Translate the following English sentence to Spanish: 'I would have gone to the party, but it was raining.'",
+          "label": "{{prompt}}",
+          "config": {
+            "provider": {
+              "id": "file://gemini_judge_provider.js",
+              "label": "Gemini Judge (3 RPM)"
+            }
+          }
+        },
+        "promptId": "effa18501e44aafd9bc42a2f64ffc9b6350f94025520ca2ed382f9bdc4b6e982",
+        "promptIdx": 0,
+        "provider": {
+          "id": "file://llada_api_provider.py",
+          "label": "LLaDA Student"
+        },
+        "response": {
+          "error": "ERROR: Request timed out after 60 seconds.",
+          "output": "[Timeout - model generation took too long]",
+          "cached": false
+        },
+        "score": 0,
+        "success": false,
+        "testCase": {
+          "vars": {
+            "prompt": "Translate the following English sentence to Spanish: 'I would have gone to the party, but it was raining.'"
+          },
+          "assert": [
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Is the translation correct (Habría ido a la fiesta...)?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it correctly use conditional perfect tense?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it correctly use past continuous/imperfect?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it use 'pero' correctly for 'but'?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Is the translation natural and accurate?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            }
+          ],
+          "options": {
+            "provider": {
+              "id": "file://gemini_judge_provider.js",
+              "label": "Gemini Judge (3 RPM)"
+            }
+          },
+          "metadata": {}
+        },
+        "testIdx": 3,
+        "vars": {
+          "prompt": "Translate the following English sentence to Spanish: 'I would have gone to the party, but it was raining.'"
+        },
+        "metadata": {
+          "_promptfooFileMetadata": {}
+        },
+        "failureReason": 2
+      },
+      {
+        "cost": 0,
+        "error": "ERROR: Request timed out after 60 seconds.",
+        "gradingResult": null,
+        "id": "aa4f9d3f-a693-4b22-b859-52de183b085e",
+        "latencyMs": 60021,
+        "namedScores": {},
+        "prompt": {
+          "raw": "Summarize the plot of the movie 'The Matrix' (1999) in exactly 3 sentences.",
+          "label": "{{prompt}}",
+          "config": {
+            "provider": {
+              "id": "file://gemini_judge_provider.js",
+              "label": "Gemini Judge (3 RPM)"
+            }
+          }
+        },
+        "promptId": "effa18501e44aafd9bc42a2f64ffc9b6350f94025520ca2ed382f9bdc4b6e982",
+        "promptIdx": 0,
+        "provider": {
+          "id": "file://llada_api_provider.py",
+          "label": "LLaDA Student"
+        },
+        "response": {
+          "error": "ERROR: Request timed out after 60 seconds.",
+          "output": "[Timeout - model generation took too long]",
+          "cached": false
+        },
+        "score": 0,
+        "success": false,
+        "testCase": {
+          "vars": {
+            "prompt": "Summarize the plot of the movie 'The Matrix' (1999) in exactly 3 sentences."
+          },
+          "assert": [
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Is the output exactly 3 sentences?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it mention Neo?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it explain the simulated reality concept?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it mention the conflict against machines/AI?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it avoid sequels details?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            }
+          ],
+          "options": {
+            "provider": {
+              "id": "file://gemini_judge_provider.js",
+              "label": "Gemini Judge (3 RPM)"
+            }
+          },
+          "metadata": {}
+        },
+        "testIdx": 4,
+        "vars": {
+          "prompt": "Summarize the plot of the movie 'The Matrix' (1999) in exactly 3 sentences."
+        },
+        "metadata": {
+          "_promptfooFileMetadata": {}
+        },
+        "failureReason": 2
+      },
+      {
+        "cost": 0,
+        "error": "ERROR: Request timed out after 60 seconds.",
+        "gradingResult": null,
+        "id": "fe071303-62be-4406-bc7e-8c16f19a48a4",
+        "latencyMs": 60022,
+        "namedScores": {},
+        "prompt": {
+          "raw": "Create a 3-day workout plan for a beginner focusing on bodyweight exercises.",
+          "label": "{{prompt}}",
+          "config": {
+            "provider": {
+              "id": "file://gemini_judge_provider.js",
+              "label": "Gemini Judge (3 RPM)"
+            }
+          }
+        },
+        "promptId": "effa18501e44aafd9bc42a2f64ffc9b6350f94025520ca2ed382f9bdc4b6e982",
+        "promptIdx": 0,
+        "provider": {
+          "id": "file://llada_api_provider.py",
+          "label": "LLaDA Student"
+        },
+        "response": {
+          "error": "ERROR: Request timed out after 60 seconds.",
+          "output": "[Timeout - model generation took too long]",
+          "cached": false
+        },
+        "score": 0,
+        "success": false,
+        "testCase": {
+          "vars": {
+            "prompt": "Create a 3-day workout plan for a beginner focusing on bodyweight exercises."
+          },
+          "assert": [
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it cover exactly 3 distinct days?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Are exercises bodyweight only (no equipment)?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Are exercises appropriate for beginners?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it include multiple muscle groups?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Are sets/reps or durations specified?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            }
+          ],
+          "options": {
+            "provider": {
+              "id": "file://gemini_judge_provider.js",
+              "label": "Gemini Judge (3 RPM)"
+            }
+          },
+          "metadata": {}
+        },
+        "testIdx": 5,
+        "vars": {
+          "prompt": "Create a 3-day workout plan for a beginner focusing on bodyweight exercises."
+        },
+        "metadata": {
+          "_promptfooFileMetadata": {}
+        },
+        "failureReason": 2
+      },
+      {
+        "cost": 0,
+        "error": "ERROR: Request timed out after 60 seconds.",
+        "gradingResult": null,
+        "id": "e24a3928-787a-43d5-b707-b390f01bd58a",
+        "latencyMs": 60015,
+        "namedScores": {},
+        "prompt": {
+          "raw": "Explain why the sky is blue. Keep it under 100 words.",
+          "label": "{{prompt}}",
+          "config": {
+            "provider": {
+              "id": "file://gemini_judge_provider.js",
+              "label": "Gemini Judge (3 RPM)"
+            }
+          }
+        },
+        "promptId": "effa18501e44aafd9bc42a2f64ffc9b6350f94025520ca2ed382f9bdc4b6e982",
+        "promptIdx": 0,
+        "provider": {
+          "id": "file://llada_api_provider.py",
+          "label": "LLaDA Student"
+        },
+        "response": {
+          "error": "ERROR: Request timed out after 60 seconds.",
+          "output": "[Timeout - model generation took too long]",
+          "cached": false
+        },
+        "score": 0,
+        "success": false,
+        "testCase": {
+          "vars": {
+            "prompt": "Explain why the sky is blue. Keep it under 100 words."
+          },
+          "assert": [
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it mention Rayleigh scattering?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Is it scientifically accurate?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it mention sunlight interacting with atmosphere?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Is it under 100 words?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it avoid saying the sky reflects the ocean?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            }
+          ],
+          "options": {
+            "provider": {
+              "id": "file://gemini_judge_provider.js",
+              "label": "Gemini Judge (3 RPM)"
+            }
+          },
+          "metadata": {}
+        },
+        "testIdx": 6,
+        "vars": {
+          "prompt": "Explain why the sky is blue. Keep it under 100 words."
+        },
+        "metadata": {
+          "_promptfooFileMetadata": {}
+        },
+        "failureReason": 2
+      },
+      {
+        "cost": 0,
+        "error": "ERROR: Request timed out after 60 seconds.",
+        "gradingResult": null,
+        "id": "c66f0b12-93ce-4285-b122-f418cb4879d5",
+        "latencyMs": 60016,
+        "namedScores": {},
+        "prompt": {
+          "raw": "Write a polite email declining a job offer because the salary is too low.",
+          "label": "{{prompt}}",
+          "config": {
+            "provider": {
+              "id": "file://gemini_judge_provider.js",
+              "label": "Gemini Judge (3 RPM)"
+            }
+          }
+        },
+        "promptId": "effa18501e44aafd9bc42a2f64ffc9b6350f94025520ca2ed382f9bdc4b6e982",
+        "promptIdx": 0,
+        "provider": {
+          "id": "file://llada_api_provider.py",
+          "label": "LLaDA Student"
+        },
+        "response": {
+          "error": "ERROR: Request timed out after 60 seconds.",
+          "output": "[Timeout - model generation took too long]",
+          "cached": false
+        },
+        "score": 0,
+        "success": false,
+        "testCase": {
+          "vars": {
+            "prompt": "Write a polite email declining a job offer because the salary is too low."
+          },
+          "assert": [
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Is the tone professional and polite?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it explicitly decline the offer?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it mention salary as the reason?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it express interest in future opportunities?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it include greeting and sign-off?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            }
+          ],
+          "options": {
+            "provider": {
+              "id": "file://gemini_judge_provider.js",
+              "label": "Gemini Judge (3 RPM)"
+            }
+          },
+          "metadata": {}
+        },
+        "testIdx": 7,
+        "vars": {
+          "prompt": "Write a polite email declining a job offer because the salary is too low."
+        },
+        "metadata": {
+          "_promptfooFileMetadata": {}
+        },
+        "failureReason": 2
+      },
+      {
+        "cost": 0,
+        "error": "ERROR: Request timed out after 60 seconds.",
+        "gradingResult": null,
+        "id": "6541b268-ce9a-47ad-97f9-bd768a52f02d",
+        "latencyMs": 60026,
+        "namedScores": {},
+        "prompt": {
+          "raw": "List exactly 5 ingredients for a traditional Margherita pizza.",
+          "label": "{{prompt}}",
+          "config": {
+            "provider": {
+              "id": "file://gemini_judge_provider.js",
+              "label": "Gemini Judge (3 RPM)"
+            }
+          }
+        },
+        "promptId": "effa18501e44aafd9bc42a2f64ffc9b6350f94025520ca2ed382f9bdc4b6e982",
+        "promptIdx": 0,
+        "provider": {
+          "id": "file://llada_api_provider.py",
+          "label": "LLaDA Student"
+        },
+        "response": {
+          "error": "ERROR: Request timed out after 60 seconds.",
+          "output": "[Timeout - model generation took too long]",
+          "cached": false
+        },
+        "score": 0,
+        "success": false,
+        "testCase": {
+          "vars": {
+            "prompt": "List exactly 5 ingredients for a traditional Margherita pizza."
+          },
+          "assert": [
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it contain exactly 5 ingredients?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Are ingredients traditional (dough, tomatoes, mozzarella, basil, olive oil)?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it avoid non-traditional items like pepperoni or pineapple?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it provide a baking temperature?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Is the list clearly formatted?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            }
+          ],
+          "options": {
+            "provider": {
+              "id": "file://gemini_judge_provider.js",
+              "label": "Gemini Judge (3 RPM)"
+            }
+          },
+          "metadata": {}
+        },
+        "testIdx": 8,
+        "vars": {
+          "prompt": "List exactly 5 ingredients for a traditional Margherita pizza."
+        },
+        "metadata": {
+          "_promptfooFileMetadata": {}
+        },
+        "failureReason": 2
+      },
+      {
+        "cost": 0,
+        "error": "ERROR: Request timed out after 60 seconds.",
+        "gradingResult": null,
+        "id": "8dc321c3-18b9-4942-a3d6-f028f6f8355a",
+        "latencyMs": 60039,
+        "namedScores": {},
+        "prompt": {
+          "raw": "Compare and contrast Batman and Superman in two short paragraphs.",
+          "label": "{{prompt}}",
+          "config": {
+            "provider": {
+              "id": "file://gemini_judge_provider.js",
+              "label": "Gemini Judge (3 RPM)"
+            }
+          }
+        },
+        "promptId": "effa18501e44aafd9bc42a2f64ffc9b6350f94025520ca2ed382f9bdc4b6e982",
+        "promptIdx": 0,
+        "provider": {
+          "id": "file://llada_api_provider.py",
+          "label": "LLaDA Student"
+        },
+        "response": {
+          "error": "ERROR: Request timed out after 60 seconds.",
+          "output": "[Timeout - model generation took too long]",
+          "cached": false
+        },
+        "score": 0,
+        "success": false,
+        "testCase": {
+          "vars": {
+            "prompt": "Compare and contrast Batman and Superman in two short paragraphs."
+          },
+          "assert": [
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Is it structured into exactly two paragraphs?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it mention Superman's alien origin or powers?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it mention Batman's lack of superpowers?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it contrast their personalities (optimistic vs dark)?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it mention their shared goal of fighting crime?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            }
+          ],
+          "options": {
+            "provider": {
+              "id": "file://gemini_judge_provider.js",
+              "label": "Gemini Judge (3 RPM)"
+            }
+          },
+          "metadata": {}
+        },
+        "testIdx": 9,
+        "vars": {
+          "prompt": "Compare and contrast Batman and Superman in two short paragraphs."
+        },
+        "metadata": {
+          "_promptfooFileMetadata": {}
+        },
+        "failureReason": 2
+      },
+      {
+        "cost": 0,
+        "error": "ERROR: Request timed out after 60 seconds.",
+        "gradingResult": null,
+        "id": "2f374521-1c95-4d29-8993-f75cdce3b95d",
+        "latencyMs": 60035,
+        "namedScores": {},
+        "prompt": {
+          "raw": "Write a haiku about a robot learning to feel emotions.",
+          "label": "{{prompt}}",
+          "config": {
+            "provider": {
+              "id": "file://gemini_judge_provider.js",
+              "label": "Gemini Judge (3 RPM)"
+            }
+          }
+        },
+        "promptId": "effa18501e44aafd9bc42a2f64ffc9b6350f94025520ca2ed382f9bdc4b6e982",
+        "promptIdx": 0,
+        "provider": {
+          "id": "file://llada_api_provider.py",
+          "label": "LLaDA Student"
+        },
+        "response": {
+          "error": "ERROR: Request timed out after 60 seconds.",
+          "output": "[Timeout - model generation took too long]",
+          "cached": false
+        },
+        "score": 0,
+        "success": false,
+        "testCase": {
+          "vars": {
+            "prompt": "Write a haiku about a robot learning to feel emotions."
+          },
+          "assert": [
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it have exactly 3 lines?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it follow 5-7-5 syllable structure?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Is the subject clearly about a robot?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it convey emotions/feelings?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Is it poetic and evocative?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            }
+          ],
+          "options": {
+            "provider": {
+              "id": "file://gemini_judge_provider.js",
+              "label": "Gemini Judge (3 RPM)"
+            }
+          },
+          "metadata": {}
+        },
+        "testIdx": 10,
+        "vars": {
+          "prompt": "Write a haiku about a robot learning to feel emotions."
+        },
+        "metadata": {
+          "_promptfooFileMetadata": {}
+        },
+        "failureReason": 2
+      },
+      {
+        "cost": 0,
+        "error": "ERROR: Request timed out after 60 seconds.",
+        "gradingResult": null,
+        "id": "c6eec642-b0ef-424c-92ad-5347ddac6245",
+        "latencyMs": 60032,
+        "namedScores": {},
+        "prompt": {
+          "raw": "Provide step-by-step instructions for boiling an egg to medium-boiled.",
+          "label": "{{prompt}}",
+          "config": {
+            "provider": {
+              "id": "file://gemini_judge_provider.js",
+              "label": "Gemini Judge (3 RPM)"
+            }
+          }
+        },
+        "promptId": "effa18501e44aafd9bc42a2f64ffc9b6350f94025520ca2ed382f9bdc4b6e982",
+        "promptIdx": 0,
+        "provider": {
+          "id": "file://llada_api_provider.py",
+          "label": "LLaDA Student"
+        },
+        "response": {
+          "error": "ERROR: Request timed out after 60 seconds.",
+          "output": "[Timeout - model generation took too long]",
+          "cached": false
+        },
+        "score": 0,
+        "success": false,
+        "testCase": {
+          "vars": {
+            "prompt": "Provide step-by-step instructions for boiling an egg to medium-boiled."
+          },
+          "assert": [
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Are they presented as clear steps?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it recommend 6-7 minutes for medium-boiled?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it mention cooling the eggs after boiling?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Are steps in logical chronological order?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it specifically address the runny yolk outcome?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+            }
+          ],
+          "options": {
+            "provider": {
+              "id": "file://gemini_judge_provider.js",
+              "label": "Gemini Judge (3 RPM)"
+            }
+          },
+          "metadata": {}
+        },
+        "testIdx": 11,
+        "vars": {
+          "prompt": "Provide step-by-step instructions for boiling an egg to medium-boiled."
+        },
+        "metadata": {
+          "_promptfooFileMetadata": {}
+        },
+        "failureReason": 2
+      }
+    ],
+    "stats": {
+      "successes": 0,
+      "failures": 0,
+      "errors": 12,
+      "tokenUsage": {
+        "prompt": 0,
+        "completion": 0,
+        "cached": 0,
+        "total": 0,
+        "numRequests": 12,
+        "completionDetails": {
+          "reasoning": 0,
+          "acceptedPrediction": 0,
+          "rejectedPrediction": 0,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0
+        },
+        "assertions": {
+          "total": 0,
+          "prompt": 0,
+          "completion": 0,
+          "cached": 0,
+          "numRequests": 0,
+          "completionDetails": {
+            "reasoning": 0,
+            "acceptedPrediction": 0,
+            "rejectedPrediction": 0,
+            "cacheReadInputTokens": 0,
+            "cacheCreationInputTokens": 0
+          }
+        }
+      },
+      "durationMs": 720667,
+      "evaluationDurationMs": 720667
+    }
+  },
+  "config": {
+    "prompts": [
+      "{{prompt}}"
+    ],
+    "providers": [
+      {
+        "id": "file://llada_api_provider.py",
+        "label": "LLaDA Student"
+      }
+    ],
+    "tests": [
+      {
+        "vars": {
+          "prompt": "Act as a football coach. My team is losing 2-0 at halftime. What should I say to my players to motivate them for the second half?"
+        },
+        "assert": [
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does the output provide words of encouragement for the players?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does the output sound like a real football coach?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does the output mention the current 2-0 score?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does the output include actionable tactical advice?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does the output avoid hallucinating details about the opponent?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          }
+        ]
+      },
+      {
+        "vars": {
+          "prompt": "Explain the theory of relativity to a 5-year-old."
+        },
+        "assert": [
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Is the language simple enough for a 5-year-old?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does the output use an analogy (train, spaceship, or playground)?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does the output mention time moving differently?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does the output avoid complex math equations?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Is the tone engaging and playful?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          }
+        ]
+      },
+      {
+        "vars": {
+          "prompt": "Write a Python script that reads a CSV file and calculates the average of a column named 'Price'. Handle missing file errors graciously."
+        },
+        "assert": [
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Is the output valid Python code?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does the script read a CSV file?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does the script calculate an average?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does the script target the 'Price' column specifically?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Is there error handling for missing files?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          }
+        ]
+      },
+      {
+        "vars": {
+          "prompt": "Translate the following English sentence to Spanish: 'I would have gone to the party, but it was raining.'"
+        },
+        "assert": [
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Is the translation correct (Habría ido a la fiesta...)?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it correctly use conditional perfect tense?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it correctly use past continuous/imperfect?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it use 'pero' correctly for 'but'?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Is the translation natural and accurate?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          }
+        ]
+      },
+      {
+        "vars": {
+          "prompt": "Summarize the plot of the movie 'The Matrix' (1999) in exactly 3 sentences."
+        },
+        "assert": [
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Is the output exactly 3 sentences?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it mention Neo?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it explain the simulated reality concept?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it mention the conflict against machines/AI?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it avoid sequels details?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          }
+        ]
+      },
+      {
+        "vars": {
+          "prompt": "Create a 3-day workout plan for a beginner focusing on bodyweight exercises."
+        },
+        "assert": [
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it cover exactly 3 distinct days?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Are exercises bodyweight only (no equipment)?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Are exercises appropriate for beginners?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it include multiple muscle groups?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Are sets/reps or durations specified?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          }
+        ]
+      },
+      {
+        "vars": {
+          "prompt": "Explain why the sky is blue. Keep it under 100 words."
+        },
+        "assert": [
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it mention Rayleigh scattering?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Is it scientifically accurate?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it mention sunlight interacting with atmosphere?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Is it under 100 words?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it avoid saying the sky reflects the ocean?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          }
+        ]
+      },
+      {
+        "vars": {
+          "prompt": "Write a polite email declining a job offer because the salary is too low."
+        },
+        "assert": [
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Is the tone professional and polite?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it explicitly decline the offer?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it mention salary as the reason?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it express interest in future opportunities?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it include greeting and sign-off?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          }
+        ]
+      },
+      {
+        "vars": {
+          "prompt": "List exactly 5 ingredients for a traditional Margherita pizza."
+        },
+        "assert": [
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it contain exactly 5 ingredients?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Are ingredients traditional (dough, tomatoes, mozzarella, basil, olive oil)?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it avoid non-traditional items like pepperoni or pineapple?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it provide a baking temperature?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Is the list clearly formatted?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          }
+        ]
+      },
+      {
+        "vars": {
+          "prompt": "Compare and contrast Batman and Superman in two short paragraphs."
+        },
+        "assert": [
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Is it structured into exactly two paragraphs?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it mention Superman's alien origin or powers?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it mention Batman's lack of superpowers?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it contrast their personalities (optimistic vs dark)?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it mention their shared goal of fighting crime?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          }
+        ]
+      },
+      {
+        "vars": {
+          "prompt": "Write a haiku about a robot learning to feel emotions."
+        },
+        "assert": [
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it have exactly 3 lines?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it follow 5-7-5 syllable structure?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Is the subject clearly about a robot?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it convey emotions/feelings?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Is it poetic and evocative?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          }
+        ]
+      },
+      {
+        "vars": {
+          "prompt": "Provide step-by-step instructions for boiling an egg to medium-boiled."
+        },
+        "assert": [
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Are they presented as clear steps?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it recommend 6-7 minutes for medium-boiled?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it mention cooling the eggs after boiling?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Are steps in logical chronological order?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "You are grading output according to a user-specified rubric.\n\n<Output>{{output}}</Output>\n\n<Question>Does it specifically address the runny yolk outcome?</Question>\n\nAnswer ONLY with a JSON object in this exact format:\n{\"answer\": \"Yes\"|\"No\", \"reason\": \"brief explanation\"}\n"
+          }
+        ]
+      }
+    ],
+    "env": {
+      "PROMPTFOO_REQUEST_TIMEOUT_MS": "3600000"
+    },
+    "defaultTest": {
+      "options": {
+        "provider": {
+          "id": "file://gemini_judge_provider.js",
+          "label": "Gemini Judge (3 RPM)"
+        }
+      }
+    },
+    "outputPath": [
+      "promptfoo_results.json"
+    ],
+    "extensions": [],
+    "evaluateOptions": {
+      "maxConcurrency": 1
+    }
+  },
+  "shareableUrl": null,
+  "metadata": {
+    "promptfooVersion": "0.121.7",
+    "nodeVersion": "v24.15.0",
+    "platform": "win32",
+    "arch": "x64",
+    "exportedAt": "2026-04-23T11:37:56.677Z",
+    "evaluationCreatedAt": "2026-04-23T11:25:55.935Z"
+  }
+}

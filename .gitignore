@@ -80,3 +80,5 @@ thesis/*.run.xml
 thesis/*.snm
 thesis/*.synctex.gz
 thesis/*.toc
+.env
+.promptfoo/
