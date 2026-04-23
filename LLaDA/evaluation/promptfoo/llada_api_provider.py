@@ -20,9 +20,12 @@ def call_api(prompt, options, context):
     data = json.dumps({'prompt': prompt}).encode('utf-8')
     headers = {'Content-Type': 'application/json'}
 
+    # Use longer timeout for LLaDA generation (can take several minutes)
+    timeout_seconds = 300  # 5 minutes
+
     try:
         req = urllib.request.Request(url, data=data, headers=headers)
-        with urllib.request.urlopen(req, timeout=60) as response:
+        with urllib.request.urlopen(req, timeout=timeout_seconds) as response:
             result = json.loads(response.read().decode('utf-8'))
             return {"output": result.get('response', '')}
 
@@ -43,7 +46,7 @@ def call_api(prompt, options, context):
 
     except socket.timeout:
         return {
-            "error": "ERROR: Request timed out after 60 seconds.",
+            "error": "ERROR: Request timed out after 5 minutes. Consider reducing steps/gen_length in serve_llada.py or increasing timeout.",
             "output": "[Timeout - model generation took too long]"
         }
 

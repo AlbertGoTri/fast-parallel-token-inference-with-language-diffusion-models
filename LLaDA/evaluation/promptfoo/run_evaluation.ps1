@@ -2,16 +2,13 @@
 # Automated evaluation script for LLaDA model using promptfoo
 #
 # Usage:
-#   .\run_evaluation.ps1 -ApiKey "your-google-api-key"
-#   .\run_evaluation.ps1 -ApiKey "your-google-api-key" -SkipServer
-#   .\run_evaluation.ps1 -ApiKey "your-google-api-key" -SkipEval -JustReport
+#   .\run_evaluation.ps1
+#   .\run_evaluation.ps1 -SkipServer
+#   .\run_evaluation.ps1 -SkipEval -JustReport
 #
 # IMPORTANT: Run this script from the LLaDA root directory, not from evaluation/promptfoo/
 
 param(
-    [Parameter(Mandatory=$true)]
-    [string]$ApiKey,
-
     [switch]$SkipServer,
     [switch]$SkipEval,
     [switch]$JustReport
@@ -23,7 +20,9 @@ $HealthUrl  = "http://127.0.0.1:$ServerPort/health"
 $ServerUrl  = "http://127.0.0.1:$ServerPort/generate"
 $ResultsFile = "promptfoo_results.json"
 $ReportFile  = "evaluation_report.html"
-$Timeout = 7200000  # 2 hours in milliseconds
+$Timeout = 3600000  # 1 hour in milliseconds
+
+$OllamaUrl = "http://127.0.0.1:11434"
 
 # Determine our location
 $ScriptDir   = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -46,6 +45,16 @@ function Test-ServerRunning {
     # Uses the lightweight /health endpoint — no inference, returns instantly.
     try {
         $response = Invoke-WebRequest -Uri $HealthUrl -Method GET -TimeoutSec 5 -ErrorAction Stop
+        return $true
+    } catch {
+        return $false
+    }
+}
+
+function Test-OllamaRunning {
+    # Check if Ollama is running
+    try {
+        $response = Invoke-WebRequest -Uri "$OllamaUrl/" -Method GET -TimeoutSec 5 -ErrorAction Stop
         return $true
     } catch {
         return $false
@@ -125,9 +134,15 @@ Write-Status "LLaDA Root: $LladaRoot" $Cyan
 Write-Status "Promptfoo Dir: $PromptfooDir" $Cyan
 Write-Host ""
 
-# Set API key
-$env:GOOGLE_API_KEY = $ApiKey
-Write-Status "API key configured" $Green
+# Check Ollama is running (required for judge)
+Write-Status "Checking Ollama..." $Cyan
+if (-not (Test-OllamaRunning)) {
+    Write-Status "ERROR: Ollama is not running at $OllamaUrl" $Red
+    Write-Status "Please start Ollama and ensure llama3.1:8b is pulled:" $Red
+    Write-Status "  ollama pull llama3.1:8b" $Yellow
+    exit 1
+}
+Write-Status "Ollama is running" $Green
 
 # Set timeout
 $env:PROMPTFOO_REQUEST_TIMEOUT_MS = $Timeout.ToString()
@@ -175,14 +190,16 @@ if (-not $SkipServer -and -not $JustReport) {
 if (-not $JustReport) {
     Write-Host ""
     Write-Status "=== Starting Evaluation ===" $Cyan
-    Write-Status "This will take approximately 30-60 minutes due to rate limiting" $Yellow
+    Write-Status "This will take approximately 15-30 minutes (LLaDA generates then Ollama judges)" $Yellow
+    Write-Status "Running sequentially to avoid VRAM collision between LLaDA and Ollama" $Cyan
     Write-Host ""
 
     # Change to promptfoo directory so relative paths in config work
     Push-Location $PromptfooDir
 
     try {
-        npx promptfoo eval -o $ResultsFile
+        # Run with concurrency=1 to ensure sequential execution (avoid VRAM collision)
+        npx promptfoo eval -o $ResultsFile --max-concurrency 1
 
         if ($LASTEXITCODE -ne 0) {
             Write-Status "Evaluation completed with warnings (exit code: $LASTEXITCODE)" $Yellow

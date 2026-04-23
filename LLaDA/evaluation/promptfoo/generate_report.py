@@ -37,10 +37,11 @@ def generate_report(json_path="promptfoo_results.json", output_path="evaluation_
 
     for i, res in enumerate(results):
         prompt_text = res.get('prompt', {}).get('raw', 'Sin prompt')
-        model_output = res.get('response', {}).get('output', res.get('error', 'Error en la respuesta'))
-        grading = res.get('gradingResult', {})
+        response_obj = res.get('response') or {}
+        model_output = response_obj.get('output', res.get('error', 'Error en la respuesta'))
+        grading = res.get('gradingResult') or {}
         components = grading.get('componentResults', [])
-        
+
         if not components and res.get('error'):
             components = [{"pass": False, "score": 0, "reason": res.get('error')}]
 
