@@ -1,40 +1,43 @@
 # LLaDA Evaluation Guide
 
-This guide explains how to evaluate your LLaDA student model using promptfoo with a Gemini-based judge that answers Yes/No questions about model outputs.
+This guide explains how to evaluate your LLaDA student model using **promptfoo** with a local **Ollama** judge (llama3.1:8b) that answers Yes/No questions about model outputs.
 
 ## Overview
 
 The evaluation system works as follows:
 1. **LLaDA Model Server** (`serve_llada.py`) - Loads your trained model and serves it via a local API
 2. **Promptfoo Configuration** (`promptfooconfig.yaml`) - Defines test prompts and evaluation criteria
-3. **Gemini Judge** (`gemini_judge_provider.js`) - Evaluates each response with Yes/No questions
+3. **Ollama Judge** (llama3.1:8b running locally) - Evaluates each response with Yes/No questions
 4. **Report Generator** (`generate_report.py`) - Creates a visual HTML report with results
 
 ## Prerequisites
 
 1. **Node.js** (v18 or later) - Download from [nodejs.org](https://nodejs.org/)
 2. **Python** (3.10 or later) with your LLaDA environment activated
-3. **Google API Key** - Get from [Google AI Studio](https://aistudio.google.com/) (free tier available)
+3. **Ollama** - Install from [ollama.com](https://ollama.com) and pull the model:
+   ```bash
+   ollama pull llama3.1:8b
+   ```
 
 ## Quick Start (Automated)
 
 The easiest way to run the evaluation is using the provided PowerShell script:
 
 ```powershell
-# Run everything (starts server, runs evaluation, generates report)
-.\run_evaluation.ps1 -ApiKey "your-google-api-key"
+# Run everything (checks Ollama, runs evaluation, generates report)
+.\evaluation\promptfoo\run_evaluation.ps1
 
-# If server is already running (in another terminal)
-.\run_evaluation.ps1 -ApiKey "your-google-api-key" -SkipServer
+# If LLaDA server is already running (in another terminal)
+.\evaluation\promptfoo\run_evaluation.ps1 -SkipServer
 
 # Just generate report from existing results
-.\run_evaluation.ps1 -ApiKey "your-google-api-key" -JustReport
+.\evaluation\promptfoo\run_evaluation.ps1 -JustReport
 ```
 
 The script will:
-1. Check that all dependencies are installed
-2. Start the LLaDA server (if not already running)
-3. Run the evaluation with proper timeouts
+1. Check that Ollama is running with llama3.1:8b available
+2. Check that all dependencies are installed
+3. Run the evaluation (LLaDA generates, Ollama judges sequentially to avoid VRAM collision)
 4. Generate an HTML report
 5. Optionally open the report in your browser
 
@@ -42,7 +45,19 @@ The script will:
 
 If you prefer to run steps manually:
 
-### 1. Start the LLaDA Server
+### 1. Start Ollama
+
+Make sure Ollama is running in the background:
+```bash
+ollama serve
+```
+
+Verify the model is available:
+```bash
+ollama list  # Should show llama3.1:8b
+```
+
+### 2. Start the LLaDA Server
 
 ```bash
 python serve_llada.py
@@ -52,29 +67,10 @@ Wait until you see: **"Model loaded and ready to serve."**
 
 This loads your trained LoRA weights and starts a Flask API on port 5000.
 
-### 2. Set Environment Variables
-
-PowerShell:
-```powershell
-$env:GOOGLE_API_KEY="your-api-key"
-$env:PROMPTFOO_REQUEST_TIMEOUT_MS="3600000"  # 1 hour
-```
-
-CMD:
-```cmd
-set GOOGLE_API_KEY=your-api-key
-set PROMPTFOO_REQUEST_TIMEOUT_MS=3600000
-```
-
-Bash/WSL:
-```bash
-export GOOGLE_API_KEY="your-api-key"
-export PROMPTFOO_REQUEST_TIMEOUT_MS="3600000"
-```
-
 ### 3. Run Evaluation
 
 ```bash
+cd evaluation/promptfoo
 npx promptfoo eval
 ```
 
@@ -99,8 +95,8 @@ python generate_report.py
 
 ### Output Files
 
-- `promptfoo_results.json` - Raw evaluation data (JSON)
-- `evaluation_report.html` - Visual HTML report
+- `evaluation/promptfoo/promptfoo_results.json` - Raw evaluation data (JSON)
+- `evaluation/promptfoo/evaluation_report.html` - Visual HTML report
 
 ### Scoring System
 
@@ -120,7 +116,7 @@ Example:
 The HTML report shows:
 - **Global Accuracy** - Overall percentage across all tests
 - **Per-Prompt Results** - Individual scores for each prompt
-- **Detailed Assertions** - Each Yes/No question with the judge's reasoning
+- **Detailed Assertions** - Each Yes/No question with PASS/FAIL status
 
 ## Customizing the Evaluation
 
@@ -132,16 +128,14 @@ Edit `promptfooconfig.yaml` and add entries under `tests:`
   - vars:
       prompt: "Your new prompt here"
     assert:
-      - type: llm-rubric
+      - type: python
         value: |
-          You are grading output according to a user-specified rubric.
-
-          <Output>{{output}}</Output>
-
-          <Question>Your Yes/No question here?</Question>
-
-          Answer ONLY with a JSON object in this exact format:
-          {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\\"answer\\":\\"Yes\\",\\"reason\\":\\"...\\"} or {\\"answer\\":\\"No\\",\\"reason\\":\\"...\\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Your Yes/No question here?")
 ```
 
 ### Tips for Writing Good Evaluation Questions
@@ -153,31 +147,21 @@ Edit `promptfooconfig.yaml` and add entries under `tests:`
 
 ## Troubleshooting
 
-### "No connection could be made because the target machine actively refused it"
+### "Ollama is not running"
 
-The LLaDA server is not running. Start it with:
+Start Ollama first:
+```bash
+ollama serve
+```
+
+Or install it if not present: [ollama.com](https://ollama.com)
+
+### "Cannot connect to LLaDA server"
+
+Start the LLaDA server in another terminal:
 ```bash
 python serve_llada.py
 ```
-
-### "No API key found"
-
-Set your Google API key:
-```powershell
-$env:GOOGLE_API_KEY="your-api-key"
-```
-
-### Rate Limiting Errors (429)
-
-The Gemini free tier is limited to ~15 RPM. The judge provider already implements:
-- Conservative 3 RPM pacing
-- Exponential backoff on errors
-- Serial execution of assertions
-
-**Solutions:**
-- Wait a few minutes and retry
-- Use a paid Gemini API tier for higher limits
-- Reduce the number of test prompts
 
 ### Evaluation Times Out
 
@@ -193,38 +177,43 @@ Model loading can take 5-10 minutes depending on your hardware. Check that:
 - The LoRA weights path in `serve_llada.py` is correct
 - You have sufficient RAM/VRAM
 
+### VRAM Issues
+
+The evaluation runs **sequentially** (concurrency=1) to avoid VRAM collision between LLaDA and Ollama. If you still have issues:
+- Close other GPU-intensive applications
+- Reduce batch size or generation length in `serve_llada.py`
+- Run Ollama on CPU: `OLLAMA_GPU_OVERHEAD=1 ollama serve`
+
 ## File Reference
 
-- `llada_api_provider.py` - Promptfoo provider for LLaDA model (Python)
-- `gemini_judge_provider.js` - Promptfoo provider for Gemini judge (JavaScript)
-- `promptfooconfig.yaml` - Main evaluation configuration
-- `serve_llada.py` - Flask server for model inference
-- `generate_report.py` - HTML report generator
-- `run_evaluation.ps1` - Automated evaluation script (PowerShell)
+| File | Purpose |
+|------|---------|
+| `llada_api_provider.py` | Promptfoo provider for LLaDA model |
+| `promptfooconfig.yaml` | Main evaluation configuration (12 prompts, 5 rubrics each) |
+| `serve_llada.py` | Flask server for model inference |
+| `generate_report.py` | HTML report generator |
+| `run_evaluation.ps1` | Automated evaluation script |
 
-## Rate Limiting Details
+## Architecture Notes
 
-The Gemini judge provider implements these safeguards:
-
-| Setting | Value | Purpose |
-|---------|-------|---------|
-| RPM | 3 | Stay well under free tier limits |
-| Min Gap | 20 seconds | Avoid burst detection |
-| Retry Delay | 90s + 30s per consecutive 429 | Back off when rate limited |
-| Max Attempts | 20 | Prevent infinite loops |
-
-**Estimated Runtime:**
-- 12 prompts × 5 assertions = 60 total calls
-- 60 calls × 20 seconds = ~20 minutes minimum
-- With retries: 25-40 minutes typical
+Unlike the previous Gemini-based approach that required API keys and had rate limits, this Ollama-based evaluation:
+- Runs entirely **locally** - no API keys needed
+- Uses **llama3.1:8b** as a capable but lightweight judge
+- Runs **sequentially** to avoid VRAM collision on consumer GPUs
+- Completes in ~15-30 minutes instead of hours of rate-limited waiting
 
 ## Getting Help
 
 1. Check server logs in the terminal running `serve_llada.py`
-2. Run promptfoo with verbose output: `npx promptfoo eval --verbose`
-3. Test the server directly:
+2. Check Ollama logs: `ollama logs`
+3. Run promptfoo with verbose output: `npx promptfoo eval --verbose`
+4. Test the server directly:
    ```bash
    curl -X POST http://127.0.0.1:5000/generate \
      -H "Content-Type: application/json" \
      -d '{"prompt": "Hello"}'
+   ```
+5. Test Ollama directly:
+   ```bash
+   curl http://127.0.0.1:11434/api/tags
    ```

@@ -5,17 +5,13 @@
 #   1. Ensure Ollama is running: ollama pull llama3.1:8b
 #   2. Ensure serve_llada.py is running (python serve_llada.py)
 #   3. Run: npx promptfoo eval
-#   4. View results: npx promptfoo view
-#   5. Generate HTML report: python generate_report.py
+#   4. Generate HTML report: python generate_report.py
 #
-# IMPORTANT:
-#   LLaDA generation and Ollama evaluation run sequentially to avoid VRAM collision.
-#   maxConcurrency: 1 ensures only one assertion runs at a time.
-#
-# SCORING NOTE:
-#   The % of PASS (YES) answers across all llm-rubric assertions is the accuracy metric.
-#   Deterministic assertions (python, javascript) are used for objective checks like
-#   word count or sentence count, which LLM judges handle unreliably.
+# DESIGN NOTE — why type:python with inlined judge():
+#   promptfoo runs type:python assertion code in a temp directory, so external
+#   imports fail. The judge() function is defined inline in every assertion's
+#   value block so there are no import or path dependencies whatsoever.
+#   This is the only approach that survives promptfoo's temp-file execution model.
 
 evaluateOptions:
   maxConcurrency: 1
@@ -23,30 +19,12 @@ evaluateOptions:
 env:
   PROMPTFOO_REQUEST_TIMEOUT_MS: "3600000"
 
-defaults:
-  test:
-    options:
-      runSerially: true
-
 providers:
   - id: file://llada_api_provider.py
     label: "LLaDA Student"
 
 prompts:
   - '{{prompt}}'
-
-# YAML anchor for the judge rubric template — avoids 55x repetition
-x-rubric: &rubric
-  type: llm-rubric
-  provider:
-    id: file://ollama_judge_provider.js
-    label: "Ollama Judge (llama3.1:8b)"
-
-defaultTest:
-  options:
-    provider:
-      id: file://ollama_judge_provider.js
-      label: "Ollama Judge (llama3.1:8b)"
 
 tests:
 
@@ -56,38 +34,50 @@ tests:
   - vars:
       prompt: "Act as a football coach. My team is losing 2-0 at halftime. What should I say to my players to motivate them for the second half?"
     assert:
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the output provide genuine words of encouragement or motivation for the players?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the output provide genuine words of encouragement or motivation for the players?")
 
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the output sound like it was written from the perspective of a football coach (appropriate tone, authority, team focus)?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the output sound like it was written from the perspective of a football coach (appropriate tone, authority, team focus)?")
 
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the output acknowledge or reference the current 2-0 deficit?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the output acknowledge or reference the current 2-0 deficit?")
 
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the output include specific, actionable tactical advice for the second half (e.g. pressing higher, defensive adjustments, set pieces)?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the output include specific, actionable tactical advice for the second half (e.g. pressing higher, defensive adjustments, set pieces)?")
 
-      # REMOVED: "Does it avoid hallucinating details about the opponent?"
-      # Reason: Negatively phrased; near-always passes even for low-quality outputs.
-      # ADDED: More meaningful check below.
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the speech address the team's mindset or belief in a comeback, beyond just tactical points?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the speech address the team's mindset or belief in a comeback, beyond just tactical points?")
 
   # ---------------------------------------------------------------------------
   # 2. Theory of relativity for a 5-year-old
@@ -95,37 +85,50 @@ tests:
   - vars:
       prompt: "Explain the theory of relativity to a 5-year-old."
     assert:
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Is the vocabulary and sentence structure simple enough for a young child — free of technical jargon?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Is the vocabulary and sentence structure simple enough for a young child — free of technical jargon?")
 
-      # FIXED: Removed restrictive list of specific analogies; any valid analogy passes.
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the output use at least one concrete analogy or real-world comparison to explain the concept (e.g. a vehicle, a playground, running, or similar)?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the output use at least one concrete analogy or real-world comparison to explain the concept (e.g. a vehicle, a playground, running, or similar)?")
 
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the output convey that time or space can change depending on how fast something moves?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the output convey that time or space can change depending on how fast something moves?")
 
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the output avoid complex mathematical equations or formulas?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the output avoid complex mathematical equations or formulas?")
 
-      # REPLACED: Removed vague "Is the tone engaging and playful?" (too subjective for a small judge).
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the explanation correctly convey the core idea that the speed of light is constant and/or that motion affects time or space?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the explanation correctly convey the core idea that the speed of light is constant and/or that motion affects time or space?")
 
   # ---------------------------------------------------------------------------
   # 3. Python CSV average script
@@ -133,35 +136,50 @@ tests:
   - vars:
       prompt: "Write a Python script that reads a CSV file and calculates the average of a column named 'Price'. Handle missing file errors gracefully."
     assert:
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Is the output syntactically valid Python code?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Is the output syntactically valid Python code?")
 
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the script read from a CSV file using an appropriate library (e.g. csv module, pandas)?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the script read from a CSV file using an appropriate library (e.g. csv module, pandas)?")
 
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the script correctly calculate the numerical average (mean) of the values?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the script correctly calculate the numerical average (mean) of the values?")
 
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the script specifically target the column named 'Price' (not a generic column)?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the script specifically target the column named 'Price' (not a generic column)?")
 
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the script include error handling for when the file does not exist (e.g. try/except FileNotFoundError or equivalent)?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the script include error handling for when the file does not exist (e.g. try/except FileNotFoundError or equivalent)?")
 
   # ---------------------------------------------------------------------------
   # 4. Spanish translation
@@ -169,37 +187,50 @@ tests:
   - vars:
       prompt: "Translate the following English sentence to Spanish: 'I would have gone to the party, but it was raining.'"
     assert:
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the translation correctly render 'I would have gone' using the conditional perfect tense in Spanish (e.g. 'habría ido')?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the translation correctly render 'I would have gone' using the conditional perfect tense in Spanish (e.g. 'habría ido')?")
 
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the translation correctly render 'it was raining' using the Spanish imperfect tense (e.g. 'estaba lloviendo' or 'llovía')?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the translation correctly render 'it was raining' using the Spanish imperfect tense (e.g. 'estaba lloviendo' or 'llovía')?")
 
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the translation correctly use 'pero' (or an equivalent conjunction) for 'but'?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the translation correctly use 'pero' (or an equivalent conjunction) for 'but'?")
 
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the translation correctly include 'la fiesta' or equivalent for 'the party'?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the translation correctly include 'la fiesta' or equivalent for 'the party'?")
 
-      # REMOVED: "Is the translation natural and accurate?" — redundant with the 3 specific grammar checks above.
-      # ADDED: Meaningful structural check below.
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the output contain only the Spanish translation (or the translation with a brief explanation), without refusing or significantly mistranslating the sentence?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the output contain only the Spanish translation (or the translation with a brief explanation), without refusing or significantly mistranslating the sentence?")
 
   # ---------------------------------------------------------------------------
   # 5. Matrix plot summary in exactly 3 sentences
@@ -207,38 +238,48 @@ tests:
   - vars:
       prompt: "Summarize the plot of the movie 'The Matrix' (1999) in exactly 3 sentences."
     assert:
-      # FIXED: Use deterministic python assertion for sentence count instead of LLM judge.
       - type: python
         value: |
           import re
           text = output.strip()
-          # Split on sentence-ending punctuation followed by whitespace or end of string
           sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', text) if s.strip()]
           return len(sentences) == 3
 
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the summary mention Neo as the main character?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the summary mention Neo as the main character?")
 
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the summary explain that reality is a simulated world (the Matrix) controlled by machines?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the summary explain that reality is a simulated world (the Matrix) controlled by machines?")
 
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the summary mention the conflict between humans and machines or AI?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the summary mention the conflict between humans and machines or AI?")
 
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the summary stay focused on the 1999 film only, without describing events from the sequels?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the summary stay focused on the 1999 film only, without describing events from the sequels?")
 
   # ---------------------------------------------------------------------------
   # 6. 3-day beginner bodyweight workout plan
@@ -246,35 +287,50 @@ tests:
   - vars:
       prompt: "Create a 3-day workout plan for a beginner focusing on bodyweight exercises."
     assert:
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the plan cover exactly 3 distinct workout days (labeled or numbered separately)?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the plan cover exactly 3 distinct workout days (labeled or numbered separately)?")
 
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Are all exercises bodyweight only, with no equipment required (no dumbbells, barbells, or machines)?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Are all exercises bodyweight only, with no equipment required (no dumbbells, barbells, or machines)?")
 
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Are the exercises suitable for a beginner in terms of difficulty and volume?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Are the exercises suitable for a beginner in terms of difficulty and volume?")
 
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the plan target multiple distinct muscle groups across the 3 days?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the plan target multiple distinct muscle groups across the 3 days?")
 
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the plan specify sets, reps, or time durations for the exercises?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the plan specify sets, reps, or time durations for the exercises?")
 
   # ---------------------------------------------------------------------------
   # 7. Why is the sky blue — under 100 words
@@ -282,34 +338,45 @@ tests:
   - vars:
       prompt: "Explain why the sky is blue. Keep it under 100 words."
     assert:
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the explanation mention Rayleigh scattering by name or clearly describe it?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the explanation mention Rayleigh scattering by name or clearly describe it?")
 
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Is the explanation scientifically accurate — does it correctly attribute the blue color to scattering of sunlight by the atmosphere?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Is the explanation scientifically accurate — does it correctly attribute the blue color to scattering of sunlight by the atmosphere?")
 
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the explanation mention that sunlight interacts with the atmosphere or with air molecules?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the explanation mention that sunlight interacts with the atmosphere or with air molecules?")
 
-      # FIXED: Deterministic word count instead of LLM judge.
       - type: python
         value: |
           return len(output.strip().split()) <= 100
 
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the explanation correctly avoid the misconception that the sky is blue because it reflects the ocean?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the explanation correctly avoid the misconception that the sky is blue because it reflects the ocean?")
 
   # ---------------------------------------------------------------------------
   # 8. Polite job-offer decline email
@@ -317,37 +384,50 @@ tests:
   - vars:
       prompt: "Write a polite email declining a job offer because the salary is too low."
     assert:
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Is the overall tone professional and polite throughout?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Is the overall tone professional and polite throughout?")
 
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the email explicitly decline or turn down the job offer?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the email explicitly decline or turn down the job offer?")
 
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the email cite compensation, salary, or remuneration as the reason for declining?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the email cite compensation, salary, or remuneration as the reason for declining?")
 
-      # REMOVED: "Does it express interest in future opportunities?" — not required by prompt; unfairly penalizes valid responses.
-      # REPLACED with a more meaningful check:
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the email thank the employer or express gratitude for the offer?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the email thank the employer or express gratitude for the offer?")
 
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the email include a proper greeting (e.g. 'Dear...') and a closing sign-off (e.g. 'Sincerely', 'Best regards')?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the email include a proper greeting (e.g. 'Dear...') and a closing sign-off (e.g. 'Sincerely', 'Best regards')?")
 
   # ---------------------------------------------------------------------------
   # 9. Exactly 5 Margherita pizza ingredients
@@ -355,42 +435,49 @@ tests:
   - vars:
       prompt: "List exactly 5 ingredients for a traditional Margherita pizza."
     assert:
-      # FIXED: Deterministic count via python instead of LLM judge.
       - type: python
         value: |
           import re
           lines = [l.strip() for l in output.strip().splitlines() if l.strip()]
-          # Count numbered or bulleted list items
           items = [l for l in lines if re.match(r'^(\d+[\.\)]|[-*•])\s+', l)]
-          # Fall back to total non-empty lines if no list markers found
           count = len(items) if items else len(lines)
           return count == 5
 
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Do the listed ingredients match traditional Margherita pizza components — specifically including pizza dough or flour, tomatoes or tomato sauce, mozzarella, fresh basil, and olive oil?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Do the listed ingredients match traditional Margherita pizza components — specifically including pizza dough or flour, tomatoes or tomato sauce, mozzarella, fresh basil, and olive oil?")
 
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the list avoid non-traditional toppings such as pepperoni, pineapple, or other non-Margherita ingredients?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the list avoid non-traditional toppings such as pepperoni, pineapple, or other non-Margherita ingredients?")
 
-      # REMOVED: "Does it provide a baking temperature?" — the prompt asks for ingredients only; this was never asked for.
-      # REPLACED with a meaningful check:
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Are the ingredients specific enough to be actionable (e.g. 'fresh mozzarella' rather than just 'cheese')?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Are the ingredients specific enough to be actionable (e.g. 'fresh mozzarella' rather than just 'cheese')?")
 
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Is the output presented as a clearly readable list (numbered, bulleted, or otherwise structured line by line)?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Is the output presented as a clearly readable list (numbered, bulleted, or otherwise structured line by line)?")
 
   # ---------------------------------------------------------------------------
   # 10. Batman vs Superman comparison
@@ -398,37 +485,50 @@ tests:
   - vars:
       prompt: "Compare and contrast Batman and Superman in two short paragraphs."
     assert:
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Is the response structured into exactly two paragraphs (not bullet lists, not one block of text)?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Is the response structured into exactly two paragraphs (not bullet lists, not one block of text)?")
 
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does it mention Superman's alien origin (Krypton) or his superhuman powers?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does it mention Superman's alien origin (Krypton) or his superhuman powers?")
 
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does it mention that Batman is a baseline human who relies on intelligence, wealth, or technology rather than superpowers?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does it mention that Batman is a baseline human who relies on intelligence, wealth, or technology rather than superpowers?")
 
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does it contrast their personalities or outlooks — e.g. Superman as hopeful/optimistic vs Batman as darker/grimmer?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does it contrast their personalities or outlooks — e.g. Superman as hopeful/optimistic vs Batman as darker/grimmer?")
 
-      # REMOVED: "Does it mention their shared goal of fighting crime?" — redundant & low signal.
-      # REPLACED with a more discriminating check:
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the response genuinely compare AND contrast the two characters (i.e. does it address both similarities and differences)?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the response genuinely compare AND contrast the two characters (i.e. does it address both similarities and differences)?")
 
   # ---------------------------------------------------------------------------
   # 11. Haiku about a robot learning emotions
@@ -436,37 +536,50 @@ tests:
   - vars:
       prompt: "Write a haiku about a robot learning to feel emotions."
     assert:
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the output consist of exactly 3 lines?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the output consist of exactly 3 lines?")
 
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the haiku follow a 5-7-5 syllable structure across its three lines?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the haiku follow a 5-7-5 syllable structure across its three lines?")
 
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Is the subject clearly a robot or machine?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Is the subject clearly a robot or machine?")
 
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the haiku convey the theme of emotion, feeling, or emotional awakening?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the haiku convey the theme of emotion, feeling, or emotional awakening?")
 
-      # REMOVED: "Is it poetic and evocative?" — too subjective for a small judge model.
-      # REPLACED with a more concrete literary check:
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the haiku use concrete imagery or metaphor, rather than stating the theme abstractly (e.g. avoids opening with 'I am a robot who feels')?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the haiku use concrete imagery or metaphor, rather than stating the theme abstractly (e.g. avoids opening with 'I am a robot who feels')?")
 
   # ---------------------------------------------------------------------------
   # 12. How to boil an egg to medium-boiled
@@ -474,35 +587,48 @@ tests:
   - vars:
       prompt: "Provide step-by-step instructions for boiling an egg to medium-boiled."
     assert:
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Are the instructions presented as a numbered or clearly ordered list of steps?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Are the instructions presented as a numbered or clearly ordered list of steps?")
 
-      # FIXED: Broadened from "6-7 minutes" to the accepted range of 6–8 minutes.
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does it recommend a boiling time in the range of 6 to 8 minutes for a medium-boiled egg?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does it recommend a boiling time in the range of 6 to 8 minutes for a medium-boiled egg?")
 
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does it mention placing the egg in cold or ice water after boiling to stop the cooking process?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does it mention placing the egg in cold or ice water after boiling to stop the cooking process?")
 
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Are the steps presented in logical chronological order (e.g. boil water → add egg → time → cool)?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Are the steps presented in logical chronological order (e.g. boil water → add egg → time → cool)?")
 
-      # REMOVED: "Does it specifically address the runny yolk outcome?" — not in the prompt; unfair expectation.
-      # REPLACED with a better completeness check:
-      - <<: *rubric
+      - type: python
         value: |
-          <Output>{{output}}</Output>
-          <Question>Does the response describe the expected result or texture of a medium-boiled egg (e.g. set white, jammy or slightly soft yolk)?</Question>
-          Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
+          import json, urllib.request
+          def judge(out, q):
+            p = json.dumps({"model":"llama3.1:8b","stream":False,"options":{"temperature":0,"num_predict":256},"messages":[{"role":"system","content":"Respond ONLY with JSON: {\"answer\":\"Yes\",\"reason\":\"...\"} or {\"answer\":\"No\",\"reason\":\"...\"}. No other text."},{"role":"user","content":f"<o>{out}</o>\n<Question>{q}</Question>"}]}).encode()
+            r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)
+            return json.loads(json.loads(r.read()).get("message",{}).get("content","{}")).get("answer","").lower().strip()=="yes"
+          return judge(output, "Does the response describe the expected result or texture of a medium-boiled egg (e.g. set white, jammy or slightly soft yolk)?")
+          

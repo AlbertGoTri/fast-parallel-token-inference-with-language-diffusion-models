@@ -1,6 +1,24 @@
 import json
 import os
 
+
+def flatten_components(components):
+    """Recursively flatten nested componentResults from promptfoo's grouped assertions.
+    
+    Promptfoo groups llm-rubric assertions by provider into a single batch call,
+    storing results as nested componentResults inside componentResults. This function
+    flattens them so each individual assertion result is counted separately.
+    """
+    flat = []
+    for comp in components:
+        inner = comp.get('componentResults')
+        if inner:
+            flat.extend(flatten_components(inner))
+        else:
+            flat.append(comp)
+    return flat
+
+
 def generate_report(json_path="promptfoo_results.json", output_path="evaluation_report.html"):
     if not os.path.exists(json_path):
         print(f"ERROR: No se encuentra '{json_path}'.")
@@ -40,7 +58,8 @@ def generate_report(json_path="promptfoo_results.json", output_path="evaluation_
         response_obj = res.get('response') or {}
         model_output = response_obj.get('output', res.get('error', 'Error en la respuesta'))
         grading = res.get('gradingResult') or {}
-        components = grading.get('componentResults', [])
+        raw_components = grading.get('componentResults', [])
+        components = flatten_components(raw_components)
 
         if not components and res.get('error'):
             components = [{"pass": False, "score": 0, "reason": res.get('error')}]
@@ -59,8 +78,19 @@ def generate_report(json_path="promptfoo_results.json", output_path="evaluation_
             status_color = "bg-emerald-500/20 text-emerald-400 border-emerald-500/50" if is_pass else "bg-rose-500/20 text-rose-400 border-rose-500/50"
             status_icon = "✓ PASS" if is_pass else "✗ FAIL"
             reason = comp.get('reason', 'Sin justificación o error subyacente')
-            # Extract rubric question if available
-            assertion_value = comp.get('assertion', {}).get('value', reason)
+            # Extract rubric question from the assertion value (Python code block)
+            # The question is in: return judge(output, "...question...") or return judge(output, '...question...')
+            assertion_value_raw = comp.get('assertion', {}).get('value', reason)
+            # Try to extract the question string from the judge() call
+            import re
+            question_match = re.search(r'return judge\(output,\s*"((?:[^"\\]|\\.)*)"\s*\)', assertion_value_raw)
+            if not question_match:
+                question_match = re.search(r"return judge\(output,\s*'((?:[^'\\]|\\.)*)'\s*\)", assertion_value_raw)
+            if question_match:
+                assertion_value = question_match.group(1).strip()
+            else:
+                # Fallback: use raw value but truncate if too long
+                assertion_value = assertion_value_raw[:200] + "..." if len(assertion_value_raw) > 200 else assertion_value_raw
             
             assertions_html += f"""
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
@@ -70,7 +100,6 @@ def generate_report(json_path="promptfoo_results.json", output_path="evaluation_
                         {status_icon}
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: {reason}</div>
             </div>
             """
 
@@ -107,6 +136,12 @@ def generate_report(json_path="promptfoo_results.json", output_path="evaluation_
 
     overall_accuracy = (passed_assertions / total_assertions * 100) if total_assertions > 0 else 0
     accuracy_color = "text-emerald-400" if overall_accuracy >= 80 else "text-amber-400" if overall_accuracy >= 50 else "text-rose-400"
+
+    # Sanity check: warn if assertion count doesn't match expected
+    if total_assertions != 60:
+        print(f"WARNING: Expected 60 assertions, found {total_assertions}. JSON structure may have changed.")
+    else:
+        print(f"[+] Assertion count check: {total_assertions}/60 ✓")
 
     html_content = f"""
     <!DOCTYPE html>

@@ -52,7 +52,7 @@
                 <div class="text-right">
                     <p class="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-1">Global Accuracy</p>
                     <p class="text-3xl font-mono font-bold text-emerald-400 drop-shadow-md">
-                        98.3%
+                        88.3%
                     </p>
                 </div>
             </div>
@@ -72,7 +72,7 @@
                         </div>
                         <div>
                             <p class="text-sm text-gray-500 mb-1">Passed</p>
-                            <p class="text-2xl font-semibold text-emerald-400">59</p>
+                            <p class="text-2xl font-semibold text-emerald-400">53</p>
                         </div>
                     </div>
                 </div>
@@ -83,7 +83,7 @@
             <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400">Prompt #1</h2>
-                <div class="text-lg font-mono font-bold text-gray-300">100% <span class="text-xs text-gray-500 font-sans">(5/5)</span></div>
+                <div class="text-lg font-mono font-bold text-gray-300">80% <span class="text-xs text-gray-500 font-sans">(4/5)</span></div>
             </div>
             <div class="mb-4">
                 <h3 class="text-xs uppercase tracking-widest text-gray-500 mb-2 font-semibold">User Input</h3>
@@ -103,67 +103,47 @@
                     
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the output provide genuine words of encouragement or motivation for the players?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the output provide genuine words of encouragement or motivation for the players?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The output contains phrases such as 'let's stay strong', 'stay focused', and 'give it our all' which are words of encouragement for the players.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the output sound like it was written from the perspective of a football coach (appropriate tone, authority, team focus)?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the output sound like it was written from the perspective of a football coach (appropriate tone, authority, team focus)?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The output uses phrases such as 'Alright, team', 'We've come too far', and 'Let's stay strong' that are typical of a football coach's tone and language. The text also emphasizes teamwork, determination, and resilience, which is consistent with the perspective of a football coach.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the output acknowledge or reference the current 2-0 deficit?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the output acknowledge or reference the current 2-0 deficit?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The output states 'We've been dominated in the first half, and we can't let that define us', which acknowledges the current 2-0 deficit.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the output include specific, actionable tactical advice for the second half (e.g. pressing higher, defensive adjustments, set pieces)?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
-                    <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
-                        ✓ PASS
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the output include specific, actionable tactical advice for the second half (e.g. pressing higher, defensive adjustments, set pieces)?</div>
+                    <div class="px-3 py-1 rounded-full text-xs font-bold border bg-rose-500/20 text-rose-400 border-rose-500/50 backdrop-blur-sm shadow-lg">
+                        ✗ FAIL
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The output includes motivational and encouraging phrases, but does not provide specific, actionable tactical advice for the second half.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the speech address the team's mindset or belief in a comeback, beyond just tactical points?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the speech address the team's mindset or belief in a comeback, beyond just tactical points?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The speech emphasizes the importance of staying united, resilient, and determined to come back from a single defeat, which suggests that it addresses the team's mindset or belief in a comeback beyond just tactical points.</div>
             </div>
             
                 </div>
@@ -194,67 +174,47 @@ Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanat
                     
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Is the vocabulary and sentence structure simple enough for a young child — free of technical jargon?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Is the vocabulary and sentence structure simple enough for a young child — free of technical jargon?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The text uses simple vocabulary and sentence structure, making it accessible to a young child. The concepts are explained in an analogy that is easy to understand.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the output use at least one concrete analogy or real-world comparison to explain the concept (e.g. a vehicle, a playground, running, or similar)?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the output use at least one concrete analogy or real-world comparison to explain the concept (e.g. a vehicle, a playground, running, or similar)?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The output uses the analogy of a rollercoaster to explain how time and space can change depending on speed.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the output convey that time or space can change depending on how fast something moves?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the output convey that time or space can change depending on how fast something moves?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The output states that 'time and space are not fixed and can change depending on how fast you are moving'.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the output avoid complex mathematical equations or formulas?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the output avoid complex mathematical equations or formulas?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The text does not contain any complex mathematical equations or formulas, it provides an analogy to explain the concept of relativity in simple terms.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the explanation correctly convey the core idea that the speed of light is constant and/or that motion affects time or space?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the explanation correctly convey the core idea that the speed of light is constant and/or that motion affects time or space?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The text explains that when you're moving really fast, time seems to slow down for you and space seems to stretch out, which is consistent with the core idea of relativity.</div>
             </div>
             
                 </div>
@@ -301,67 +261,47 @@ if average_price is not None:
                     
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Is the output syntactically valid Python code?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Is the output syntactically valid Python code?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The provided code is syntactically valid Python code, following proper indentation and using correct syntax for importing libraries, defining functions, handling exceptions, and printing output.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the script read from a CSV file using an appropriate library (e.g. csv module, pandas)?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the script read from a CSV file using an appropriate library (e.g. csv module, pandas)?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The script uses the pandas library to read from a CSV file, which is an appropriate library for this task.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the script correctly calculate the numerical average (mean) of the values?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the script correctly calculate the numerical average (mean) of the values?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The script uses numpy's mean function to calculate the average price, which is a correct implementation of calculating the numerical average.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the script specifically target the column named 'Price' (not a generic column)?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the script specifically target the column named 'Price' (not a generic column)?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The script uses df['Price'].values to access the 'Price' column, which is specific and not generic.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the script include error handling for when the file does not exist (e.g. try/except FileNotFoundError or equivalent)?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the script include error handling for when the file does not exist (e.g. try/except FileNotFoundError or equivalent)?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The script includes error handling for when the file does not exist, using a try/except block to catch FileNotFoundError and print an error message.</div>
             </div>
             
                 </div>
@@ -372,7 +312,7 @@ Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanat
             <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400">Prompt #4</h2>
-                <div class="text-lg font-mono font-bold text-gray-300">100% <span class="text-xs text-gray-500 font-sans">(5/5)</span></div>
+                <div class="text-lg font-mono font-bold text-gray-300">80% <span class="text-xs text-gray-500 font-sans">(4/5)</span></div>
             </div>
             <div class="mb-4">
                 <h3 class="text-xs uppercase tracking-widest text-gray-500 mb-2 font-semibold">User Input</h3>
@@ -392,67 +332,47 @@ Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanat
                     
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the translation correctly render 'I would have gone' using the conditional perfect tense in Spanish (e.g. 'habría ido')?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the translation correctly render 'I would have gone' using the conditional perfect tense in Spanish (e.g. 'habría ido')?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The translation correctly uses the conditional perfect tense in Spanish, which is 'habría ido' for 'I would have gone'.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the translation correctly render 'it was raining' using the Spanish imperfect tense (e.g. 'estaba lloviendo' or 'llovía')?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
-                    <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
-                        ✓ PASS
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the translation correctly render 'it was raining' using the Spanish imperfect tense (e.g. 'estaba lloviendo' or 'llovía')?</div>
+                    <div class="px-3 py-1 rounded-full text-xs font-bold border bg-rose-500/20 text-rose-400 border-rose-500/50 backdrop-blur-sm shadow-lg">
+                        ✗ FAIL
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The translation uses the present tense 'está lloviendo' instead of the imperfect tense 'estaba lloviendo'</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the translation correctly use 'pero' (or an equivalent conjunction) for 'but'?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the translation correctly use 'pero' (or an equivalent conjunction) for 'but'?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The translation correctly uses the conjunction 'pero' to translate 'but'.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the translation correctly include 'la fiesta' or equivalent for 'the party'?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the translation correctly include 'la fiesta' or equivalent for 'the party'?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The translation correctly includes the Spanish phrase 'la fiesta', which is equivalent to 'the party' in English.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the output contain only the Spanish translation (or the translation with a brief explanation), without refusing or significantly mistranslating the sentence?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the output contain only the Spanish translation (or the translation with a brief explanation), without refusing or significantly mistranslating the sentence?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: the output contains only the Spanish translation of 'I would have gone to the party, but it's raining.'</div>
             </div>
             
                 </div>
@@ -485,7 +405,6 @@ Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanat
                 <div class="flex items-start justify-between">
                     <div class="text-sm font-medium text-gray-300 w-3/4">import re
 text = output.strip()
-# Split on sentence-ending punctuation followed by whitespace or end of string
 sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', text) if s.strip()]
 return len(sentences) == 3
 </div>
@@ -493,65 +412,42 @@ return len(sentences) == 3
                         ✗ FAIL
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: Python code returned false
-import re
-text = output.strip()
-# Split on sentence-ending punctuation followed by whitespace or end of string
-sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', text) if s.strip()]
-return len(sentences) == 3
-</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the summary mention Neo as the main character?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the summary mention Neo as the main character?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The summary mentions 'Neo, a computer hacker' and 'Neo, along with his friends Neo, Trinity, and Morpheus', indicating that Neo is the main character.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the summary explain that reality is a simulated world (the Matrix) controlled by machines?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the summary explain that reality is a simulated world (the Matrix) controlled by machines?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The summary explicitly states that the reality is actually a simulated reality created by machines to keep humans enslaved and ignorant.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the summary mention the conflict between humans and machines or AI?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the summary mention the conflict between humans and machines or AI?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The summary mentions that the reality is actually a simulated reality created by machines to keep humans enslaved and ignorant, indicating a conflict between humans and machines or AI.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the summary stay focused on the 1999 film only, without describing events from the sequels?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the summary stay focused on the 1999 film only, without describing events from the sequels?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The summary only describes the 1999 film 'The Matrix' and does not mention any events from the sequels.</div>
             </div>
             
                 </div>
@@ -562,7 +458,7 @@ Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanat
             <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400">Prompt #6</h2>
-                <div class="text-lg font-mono font-bold text-gray-300">100% <span class="text-xs text-gray-500 font-sans">(5/5)</span></div>
+                <div class="text-lg font-mono font-bold text-gray-300">80% <span class="text-xs text-gray-500 font-sans">(4/5)</span></div>
             </div>
             <div class="mb-4">
                 <h3 class="text-xs uppercase tracking-widest text-gray-500 mb-2 font-semibold">User Input</h3>
@@ -582,67 +478,47 @@ Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanat
                     
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the plan cover exactly 3 distinct workout days (labeled or numbered separately)?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the plan cover exactly 3 distinct workout days (labeled or numbered separately)?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The plan covers exactly 3 distinct workout days (Day 1, Day 2, and Day 3) which are labeled separately.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Are all exercises bodyweight only, with no equipment required (no dumbbells, barbells, or machines)?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Are all exercises bodyweight only, with no equipment required (no dumbbells, barbells, or machines)?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: All exercises mentioned (push-ups, squats, plank, lunges, pull-ups) are bodyweight only and do not require any equipment.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Are the exercises suitable for a beginner in terms of difficulty and volume?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
-                    <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
-                        ✓ PASS
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Are the exercises suitable for a beginner in terms of difficulty and volume?</div>
+                    <div class="px-3 py-1 rounded-full text-xs font-bold border bg-rose-500/20 text-rose-400 border-rose-500/50 backdrop-blur-sm shadow-lg">
+                        ✗ FAIL
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The exercises are suitable for a beginner in terms of difficulty and volume. The workouts include a mix of upper body (push-ups, pull-ups) and lower body (squats, lunges) exercises, with moderate sets and reps that allow for progressive overload as the individual gets stronger.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the plan target multiple distinct muscle groups across the 3 days?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the plan target multiple distinct muscle groups across the 3 days?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The plan targets multiple distinct muscle groups across the 3 days, including chest (push-ups), legs (squats and lunges), back (pull-ups), and core (plank).</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the plan specify sets, reps, or time durations for the exercises?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the plan specify sets, reps, or time durations for the exercises?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The plan specifies sets, reps, and time durations for the exercises. For example, 'Push-ups (3 sets of 10 reps)' indicates that there are 3 sets with 10 repetitions each.</div>
             </div>
             
                 </div>
@@ -673,41 +549,29 @@ Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanat
                     
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the explanation mention Rayleigh scattering by name or clearly describe it?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the explanation mention Rayleigh scattering by name or clearly describe it?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: the text explicitly mentions 'Rayleigh scattering'</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Is the explanation scientifically accurate — does it correctly attribute the blue color to scattering of sunlight by the atmosphere?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Is the explanation scientifically accurate — does it correctly attribute the blue color to scattering of sunlight by the atmosphere?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The explanation correctly attributes the blue color of the sky to Rayleigh scattering, which is a scientifically accepted phenomenon.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the explanation mention that sunlight interacts with the atmosphere or with air molecules?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the explanation mention that sunlight interacts with the atmosphere or with air molecules?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The text mentions that sunlight interacts with the molecules and particles in the atmosphere.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
@@ -718,20 +582,15 @@ Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanat
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: Assertion passed</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the explanation correctly avoid the misconception that the sky is blue because it reflects the ocean?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the explanation correctly avoid the misconception that the sky is blue because it reflects the ocean?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The text does not mention anything about the sky being blue because it reflects the ocean, so it correctly avoids this misconception.</div>
             </div>
             
                 </div>
@@ -774,67 +633,47 @@ Best regards,
                     
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Is the overall tone professional and polite throughout?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Is the overall tone professional and polite throughout?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The email is well-structured, uses polite language and phrases such as 'Thank you for extending the job offer' and 'Best regards', indicating a professional tone throughout.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the email explicitly decline or turn down the job offer?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the email explicitly decline or turn down the job offer?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The email states 'I must respectfully decline the offer due to the salary package.'</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the email cite compensation, salary, or remuneration as the reason for declining?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the email cite compensation, salary, or remuneration as the reason for declining?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The email states 'I must respectfully decline the offer due to the salary package' which explicitly mentions compensation as the reason for declining.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the email thank the employer or express gratitude for the offer?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the email thank the employer or express gratitude for the offer?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The email includes phrases such as 'Thank you for extending the job offer' and 'Thank you for your understanding', which express gratitude to the employer.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the email include a proper greeting (e.g. 'Dear...') and a closing sign-off (e.g. 'Sincerely', 'Best regards')?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the email include a proper greeting (e.g. 'Dear...') and a closing sign-off (e.g. 'Sincerely', 'Best regards')?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The email includes both a proper greeting ('Dear [Manager's Name],') and a closing sign-off ('Best regards,').</div>
             </div>
             
                 </div>
@@ -845,7 +684,7 @@ Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanat
             <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400">Prompt #9</h2>
-                <div class="text-lg font-mono font-bold text-gray-300">100% <span class="text-xs text-gray-500 font-sans">(5/5)</span></div>
+                <div class="text-lg font-mono font-bold text-gray-300">80% <span class="text-xs text-gray-500 font-sans">(4/5)</span></div>
             </div>
             <div class="mb-4">
                 <h3 class="text-xs uppercase tracking-widest text-gray-500 mb-2 font-semibold">User Input</h3>
@@ -873,69 +712,49 @@ Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanat
                 <div class="flex items-start justify-between">
                     <div class="text-sm font-medium text-gray-300 w-3/4">import re
 lines = [l.strip() for l in output.strip().splitlines() if l.strip()]
-# Count numbered or bulleted list items
 items = [l for l in lines if re.match(r'^(\d+[\.\)]|[-*•])\s+', l)]
-# Fall back to total non-empty lines if no list markers found
 count = len(items) if items else len(lines)
-return count == 5
-</div>
+return c...</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: Assertion passed</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Do the listed ingredients match traditional Margherita pizza components — specifically including pizza dough or flour, tomatoes or tomato sauce, mozzarella, fresh basil, and olive oil?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Do the listed ingredients match traditional Margherita pizza components — specifically including pizza dough or flour, tomatoes or tomato sauce, mozzarella, fresh basil, and olive oil?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The listed ingredients match the traditional Margherita pizza components, including tomato sauce (or tomatoes), mozzarella cheese, fresh basil leaves, and olive oil.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the list avoid non-traditional toppings such as pepperoni, pineapple, or other non-Margherita ingredients?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the list avoid non-traditional toppings such as pepperoni, pineapple, or other non-Margherita ingredients?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The list only includes traditional Margherita ingredients, such as Tomato Sauce, Mozzarella Cheese, Fresh Basil Leaves, Bread Dough, and Olive Oil, without any non-traditional toppings like pepperoni or pineapple.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Are the ingredients specific enough to be actionable (e.g. 'fresh mozzarella' rather than just 'cheese')?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
-                    <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
-                        ✓ PASS
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Are the ingredients specific enough to be actionable (e.g. 'fresh mozzarella' rather than just 'cheese')?</div>
+                    <div class="px-3 py-1 rounded-full text-xs font-bold border bg-rose-500/20 text-rose-400 border-rose-500/50 backdrop-blur-sm shadow-lg">
+                        ✗ FAIL
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The ingredients are specific enough to be actionable, e.g. 'Mozzarella Cheese' instead of just 'cheese', and 'Fresh Basil Leaves' instead of just 'basil'.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Is the output presented as a clearly readable list (numbered, bulleted, or otherwise structured line by line)?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Is the output presented as a clearly readable list (numbered, bulleted, or otherwise structured line by line)?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The output is presented as a clearly readable list, numbered and structured line by line.</div>
             </div>
             
                 </div>
@@ -946,7 +765,7 @@ Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanat
             <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400">Prompt #10</h2>
-                <div class="text-lg font-mono font-bold text-gray-300">100% <span class="text-xs text-gray-500 font-sans">(5/5)</span></div>
+                <div class="text-lg font-mono font-bold text-gray-300">80% <span class="text-xs text-gray-500 font-sans">(4/5)</span></div>
             </div>
             <div class="mb-4">
                 <h3 class="text-xs uppercase tracking-widest text-gray-500 mb-2 font-semibold">User Input</h3>
@@ -966,67 +785,47 @@ Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanat
                     
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Is the response structured into exactly two paragraphs (not bullet lists, not one block of text)?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Is the response structured into exactly two paragraphs (not bullet lists, not one block of text)?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The response is divided into two paragraphs, each separated by a blank line.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does it mention Superman's alien origin (Krypton) or his superhuman powers?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
-                    <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
-                        ✓ PASS
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does it mention Superman's alien origin (Krypton) or his superhuman powers?</div>
+                    <div class="px-3 py-1 rounded-full text-xs font-bold border bg-rose-500/20 text-rose-400 border-rose-500/50 backdrop-blur-sm shadow-lg">
+                        ✗ FAIL
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The text does not mention Superman's alien origin (Krypton) or his superhuman powers, but it does describe his incredible strength and speed.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does it mention that Batman is a baseline human who relies on intelligence, wealth, or technology rather than superpowers?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does it mention that Batman is a baseline human who relies on intelligence, wealth, or technology rather than superpowers?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The text describes Batman as having 'incredible strength and speed', which suggests that he has superpowers, not relying on intelligence, wealth, or technology.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does it contrast their personalities or outlooks — e.g. Superman as hopeful/optimistic vs Batman as darker/grimmer?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does it contrast their personalities or outlooks — e.g. Superman as hopeful/optimistic vs Batman as darker/grimmer?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The text contrasts their personalities, describing Batman as 'stoic and calculating' and Superman as 'idealistic and heroic', and also highlights their different approaches to fighting crime.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the response genuinely compare AND contrast the two characters (i.e. does it address both similarities and differences)?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the response genuinely compare AND contrast the two characters (i.e. does it address both similarities and differences)?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The response compares the characters' personalities, approaches, motivations, and goals, as well as their similarities in strength and speed. It also contrasts their methods of fighting crime (Batman from shadows, Superman openly) and their values (Batman's stoicism vs Superman's idealism).</div>
             </div>
             
                 </div>
@@ -1059,67 +858,47 @@ Emotions take flight
                     
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the output consist of exactly 3 lines?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the output consist of exactly 3 lines?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: the output has 4 blank lines, but the content has 3 non-blank lines</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the haiku follow a 5-7-5 syllable structure across its three lines?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the haiku follow a 5-7-5 syllable structure across its three lines?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The haiku does not follow the traditional 5-7-5 syllable structure. The first line has 2 syllables, the second line has 3 syllables, and the third line has 4 syllables.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Is the subject clearly a robot or machine?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Is the subject clearly a robot or machine?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The poem describes 'Metal heart' and 'Silent circuits now sing', which suggests a machine or robot with mechanical components that can perform actions similar to living beings.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the haiku convey the theme of emotion, feeling, or emotional awakening?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the haiku convey the theme of emotion, feeling, or emotional awakening?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The haiku describes emotions taking flight, which suggests emotional awakening and conveys the theme of emotion.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the haiku use concrete imagery or metaphor, rather than stating the theme abstractly (e.g. avoids opening with 'I am a robot who feels')?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the haiku use concrete imagery or metaphor, rather than stating the theme abstractly (e.g. avoids opening with 'I am a robot who feels')?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The haiku uses concrete imagery, such as 'Metal heart beats' and 'Silent circuits now sing', rather than stating the theme abstractly.</div>
             </div>
             
                 </div>
@@ -1130,7 +909,7 @@ Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanat
             <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400">Prompt #12</h2>
-                <div class="text-lg font-mono font-bold text-gray-300">100% <span class="text-xs text-gray-500 font-sans">(5/5)</span></div>
+                <div class="text-lg font-mono font-bold text-gray-300">80% <span class="text-xs text-gray-500 font-sans">(4/5)</span></div>
             </div>
             <div class="mb-4">
                 <h3 class="text-xs uppercase tracking-widest text-gray-500 mb-2 font-semibold">User Input</h3>
@@ -1156,67 +935,47 @@ Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanat
                     
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Are the instructions presented as a numbered or clearly ordered list of steps?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Are the instructions presented as a numbered or clearly ordered list of steps?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The instructions are presented as a numbered list of steps, starting from 1 and incrementing by 1 for each step.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does it recommend a boiling time in the range of 6 to 8 minutes for a medium-boiled egg?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does it recommend a boiling time in the range of 6 to 8 minutes for a medium-boiled egg?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The recipe recommends cooking the egg for 6-7 minutes, which falls within the range of 6 to 8 minutes.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does it mention placing the egg in cold or ice water after boiling to stop the cooking process?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
-                    <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
-                        ✓ PASS
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does it mention placing the egg in cold or ice water after boiling to stop the cooking process?</div>
+                    <div class="px-3 py-1 rounded-full text-xs font-bold border bg-rose-500/20 text-rose-400 border-rose-500/50 backdrop-blur-sm shadow-lg">
+                        ✗ FAIL
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The text does not mention placing the egg in cold or ice water after boiling to stop the cooking process.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Are the steps presented in logical chronological order (e.g. boil water → add egg → time → cool)?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Are the steps presented in logical chronological order (e.g. boil water → add egg → time → cool)?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The steps are presented in a clear and logical order, starting with filling the pot with water (step 1), then placing the egg in the pot (step 2), bringing the water to a boil (implied by step 3), reducing heat and covering the pot (step 3), cooking the egg for a specified time (step 4), removing from heat and letting it sit (step 5), carefully removing the egg from the water (step 6), and finally peeling and slicing the egg (step 7). This order makes sense in terms of chronological sequence.</div>
             </div>
             
             <div class="mb-3 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition duration-300">
                 <div class="flex items-start justify-between">
-                    <div class="text-sm font-medium text-gray-300 w-3/4"><Output>{{output}}</Output>
-<Question>Does the response describe the expected result or texture of a medium-boiled egg (e.g. set white, jammy or slightly soft yolk)?</Question>
-Answer ONLY with a JSON object: {"answer": "Yes"|"No", "reason": "brief explanation"}
-</div>
+                    <div class="text-sm font-medium text-gray-300 w-3/4">Does the response describe the expected result or texture of a medium-boiled egg (e.g. set white, jammy or slightly soft yolk)?</div>
                     <div class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50 backdrop-blur-sm shadow-lg">
                         ✓ PASS
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500 italic">Evaluador: The response describes the expected result of cooking an egg for 6-7 minutes, which is a medium-boiled egg with a set white and slightly soft yolk.</div>
             </div>
             
                 </div>
