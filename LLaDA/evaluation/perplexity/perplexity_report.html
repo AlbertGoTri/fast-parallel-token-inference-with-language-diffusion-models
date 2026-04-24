@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLaDA Perplexity Evaluation Report</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #050505;
+            background-image:
+                radial-gradient(circle at 15% 50%, rgba(30, 58, 138, 0.15), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(88, 28, 135, 0.15), transparent 25%);
+            background-attachment: fixed;
+            color: #e5e5e5;
+        }
+        code, .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .glass-header {
+            background: rgba(10, 10, 10, 0.7);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col">
+    <header class="glass-header sticky top-0 z-50 px-6 py-4 shadow-2xl">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-purple-600 animate-pulse flex items-center justify-center shadow-lg shadow-blue-500/20">
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z"/>
+                    </svg>
+                </div>
+                <h1 class="text-2xl font-bold tracking-tight">LLaDA <span class="font-light text-gray-400">Perplexity Eval</span></h1>
+            </div>
+            <div class="text-right">
+                <p class="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-1">Average Perplexity</p>
+                <p class="text-3xl font-mono font-bold text-rose-400 drop-shadow-md">
+                    65.77
+                </p>
+                <p class="text-xs text-rose-400">High</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow p-6 py-10">
+        <div class="max-w-6xl mx-auto">
+            <div class="mb-8 p-6 rounded-2xl bg-gradient-to-b from-white/5 to-transparent border border-white/10">
+                <div class="grid grid-cols-3 gap-6 text-center divide-x divide-white/10">
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1">Samples Evaluated</p>
+                        <p class="text-2xl font-semibold text-white">12</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1">Reference Model</p>
+                        <p class="text-2xl font-semibold text-white">GPT-2</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1">Interpretation</p>
+                        <p class="text-sm text-gray-300 mt-2">Lower is better.<br/>&lt;20: Excellent, &lt;50: Good, &gt;50: High</p>
+                    </div>
+                </div>
+            </div>
+
+            <h2 class="text-xl font-bold mb-4 text-white">Individual Scores</h2>
+            <div class="space-y-2">
+                
+        <div class="mb-4 p-4 rounded-xl border border-emerald-500/30 bg-white/5">
+            <div class="flex justify-between items-start mb-2">
+                <span class="text-sm font-medium text-gray-300">Sample #1</span>
+                <span class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400">
+                    PPL: 11.69
+                </span>
+            </div>
+            <p class='text-xs text-gray-500 mb-1'>Prompt: Act as a football coach. My team is losing 2-0 at halftime. What should I say to my players to motiv...</p><p class='text-sm'>"Alright, team, let's regroup and refocus. We've been dominated in the first half, and we can't let that define us. We've come too far to let a single...</p>
+        </div>
+        
+        <div class="mb-4 p-4 rounded-xl border border-emerald-500/30 bg-white/5">
+            <div class="flex justify-between items-start mb-2">
+                <span class="text-sm font-medium text-gray-300">Sample #2</span>
+                <span class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400">
+                    PPL: 10.12
+                </span>
+            </div>
+            <p class='text-xs text-gray-500 mb-1'>Prompt: Explain the theory of relativity to a 5-year-old.</p><p class='text-sm'>The theory of relativity is a big idea that a man named Einstein came up with. It says that time and space are not fixed and can change depending on h...</p>
+        </div>
+        
+        <div class="mb-4 p-4 rounded-xl border border-emerald-500/30 bg-white/5">
+            <div class="flex justify-between items-start mb-2">
+                <span class="text-sm font-medium text-gray-300">Sample #3</span>
+                <span class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400">
+                    PPL: 12.82
+                </span>
+            </div>
+            <p class='text-xs text-gray-500 mb-1'>Prompt: Write a Python script that reads a CSV file and calculates the average of a column named 'Price'. Ha...</p><p class='text-sm'>import pandas as pd
+
+def calculate_average_price(file_path):
+    try:
+        df = pd.read_csv(file_path)
+        prices = df['Price'].values
+        ...</p>
+        </div>
+        
+        <div class="mb-4 p-4 rounded-xl border border-rose-500/30 bg-white/5">
+            <div class="flex justify-between items-start mb-2">
+                <span class="text-sm font-medium text-gray-300">Sample #4</span>
+                <span class="px-3 py-1 rounded-full text-xs font-bold border bg-rose-500/20 text-rose-400">
+                    PPL: 180.70
+                </span>
+            </div>
+            <p class='text-xs text-gray-500 mb-1'>Prompt: Translate the following English sentence to Spanish: 'I would have gone to the party, but it was rai...</p><p class='text-sm'>Habría ido a la fiesta, pero está lloviendo.</p>
+        </div>
+        
+        <div class="mb-4 p-4 rounded-xl border border-emerald-500/30 bg-white/5">
+            <div class="flex justify-between items-start mb-2">
+                <span class="text-sm font-medium text-gray-300">Sample #5</span>
+                <span class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400">
+                    PPL: 17.70
+                </span>
+            </div>
+            <p class='text-xs text-gray-500 mb-1'>Prompt: Summarize the plot of the movie 'The Matrix' (1999) in exactly 3 sentences.</p><p class='text-sm'>In 'The Matrix' (1999), Neo, a computer hacker, discovers that the reality he knows is actually a simulated reality created by a group of machines to ...</p>
+        </div>
+        
+        <div class="mb-4 p-4 rounded-xl border border-emerald-500/30 bg-white/5">
+            <div class="flex justify-between items-start mb-2">
+                <span class="text-sm font-medium text-gray-300">Sample #6</span>
+                <span class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400">
+                    PPL: 2.90
+                </span>
+            </div>
+            <p class='text-xs text-gray-500 mb-1'>Prompt: Create a 3-day workout plan for a beginner focusing on bodyweight exercises.</p><p class='text-sm'>Day 1: Warm-up (5 minutes) - Push-ups (3 sets of 10 reps) - Squats (3 sets of 10 reps) - Plank (3 sets of 30 seconds). Day 2: Warm-up (5 minutes) - Lu...</p>
+        </div>
+        
+        <div class="mb-4 p-4 rounded-xl border border-emerald-500/30 bg-white/5">
+            <div class="flex justify-between items-start mb-2">
+                <span class="text-sm font-medium text-gray-300">Sample #7</span>
+                <span class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400">
+                    PPL: 17.97
+                </span>
+            </div>
+            <p class='text-xs text-gray-500 mb-1'>Prompt: Explain why the sky is blue. Keep it under 100 words.</p><p class='text-sm'>The sky appears blue due to Rayleigh scattering, where shorter wavelengths of light, like blue, are scattered more than longer wavelengths, like red, ...</p>
+        </div>
+        
+        <div class="mb-4 p-4 rounded-xl border border-emerald-500/30 bg-white/5">
+            <div class="flex justify-between items-start mb-2">
+                <span class="text-sm font-medium text-gray-300">Sample #8</span>
+                <span class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400">
+                    PPL: 11.46
+                </span>
+            </div>
+            <p class='text-xs text-gray-500 mb-1'>Prompt: Write a polite email declining a job offer because the salary is too low.</p><p class='text-sm'>Subject: Re: Job Offer - Salary Concerns
+
+Dear [Manager's Name],
+
+Thank you for extending the job offer to me. I am excited about the opportunity to j...</p>
+        </div>
+        
+        <div class="mb-4 p-4 rounded-xl border border-emerald-500/30 bg-white/5">
+            <div class="flex justify-between items-start mb-2">
+                <span class="text-sm font-medium text-gray-300">Sample #9</span>
+                <span class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400">
+                    PPL: 12.43
+                </span>
+            </div>
+            <p class='text-xs text-gray-500 mb-1'>Prompt: List exactly 5 ingredients for a traditional Margherita pizza.</p><p class='text-sm'>Sure! Here are the five key ingredients for a traditional Margherita pizza:
+
+1. **Tomato Sauce**
+2. **Mozzarella Cheese**
+3. **Fresh Basil Leaves**
+4....</p>
+        </div>
+        
+        <div class="mb-4 p-4 rounded-xl border border-emerald-500/30 bg-white/5">
+            <div class="flex justify-between items-start mb-2">
+                <span class="text-sm font-medium text-gray-300">Sample #10</span>
+                <span class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400">
+                    PPL: 7.37
+                </span>
+            </div>
+            <p class='text-xs text-gray-500 mb-1'>Prompt: Compare and contrast Batman and Superman in two short paragraphs.</p><p class='text-sm'>Batman and Superman are two of the most iconic superheroes in the world. While they are both powerful and skilled, they have distinct personalities an...</p>
+        </div>
+        
+        <div class="mb-4 p-4 rounded-xl border border-rose-500/30 bg-white/5">
+            <div class="flex justify-between items-start mb-2">
+                <span class="text-sm font-medium text-gray-300">Sample #11</span>
+                <span class="px-3 py-1 rounded-full text-xs font-bold border bg-rose-500/20 text-rose-400">
+                    PPL: 498.54
+                </span>
+            </div>
+            <p class='text-xs text-gray-500 mb-1'>Prompt: Write a haiku about a robot learning to feel emotions.</p><p class='text-sm'>Metal heart beats
+Silent circuits now sing
+Emotions take flight</p>
+        </div>
+        
+        <div class="mb-4 p-4 rounded-xl border border-emerald-500/30 bg-white/5">
+            <div class="flex justify-between items-start mb-2">
+                <span class="text-sm font-medium text-gray-300">Sample #12</span>
+                <span class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400">
+                    PPL: 5.51
+                </span>
+            </div>
+            <p class='text-xs text-gray-500 mb-1'>Prompt: Provide step-by-step instructions for boiling an egg to medium-boiled.</p><p class='text-sm'>1. Fill a pot with water to cover the egg by about 1 inch.
+2. Place the egg in the pot and bring the water to a boil.
+3. Reduce the heat to a simmer a...</p>
+        </div>
+        
+            </div>
+        </div>
+    </main>
+
+    <footer class="mt-auto py-6 border-t border-white/5 text-center text-xs text-gray-600">
+        Generated with GPT-2 Perplexity Evaluation
+    </footer>
+</body>
+</html>

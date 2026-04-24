@@ -4,11 +4,20 @@ This guide explains how to evaluate your LLaDA student model using **promptfoo**
 
 ## Overview
 
-The evaluation system works as follows:
+The evaluation system supports two complementary evaluation methods:
+
+### 1. Promptfoo + Ollama (Task-Specific Accuracy)
+Evaluates whether LLaDA outputs meet specific criteria using Yes/No rubrics:
 1. **LLaDA Model Server** (`serve_llada.py`) - Loads your trained model and serves it via a local API
 2. **Promptfoo Configuration** (`promptfooconfig.yaml`) - Defines test prompts and evaluation criteria
 3. **Ollama Judge** (llama3.1:8b running locally) - Evaluates each response with Yes/No questions
 4. **Report Generator** (`generate_report.py`) - Creates a visual HTML report with results
+
+### 2. Perplexity Evaluation (Text Fluency)
+Measures how natural/fluent the generated text is using GPT-2 perplexity:
+- **Lower perplexity** = More natural, fluent text
+- **Higher perplexity** = More surprising, potentially lower quality text
+- See `./perplexity/README.md` for details
 
 ## Prerequisites
 
@@ -97,6 +106,29 @@ python generate_report.py
 
 - `evaluation/promptfoo/promptfoo_results.json` - Raw evaluation data (JSON)
 - `evaluation/promptfoo/evaluation_report.html` - Visual HTML report
+
+### Running Perplexity Evaluation
+
+After running promptfoo evaluation, you can also compute perplexity:
+
+```powershell
+cd evaluation/perplexity
+.\run_perplexity_eval.ps1 -GenerateHtml
+```
+
+Or manually:
+
+```bash
+python calculate_perplexity.py \
+  --input ../promptfoo/promptfoo_results.json \
+  --output perplexity_results.json \
+  --html perplexity_report.html
+```
+
+Perplexity interpretation:
+- **< 20**: Excellent - Very natural, fluent text
+- **20-50**: Good - Natural text with minor awkwardness
+- **> 50**: High - Significant awkwardness or errors
 
 ### Scoring System
 
