@@ -82,3 +82,9 @@ thesis/*.synctex.gz
 thesis/*.toc
 .env
 .promptfoo/
+
+# =============================================================
+# NESTED DISTILLATION GENERATED OUTPUTS
+# =============================================================
+LLaDA/outputs/
+LLaDA/temp_delete.txt

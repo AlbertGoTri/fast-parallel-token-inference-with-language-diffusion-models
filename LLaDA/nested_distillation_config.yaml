@@ -1,0 +1,132 @@
+# Nested Distillation Pipeline Configuration
+# Pure recursive teacher-student distillation with step reduction
+
+experiment:
+  name: "nested_distillation"
+  description: "Recursive distillation where each student uses one fewer step than its teacher"
+
+# Initial teacher settings
+teacher:
+  # Path or ID of the initial teacher model
+  # Can be a HuggingFace model ID or local path
+  model_path: "GSAI-ML/LLaDA-8B-Instruct"
+  # Initial number of denoising steps for the first teacher
+  initial_steps: 128
+  # Target step for caching (intermediate state to learn)
+  target_step: 64
+
+# Student training settings
+student:
+  # Generation settings for training data
+  gen_length: 64
+  block_length: 64
+  # Dataset for generating training trajectories
+  dataset_name: "wikitext"
+  dataset_config: "wikitext-2-raw-v1"
+  dataset_split: "train"
+  # Number of examples to use for training
+  num_train_examples: 10
+  # Minimum text length to filter dataset
+  min_text_length: 80
+  # LoRA configuration
+  lora:
+    r: 8
+    alpha: 16
+    target_modules: ["q_proj", "v_proj"]
+    dropout: 0.05
+  # Training hyperparameters
+  temperature: 2.0
+  learning_rate: 1e-4
+  max_grad_norm: 1.0
+
+# Distillation schedule
+schedule:
+  # Minimum steps allowed before stopping
+  min_steps: 1
+  # Step schedule for this experiment
+  strategy: "halve"
+
+# Evaluation settings
+evaluation:
+  # Promptfoo threshold - minimum pass percentage to continue
+  promptfoo_threshold: 30.0
+  # Steps to use during evaluation (can be less than training steps for speed)
+  # Set to 0 to use same as training steps (RECOMMENDED for nested distillation)
+  eval_steps: 0
+  # Evaluation server resource mode:
+  # - cpu: frees GPU for Ollama judge (slower generation, stronger isolation)
+  # - cuda: faster generation, shared GPU with Ollama
+  server:
+    device: "cuda"
+    # Only used when device is cuda
+    cuda_memory_fraction: 0.85
+    # Max wait for eval server /health to become ready.
+    # CPU model loading can be much slower than GPU.
+    startup_timeout_seconds: 900
+  # Promptfoo configuration
+  promptfoo:
+    config_path: "evaluation/promptfoo/promptfooconfig.yaml"
+    provider_path: "evaluation/promptfoo/llada_api_provider.py"
+    timeout_ms: 7200000  # 2 hours total for all prompts
+    max_concurrency: 1
+    # Per-assertion judge max tokens (smaller = less Ollama load).
+    judge_num_predict: 64
+    # Ollama GPU layers for judge model; 0 forces CPU judging.
+    judge_num_gpu: 0
+  # Perplexity configuration
+  perplexity:
+    reference_model: "gpt2"
+    device: "cpu"
+
+# Execution settings
+execution:
+  # Strict sequential execution - never run stages in parallel
+  sequential: true
+  # Explicit GPU memory cleanup between stages
+  memory_cleanup: true
+  # Verify no model remains on GPU before each stage
+  verify_gpu_empty: true
+  # Number of dataloader workers (prefer single worker for low VRAM)
+  num_workers: 0
+  # Fixed seed for reproducibility
+  seed: 42
+
+# Resume and checkpointing
+checkpointing:
+  # Enable resume from interrupted runs
+  resume_enabled: true
+  # Force rerun all rounds even if completed
+  force_rerun: false
+  # Keep all round outputs (do not delete prior rounds)
+  keep_history: true
+
+# Output paths
+paths:
+  # Base output directory for all experiments
+  base_output_dir: "outputs/nested_distillation"
+  # Cache directory for teacher trajectories (round-specific subdirs created automatically)
+  cache_dir: "outputs/nested_distillation/cache"
+  # Student checkpoint directory (round-specific subdirs created automatically)
+  checkpoint_dir: "outputs/nested_distillation/checkpoints"
+  # Evaluation results directory
+  eval_dir: "outputs/nested_distillation/evaluation"
+  # Leaderboard files
+  leaderboard:
+    markdown: "outputs/nested_distillation/leaderboard.md"
+    csv: "outputs/nested_distillation/leaderboard.csv"
+    json: "outputs/nested_distillation/leaderboard.json"
+  # Progress/state file for resume support
+  state_file: "outputs/nested_distillation/state.json"
+
+# System settings
+system:
+  # HuggingFace cache directory
+  hf_home: "D:/.cache"
+  # PyTorch CUDA memory configuration
+  cuda_memory_fraction: 0.85
+  # Quantization settings
+  quantization:
+    load_in_4bit: true
+    compute_dtype: "float16"
+    quant_type: "nf4"
+    use_double_quant: true

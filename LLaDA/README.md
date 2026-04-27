@@ -73,6 +73,128 @@ and has open-sourced the training framework.
 ## Evaluation
 Please refer to [EVAL.md](EVAL.md) for instructions on using the evaluation code.
 
+## Nested Distillation Pipeline
+
+This repository includes an end-to-end **nested distillation pipeline** that performs recursive teacher-student distillation. Each new student uses exactly one fewer denoising step than its teacher (K(r+1) = K(r) - 1), with automatic evaluation and stopping when quality falls below threshold.
+
+### Quick Start
+
+```bash
+# View planned rounds without training
+python nested_distillation.py --dry-run
+
+# Run the full pipeline
+python nested_distillation.py
+
+# Resume from interrupted run
+python nested_distillation.py --resume
+
+# Resume a specific run directory
+python nested_distillation.py --resume --run-dir outputs/nested_distillation/runs/run_YYYYmmdd_HHMMSS
+
+# Check current status
+python nested_distillation.py --status
+
+# Check status of a specific run
+python nested_distillation.py --status --run-dir outputs/nested_distillation/runs/run_YYYYmmdd_HHMMSS
+```
+
+### How It Works
+
+1. **Caching Stage**: The teacher model generates intermediate trajectories at `target_step = teacher_steps // 2`
+2. **Training Stage**: Student is trained via LoRA to predict the teacher's intermediate outputs
+3. **Evaluation Stage**: Student is automatically evaluated with:
+   - **Promptfoo**: LLM-as-judge evaluation on 12 diverse prompts with 60 total assertions
+   - **Perplexity**: GPT-2 based perplexity on generated outputs
+4. **Stopping Decision**: Pipeline stops when promptfoo score < 30%
+
+**Note**: Evaluation uses fewer steps than training by default (64 steps) for reasonable evaluation speed. A model trained with 127 steps and evaluated with 64 steps will still demonstrate distillation effectiveness - we're measuring capability retention at reduced inference cost.
+
+### Configuration
+
+Edit `nested_distillation_config.yaml` to customize:
+
+```yaml
+# Initial teacher settings
+teacher:
+  model_path: "GSAI-ML/LLaDA-8B-Instruct"  # Starting model
+  initial_steps: 128                         # Initial denoising steps
+
+# Evaluation thresholds
+evaluation:
+  promptfoo_threshold: 30.0  # Minimum % to continue
+  eval_steps: 64             # Steps for evaluation (faster than training steps)
+
+# Step schedule
+schedule:
+  min_steps: 1  # Minimum steps before stopping
+  step_decrement: 1  # Steps reduced per round (K-1)
+
+# Execution
+execution:
+  seed: 42                    # For reproducibility
+  sequential: true           # Never parallelize (VRAM safety)
+  memory_cleanup: true       # Explicit GPU cleanup
+  verify_gpu_empty: true     # Verify no models on GPU between stages
+```
+
+### Output Structure
+
+```
+outputs/nested_distillation/
+├── latest_run.txt                                # Pointer to latest run directory
+└── runs/
+  └── run_YYYYmmdd_HHMMSS/                      # One isolated run
+    ├── state.json                            # Resume state
+    ├── leaderboard.md                        # Human-readable results
+    ├── leaderboard.csv                       # Machine-readable results
+    ├── leaderboard.json                      # Detailed results
+    └── round_001_steps_64/                   # Per-round outputs
+      ├── cache/                            # Teacher trajectories
+      ├── checkpoint/                       # Trained LoRA adapter
+      ├── evaluation/                       # Promptfoo & perplexity results
+      └── reports/                          # HTML reports for this round
+```
+
+Each fresh run creates a new timestamped directory under `runs/`, so evaluation outputs are preserved across runs.
+Each round also writes HTML reports into its own `reports/` directory.
+
+### Leaderboard Format
+
+Results are displayed as:
+
+```
+Student 127 steps: promptfoo 41.2 percent, perplexity 18.7
+Student 126 steps: promptfoo 35.0 percent, perplexity 20.1
+Student 125 steps: promptfoo 29.4 percent, perplexity 23.9, stopped
+```
+
+### Requirements
+
+- **Ollama**: Must be running for promptfoo evaluation (`ollama serve`)
+- **GPU**: CUDA-capable GPU with sufficient VRAM
+- **Node.js**: Required for promptfoo (`npx promptfoo`)
+
+### Sequential Execution
+
+The pipeline enforces **strict sequential execution** to avoid VRAM spikes:
+
+- Never runs training, caching, and evaluation in parallel
+- Explicit `torch.cuda.empty_cache()` between stages
+- Model unloading and reference deletion after each stage
+- Single-worker dataloader defaults
+- Verification that GPU is empty before starting each stage
+
+### Resume Support
+
+If interrupted, the pipeline can resume from the last completed round:
+
+```bash
+python nested_distillation.py --resume
+```
+
+The state is stored in `outputs/nested_distillation/state.json`.
+
 ## FAQ
 Here, we address some common questions about LLaDA.
 
