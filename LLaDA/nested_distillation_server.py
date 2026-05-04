@@ -193,15 +193,21 @@ BASE_MODEL_FALLBACK = "GSAI-ML/LLaDA-8B-Instruct"
 
 
 def resolve_base_model_path(checkpoint_path: str, fallback: str) -> str:
-    adapter_config_path = os.path.join(checkpoint_path, "adapter_config.json")
-    if os.path.isdir(checkpoint_path) and os.path.exists(adapter_config_path):
-        try:
-            with open(adapter_config_path, "r", encoding="utf-8") as f:
-                adapter_config = json.load(f)
-            return adapter_config.get("base_model_name_or_path") or fallback
-        except Exception:
-            return fallback
-    return fallback
+    if not checkpoint_path:
+        return fallback
+    if os.path.isdir(checkpoint_path):
+        adapter_config_path = os.path.join(checkpoint_path, "adapter_config.json")
+        if os.path.exists(adapter_config_path):
+            try:
+                with open(adapter_config_path, "r", encoding="utf-8") as f:
+                    adapter_config = json.load(f)
+                return adapter_config.get("base_model_name_or_path") or fallback
+            except Exception:
+                return fallback
+        # Directory without adapter config; assume it is a base model dir.
+        return checkpoint_path
+    # Non-directory string; assume it is a model id or path.
+    return checkpoint_path
 
 # --- MODEL LOADING ---
 model_id = "GSAI-ML/LLaDA-8B-Instruct"
@@ -237,9 +243,18 @@ else:
     )
 model.tie_weights()
 
-print(f"Loading LoRA checkpoint from {{CHECKPOINT_DIR}}...")
-model = PeftModel.from_pretrained(model, CHECKPOINT_DIR)
-model.tie_weights()
+use_lora = False
+if os.path.isdir(CHECKPOINT_DIR):
+    adapter_config_path = os.path.join(CHECKPOINT_DIR, "adapter_config.json")
+    if os.path.exists(adapter_config_path):
+        use_lora = True
+
+if use_lora:
+    print(f"Loading LoRA checkpoint from {{CHECKPOINT_DIR}}...")
+    model = PeftModel.from_pretrained(model, CHECKPOINT_DIR)
+    model.tie_weights()
+else:
+    print("No LoRA adapter found; using base model only.")
 
 model.eval()
 print("Model loaded and ready to serve.")
@@ -303,12 +318,14 @@ class ServerManager:
         port: int = 5000,
         device: str = "cuda",
         cuda_memory_fraction: float = 0.85,
+        eval_dir: Optional[str] = None,
     ):
         self.checkpoint_dir = checkpoint_dir
         self.steps = steps
         self.port = port
         self.device = device
         self.cuda_memory_fraction = cuda_memory_fraction
+        self.eval_dir = eval_dir
         self.process: Optional[subprocess.Popen] = None
         self.script_path: Optional[str] = None
         self.log_file: Optional[str] = None
@@ -324,7 +341,7 @@ class ServerManager:
                 return False
 
         # Create server script
-        eval_dir = os.path.join(os.path.dirname(self.checkpoint_dir), "evaluation")
+        eval_dir = self.eval_dir or os.path.join(os.path.dirname(self.checkpoint_dir), "evaluation")
         os.makedirs(eval_dir, exist_ok=True)
         self.script_path = os.path.join(eval_dir, "serve_eval.py")
         self.log_file = os.path.join(eval_dir, "server.log")
@@ -434,6 +451,7 @@ def managed_server(
     timeout: float = 600.0,
     device: str = "cuda",
     cuda_memory_fraction: float = 0.85,
+    eval_dir: Optional[str] = None,
 ):
     """
     Context manager for running the LLaDA server.
@@ -449,6 +467,7 @@ def managed_server(
         port,
         device=device,
         cuda_memory_fraction=cuda_memory_fraction,
+        eval_dir=eval_dir,
     )
     try:
         if not manager.start(timeout=timeout):

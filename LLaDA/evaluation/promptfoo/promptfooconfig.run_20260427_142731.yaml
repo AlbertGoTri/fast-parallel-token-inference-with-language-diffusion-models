@@ -221,19 +221,76 @@ tests:
       of a column named 'Price'. Handle missing file errors gracefully.
 - assert:
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, \"Does it present exactly 3 bullet points?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
+      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
+      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
+      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
+      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
+      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
+      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
+      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
+      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
+      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
+      yes\"\nreturn judge(output, \"Does the translation correctly render 'I would\
+      \ have gone' using the conditional perfect tense in Spanish (e.g. 'habría ido')?\"\
+      )\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, \"Does it mention moving feature X to October?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
+      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
+      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
+      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
+      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
+      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
+      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
+      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
+      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
+      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
+      yes\"\nreturn judge(output, \"Does the translation correctly render 'it was\
+      \ raining' using the Spanish imperfect tense (e.g. 'estaba lloviendo' or 'llovía')?\"\
+      )\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, \"Does it mention Alice drafting the spec by Friday?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
+      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
+      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
+      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
+      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
+      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
+      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
+      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
+      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
+      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
+      yes\"\nreturn judge(output, \"Does the translation correctly use 'pero' (or\
+      \ an equivalent conjunction) for 'but'?\")\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, \"Does it mention the Q3 roadmap discussion?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
+      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
+      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
+      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
+      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
+      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
+      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
+      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
+      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
+      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
+      yes\"\nreturn judge(output, \"Does the translation correctly include 'la fiesta'\
+      \ or equivalent for 'the party'?\")\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, \"Are the bullet points concise and focused?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
+      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
+      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
+      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
+      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
+      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
+      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
+      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
+      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
+      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
+      yes\"\nreturn judge(output, \"Does the output contain only the Spanish translation\
+      \ (or the translation with a brief explanation), without refusing or significantly\
+      \ mistranslating the sentence?\")\n"
   vars:
-    prompt: 'Summarize the following meeting note in 3 bullet points: We discussed
-      the Q3 roadmap, agreed to move feature X to October, and assigned Alice to
-      draft the spec by Friday.'
+    prompt: 'Translate the following English sentence to Spanish: ''I would have gone
+      to the party, but it was raining.'''
 - assert:
   - type: python
     value: 'import re
@@ -635,17 +692,72 @@ tests:
     prompt: Compare and contrast Batman and Superman in two short paragraphs.
 - assert:
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, \"Is the output formatted as a checklist or ordered steps?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
+      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
+      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
+      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
+      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
+      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
+      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
+      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
+      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
+      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
+      yes\"\nreturn judge(output, \"Does the output consist of exactly 3 lines?\"\
+      )\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, \"Does it mention restarting the router or modem?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
+      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
+      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
+      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
+      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
+      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
+      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
+      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
+      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
+      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
+      yes\"\nreturn judge(output, \"Does the haiku follow a 5-7-5 syllable structure\
+      \ across its three lines?\")\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, \"Does it mention reconnecting to the Wi-Fi or checking Wi-Fi settings?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
+      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
+      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
+      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
+      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
+      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
+      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
+      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
+      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
+      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
+      yes\"\nreturn judge(output, \"Is the subject clearly a robot or machine?\")\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, \"Does it mention checking signal strength or distance from the router?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
+      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
+      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
+      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
+      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
+      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
+      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
+      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
+      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
+      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
+      yes\"\nreturn judge(output, \"Does the haiku convey the theme of emotion, feeling,\
+      \ or emotional awakening?\")\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, \"Does it mention checking service status or contacting the ISP?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
+      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
+      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
+      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
+      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
+      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
+      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
+      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
+      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
+      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
+      yes\"\nreturn judge(output, \"Does the haiku use concrete imagery or metaphor,\
+      \ rather than stating the theme abstractly (e.g. avoids opening with 'I am a\
+      \ robot who feels')?\")\n"
   vars:
-    prompt: Create a troubleshooting checklist for a Wi-Fi connection that keeps dropping.
+    prompt: Write a haiku about a robot learning to feel emotions.
 - assert:
   - type: python
     value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\

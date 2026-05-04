@@ -637,6 +637,112 @@ def run_single_round(
     return result
 
 
+def evaluate_teacher_baseline(
+    config: Dict[str, Any],
+    teacher_path: str,
+    teacher_steps: int,
+    base_output_dir: str,
+    logger: ProgressLogger,
+    thresholds: EvaluationThresholds
+) -> RoundResult:
+    """Run a baseline evaluation for the initial teacher model."""
+    logger.start_stage("teacher_eval")
+
+    if config['execution']['verify_gpu_empty']:
+        verify_gpu_empty()
+    cleanup_gpu_memory()
+    log_memory_usage("teacher_eval_start")
+
+    eval_config = config['evaluation']
+    eval_server_config = eval_config.get('server', {})
+    eval_server_device = str(eval_server_config.get('device', 'cuda')).lower()
+    if eval_server_device not in {'cuda', 'cpu'}:
+        logger.log(f"WARNING: Invalid evaluation.server.device='{eval_server_device}', using 'cuda'")
+        eval_server_device = 'cuda'
+    eval_server_cuda_fraction = float(eval_server_config.get('cuda_memory_fraction', 0.85))
+    if not (0 < eval_server_cuda_fraction <= 1.0):
+        logger.log(
+            f"WARNING: Invalid evaluation.server.cuda_memory_fraction='{eval_server_cuda_fraction}', using 0.85"
+        )
+        eval_server_cuda_fraction = 0.85
+    eval_server_timeout = float(
+        eval_server_config.get(
+            'startup_timeout_seconds',
+            1800.0 if eval_server_device == 'cpu' else 600.0,
+        )
+    )
+    if eval_server_timeout <= 0:
+        logger.log(
+            f"WARNING: Invalid evaluation.server.startup_timeout_seconds='{eval_server_timeout}', "
+            f"using {'1800.0' if eval_server_device == 'cpu' else '600.0'}"
+        )
+        eval_server_timeout = 1800.0 if eval_server_device == 'cpu' else 600.0
+
+    eval_steps = eval_config.get('eval_steps', 0)
+    if eval_steps == 0:
+        eval_steps = teacher_steps
+
+    logger.log(
+        f"Starting teacher evaluation server for {teacher_steps} steps (eval using {eval_steps} steps)..."
+    )
+
+    eval_result = None
+    eval_dir = os.path.join(base_output_dir, "teacher_eval")
+    reports_dir = os.path.join(eval_dir, "reports")
+    os.makedirs(eval_dir, exist_ok=True)
+    os.makedirs(reports_dir, exist_ok=True)
+
+    promptfoo_template = os.path.abspath(eval_config['promptfoo']['config_path'])
+    provider_abs = os.path.abspath(eval_config['promptfoo']['provider_path'])
+
+    with managed_server(
+        teacher_path,
+        eval_steps,
+        port=5000,
+        timeout=eval_server_timeout,
+        device=eval_server_device,
+        cuda_memory_fraction=eval_server_cuda_fraction,
+        eval_dir=eval_dir,
+    ) as server:
+        logger.log("Server is ready, running teacher baseline evaluation...")
+        eval_result = evaluate_round(
+            round_num=0,
+            student_steps=teacher_steps,
+            promptfoo_config_path=promptfoo_template,
+            provider_path=provider_abs,
+            eval_output_dir=eval_dir,
+            reports_dir=reports_dir,
+            perplexity_device=eval_config['perplexity']['device'],
+            max_concurrency=eval_config['promptfoo']['max_concurrency'],
+            timeout_ms=eval_config['promptfoo']['timeout_ms'],
+            judge_num_predict=int(eval_config['promptfoo'].get('judge_num_predict', 256)),
+            judge_num_gpu=int(eval_config['promptfoo'].get('judge_num_gpu', 1)),
+        )
+
+    logger.log("Teacher evaluation server stopped")
+    log_memory_usage("teacher_eval_end")
+    logger.end_stage("teacher_eval", success=eval_result.get('promptfoo_success', False))
+
+    promptfoo_percent = eval_result.get('promptfoo_assertion_percent', eval_result.get('promptfoo_percent', 0.0))
+    perplexity = eval_result.get('perplexity', 999.9)
+    passed = promptfoo_percent >= thresholds.promptfoo_min
+
+    return RoundResult(
+        round_number=0,
+        student_name="teacher_baseline",
+        teacher_name=teacher_path,
+        student_steps=teacher_steps,
+        teacher_steps=teacher_steps,
+        promptfoo_percent=promptfoo_percent,
+        perplexity=perplexity,
+        passed=passed,
+        timestamp=format_timestamp(),
+        cache_dir="",
+        checkpoint_dir=teacher_path,
+        eval_dir=eval_dir
+    )
+
+
 def update_leaderboard(results: list, paths: Dict[str, str]) -> None:
     """Update all leaderboard files (MD, CSV, JSON)."""
     # JSON
@@ -871,6 +977,31 @@ def main():
         data = load_json(paths['leaderboard']['json'])
         results = [RoundResult.from_dict(d) for d in data]
         print(f"Loaded {len(results)} previous results")
+
+    # Baseline evaluation for initial teacher (round 0)
+    baseline_done = any(r.round_number == 0 for r in results)
+    if state.current_round == 0 and not baseline_done:
+        try:
+            print("\n" + "=" * 70)
+            print(f"ROUND 0/BASELINE | Teacher Steps: {initial_steps}")
+            print("=" * 70)
+            print(f"[Round 0] Teacher path: {teacher_path}")
+            baseline_result = evaluate_teacher_baseline(
+                config,
+                teacher_path,
+                initial_steps,
+                base_output_dir,
+                logger,
+                thresholds
+            )
+            results.append(baseline_result)
+            update_leaderboard(results, paths['leaderboard'])
+            print("\n" + "-" * 70)
+            print("Teacher baseline evaluation completed!")
+            print(baseline_result.format_summary())
+            print("-" * 70)
+        except Exception as e:
+            print(f"WARNING: Teacher baseline evaluation failed: {e}")
 
     # Main distillation loop
     teacher_steps = state.current_teacher_steps
