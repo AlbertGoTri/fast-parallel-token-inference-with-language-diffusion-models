@@ -6,15 +6,17 @@ import psutil
 from transformers import AutoModel, BitsAndBytesConfig
 from peft import get_peft_model, LoraConfig
 
-os.environ["HF_HOME"] = r"C:\Users\Gotri\.cache"
+BASE_DIR = os.path.expanduser("~/groups/hpai-collaborators/albert-gomez-triunfante/tfg")
+HF_HOME = os.path.join(BASE_DIR, ".cache")
+os.environ["HF_HOME"] = HF_HOME
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 os.environ["SAFETENSORS_FAST_GPU"] = "0"
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:128"
 
 torch.cuda.set_per_process_memory_fraction(0.90)
 
-CACHE_DIR = r"C:\Users\Gotri\.cache\trayectorias_llada"
-SAVE_DIR = r"C:\Users\Gotri\.cache\llada_student_lora"
+CACHE_DIR = os.path.join(HF_HOME, "trayectorias_llada")
+SAVE_DIR = os.path.join(HF_HOME, "llada_student_lora")
 TEMPERATURE = 2.0
 
 quantization_config = BitsAndBytesConfig(

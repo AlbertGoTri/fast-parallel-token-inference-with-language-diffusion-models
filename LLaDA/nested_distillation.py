@@ -152,7 +152,7 @@ def cache_stage(
     )
 
     # Setup environment
-    os.environ["HF_HOME"] = config['system']['hf_home']
+    os.environ["HF_HOME"] = os.path.expanduser(config['system']['hf_home'])
     os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
     os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
     os.environ["SAFETENSORS_FAST_GPU"] = "0"
@@ -315,7 +315,7 @@ def train_stage(
     )
 
     # Setup environment
-    os.environ["HF_HOME"] = config['system']['hf_home']
+    os.environ["HF_HOME"] = os.path.expanduser(config['system']['hf_home'])
     os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
     os.environ["SAFETENSORS_FAST_GPU"] = "0"
     os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:128"

@@ -155,7 +155,7 @@ def create_server_script(
     checkpoint_doc_path = checkpoint_dir.replace('\\', '/')
     checkpoint_dir_posix = checkpoint_doc_path
 
-    hf_home = hf_home or ""
+    hf_home = os.path.expanduser(hf_home or "")
 
     script_content = f'''#!/usr/bin/env python3
 """
