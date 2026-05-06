@@ -18,11 +18,10 @@ tests:
       role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
       \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
       ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Does the output provide genuine words of encouragement\
-      \ or motivation for the players?\")\n"
-  - type: python
+      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"
+      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, \"Do the listed ingredients match traditional Margherita\
+      \ pizza components, specifically including pizza dough or flour, tomatoes or\
+      \ tomato sauce, mozzarella, fresh basil, and olive oil?\")\n"
     value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
       model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
       :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
@@ -520,7 +519,7 @@ tests:
       \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
       message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
       yes\"\nreturn judge(output, \"Do the listed ingredients match traditional Margherita\
-      \ pizza components — specifically including pizza dough or flour, tomatoes or\
+      \ pizza components, specifically including pizza dough or flour, tomatoes or\
       \ tomato sauce, mozzarella, fresh basil, and olive oil?\")\n"
   - type: python
     value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\

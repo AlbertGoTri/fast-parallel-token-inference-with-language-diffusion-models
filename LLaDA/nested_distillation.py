@@ -344,7 +344,11 @@ def train_stage(
             trust_remote_code=True,
             low_cpu_mem_usage=True,
         )
-        student_base.gradient_checkpointing_enable()
+        if hasattr(student_base, "gradient_checkpointing_enable"):
+            try:
+                student_base.gradient_checkpointing_enable()
+            except Exception as e:
+                logger.log(f"WARNING: Gradient checkpointing not supported: {e}")
 
         # Freeze base parameters
         for param in student_base.parameters():
@@ -569,6 +573,7 @@ def run_single_round(
             timeout=eval_server_timeout,
             device=eval_server_device,
             cuda_memory_fraction=eval_server_cuda_fraction,
+            hf_home=config['system']['hf_home'],
         ) as server:
             logger.log("Server is ready, running evaluations...")
 
@@ -703,6 +708,7 @@ def evaluate_teacher_baseline(
         device=eval_server_device,
         cuda_memory_fraction=eval_server_cuda_fraction,
         eval_dir=eval_dir,
+        hf_home=config['system']['hf_home'],
     ) as server:
         logger.log("Server is ready, running teacher baseline evaluation...")
         eval_result = evaluate_round(

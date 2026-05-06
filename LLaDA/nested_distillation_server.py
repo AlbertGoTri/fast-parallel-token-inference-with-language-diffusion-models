@@ -136,6 +136,7 @@ def create_server_script(
     steps: int = 128,
     device: str = "cuda",
     cuda_memory_fraction: float = 0.85,
+    hf_home: Optional[str] = None,
 ) -> str:
     """
     Create a temporary server script for the specific checkpoint.
@@ -153,6 +154,8 @@ def create_server_script(
     llada_dir = os.path.dirname(os.path.abspath(__file__))
     checkpoint_doc_path = checkpoint_dir.replace('\\', '/')
     checkpoint_dir_posix = checkpoint_doc_path
+
+    hf_home = hf_home or ""
 
     script_content = f'''#!/usr/bin/env python3
 """
@@ -174,7 +177,7 @@ sys.path.insert(0, r"{llada_dir}")
 from generate import generate
 
 # --- CONFIGURATION ---
-os.environ["HF_HOME"] = "D:/.cache"
+os.environ["HF_HOME"] = r"{hf_home}"
 os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 os.environ["SAFETENSORS_FAST_GPU"] = "0"
@@ -319,6 +322,7 @@ class ServerManager:
         device: str = "cuda",
         cuda_memory_fraction: float = 0.85,
         eval_dir: Optional[str] = None,
+        hf_home: Optional[str] = None,
     ):
         self.checkpoint_dir = checkpoint_dir
         self.steps = steps
@@ -326,6 +330,7 @@ class ServerManager:
         self.device = device
         self.cuda_memory_fraction = cuda_memory_fraction
         self.eval_dir = eval_dir
+        self.hf_home = hf_home
         self.process: Optional[subprocess.Popen] = None
         self.script_path: Optional[str] = None
         self.log_file: Optional[str] = None
@@ -353,6 +358,7 @@ class ServerManager:
             self.steps,
             self.device,
             self.cuda_memory_fraction,
+            hf_home=self.hf_home,
         )
 
         print(f"Starting LLaDA server on port {self.port}...")
@@ -452,6 +458,7 @@ def managed_server(
     device: str = "cuda",
     cuda_memory_fraction: float = 0.85,
     eval_dir: Optional[str] = None,
+    hf_home: Optional[str] = None,
 ):
     """
     Context manager for running the LLaDA server.
@@ -468,6 +475,7 @@ def managed_server(
         device=device,
         cuda_memory_fraction=cuda_memory_fraction,
         eval_dir=eval_dir,
+        hf_home=hf_home,
     )
     try:
         if not manager.start(timeout=timeout):

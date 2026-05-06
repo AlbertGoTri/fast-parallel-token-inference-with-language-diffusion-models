@@ -360,6 +360,10 @@ def create_promptfoo_config_for_round(
         r'(?m)^(\s*)r = urllib\.request\.urlopen\(urllib\.request\.Request\('
         r'"http://127\.0\.0\.1:11434/api/chat",data=p,headers=\{"Content-Type":"application/json"\}\),timeout=300\)\s*$'
     )
+    return_line_pattern = re.compile(
+        r'(?m)^(\s*)return json\.loads\(json\.loads\(r\.read\(\)\)\.get\("message",\{\}\)'
+        r'\.get\("content","\{\}"\)\)\.get\("answer",""\)\.lower\(\)\.strip\(\)=="yes"\s*$'
+    )
 
     def _harden_assertion_value(value: str) -> str:
         updated = value.replace('"num_predict":256', f'"num_predict":{judge_num_predict}')
@@ -367,11 +371,24 @@ def create_promptfoo_config_for_round(
             '"options":{"temperature":0,',
             f'"options":{{"temperature":0,"num_gpu":{judge_num_gpu},'
         )
-        return request_line_pattern.sub(
+        updated = request_line_pattern.sub(
             r'\1try:\n'
             r'\1  r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:11434/api/chat",data=p,headers={"Content-Type":"application/json"}),timeout=300)\n'
             r'\1except Exception:\n'
             r'\1  return False',
+            updated
+        )
+        return return_line_pattern.sub(
+            r'\1try:\n'
+            r'\1  raw = r.read()\n'
+            r'\1  if isinstance(raw, bytes):\n'
+            r'\1    raw = raw.decode("utf-8", errors="replace")\n'
+            r'\1  data = json.loads(raw)\n'
+            r'\1  content = data.get("message", {}).get("content", "")\n'
+            r'\1  parsed = json.loads(content)\n'
+            r'\1except Exception:\n'
+            r'\1  return False\n'
+            r'\1return str(parsed.get("answer", "")).lower().strip() == "yes"',
             updated
         )
 

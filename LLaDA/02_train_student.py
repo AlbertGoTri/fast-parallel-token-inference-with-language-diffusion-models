@@ -6,15 +6,15 @@ import psutil
 from transformers import AutoModel, BitsAndBytesConfig
 from peft import get_peft_model, LoraConfig
 
-os.environ["HF_HOME"] = r"D:\.cache"
+os.environ["HF_HOME"] = r"C:\Users\Gotri\.cache"
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 os.environ["SAFETENSORS_FAST_GPU"] = "0"
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:128"
 
 torch.cuda.set_per_process_memory_fraction(0.90)
 
-CACHE_DIR = r"D:\.cache\trayectorias_llada"
-SAVE_DIR = r"D:\.cache\llada_student_lora"
+CACHE_DIR = r"C:\Users\Gotri\.cache\trayectorias_llada"
+SAVE_DIR = r"C:\Users\Gotri\.cache\llada_student_lora"
 TEMPERATURE = 2.0
 
 quantization_config = BitsAndBytesConfig(
@@ -39,8 +39,12 @@ student_base = AutoModel.from_pretrained(
 )
 print(f"Modelo base cargado. VRAM: {torch.cuda.memory_allocated(0)/1024**3:.2f} GB")
 
-# Activar gradient checkpointing manualmente sin castear parametros a float32
-student_base.gradient_checkpointing_enable()
+# Activar gradient checkpointing si el modelo lo soporta
+if hasattr(student_base, "gradient_checkpointing_enable"):
+    try:
+        student_base.gradient_checkpointing_enable()
+    except Exception as e:
+        print(f"WARNING: Gradient checkpointing no soportado: {e}")
 
 # Asegurarse de que solo los parametros LoRA (que se añadiran) requieren gradiente
 # Los parametros 4-bit del base model no necesitan grad

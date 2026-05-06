@@ -5,7 +5,7 @@ import psutil
 from transformers import AutoTokenizer, AutoModel, BitsAndBytesConfig
 from peft import PeftModel
 
-os.environ["HF_HOME"] = r"D:\.cache"
+os.environ["HF_HOME"] = r"C:\Users\Gotri\.cache"
 os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 os.environ["SAFETENSORS_FAST_GPU"] = "0"
@@ -15,7 +15,7 @@ torch.cuda.set_per_process_memory_fraction(0.85)
 # --- CONFIGURACIÓN ---
 # Cambiar a False para usar el modelo base sin LoRA (útil para comparar)
 USE_LORA = True
-LORA_DIR = r"D:\.cache\llada_student_lora"
+LORA_DIR = r"C:\Users\Gotri\.cache\llada_student_lora"
 
 print(f"CUDA available: {torch.cuda.is_available()}")
 print(f"CUDA device: {torch.cuda.get_device_name(0)}")

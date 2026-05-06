@@ -7,13 +7,13 @@ from datasets import load_dataset
 from generate_cache import generate_and_cache_trajectory
 
 # --- CONFIGURACIÓN DE ENTORNO ---
-os.environ["HF_HOME"] = r"D:\.cache"
+os.environ["HF_HOME"] = r"C:\Users\Gotri\.cache"
 os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 os.environ["SAFETENSORS_FAST_GPU"] = "0"
 
 # Carpeta donde se guardarán los datos
-CACHE_DIR = r"D:\.cache\trayectorias_llada"
+CACHE_DIR = r"C:\Users\Gotri\.cache\trayectorias_llada"
 
 # Limpiar cache anterior para regenerar con target_step correcto
 import shutil

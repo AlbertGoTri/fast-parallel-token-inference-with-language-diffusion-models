@@ -8,7 +8,7 @@ from peft import PeftModel
 from generate import generate
 
 # --- CONFIGURACIÓN DE ENTORNO ---
-os.environ["HF_HOME"] = r"D:\.cache"
+os.environ["HF_HOME"] = r"C:\Users\Gotri\.cache"
 os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 os.environ["SAFETENSORS_FAST_GPU"] = "0"
@@ -16,7 +16,7 @@ os.environ["SAFETENSORS_FAST_GPU"] = "0"
 torch.cuda.set_per_process_memory_fraction(0.85)
 
 USE_LORA = True
-LORA_DIR = r"D:\.cache\llada_student_lora"
+LORA_DIR = r"C:\Users\Gotri\.cache\llada_student_lora"
 
 # --- INICIALIZACIÓN DEL MODELO ---
 quantization_config = BitsAndBytesConfig(

@@ -121,7 +121,7 @@ paths:
 # System settings
 system:
   # HuggingFace cache directory
-  hf_home: "D:/.cache"
+  hf_home: "C:/Users/Gotri/.cache"
   # PyTorch CUDA memory configuration
   cuda_memory_fraction: 0.85
   # Quantization settings
