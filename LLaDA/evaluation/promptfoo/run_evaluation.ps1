@@ -20,9 +20,8 @@ $HealthUrl  = "http://127.0.0.1:$ServerPort/health"
 $ServerUrl  = "http://127.0.0.1:$ServerPort/generate"
 $ResultsFile = "promptfoo_results.json"
 $ReportFile  = "evaluation_report.html"
+$ConfigFile  = "promptfooconfig_mistral.yaml"
 $Timeout = 3600000  # 1 hour in milliseconds
-
-$OllamaUrl = "http://127.0.0.1:11434"
 
 # Determine our location
 $ScriptDir   = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -45,16 +44,6 @@ function Test-ServerRunning {
     # Uses the lightweight /health endpoint — no inference, returns instantly.
     try {
         $response = Invoke-WebRequest -Uri $HealthUrl -Method GET -TimeoutSec 5 -ErrorAction Stop
-        return $true
-    } catch {
-        return $false
-    }
-}
-
-function Test-OllamaRunning {
-    # Check if Ollama is running
-    try {
-        $response = Invoke-WebRequest -Uri "$OllamaUrl/" -Method GET -TimeoutSec 5 -ErrorAction Stop
         return $true
     } catch {
         return $false
@@ -128,21 +117,13 @@ function Start-LladaServer {
     exit 1
 }
 
-# Main execution
 Write-Status "=== LLaDA Evaluation Runner ===" $Cyan
 Write-Status "LLaDA Root: $LladaRoot" $Cyan
 Write-Status "Promptfoo Dir: $PromptfooDir" $Cyan
 Write-Host ""
 
-# Check Ollama is running (required for judge)
-Write-Status "Checking Ollama..." $Cyan
-if (-not (Test-OllamaRunning)) {
-    Write-Status "ERROR: Ollama is not running at $OllamaUrl" $Red
-    Write-Status "Please start Ollama and ensure llama3.1:8b is pulled:" $Red
-    Write-Status "  ollama pull llama3.1:8b" $Yellow
-    exit 1
-}
-Write-Status "Ollama is running" $Green
+# Note: Ollama dependency removed - using local Mistral-7B-Instruct judge instead
+Write-Status "Evaluator: Mistral-7B-Instruct (local, no external service required)" $Green
 
 # Set timeout
 $env:PROMPTFOO_REQUEST_TIMEOUT_MS = $Timeout.ToString()
@@ -158,12 +139,12 @@ if (-not $node) {
 Write-Status "Node.js found: $(node --version)" $Green
 
 # Check if config exists
-$configPath = Join-Path $PromptfooDir "promptfooconfig.yaml"
+$configPath = Join-Path $PromptfooDir $ConfigFile
 if (-not (Test-Path $configPath)) {
-    Write-Status "ERROR: promptfooconfig.yaml not found at: $configPath" $Red
+    Write-Status "ERROR: $ConfigFile not found at: $configPath" $Red
     exit 1
 }
-Write-Status "Config found: $configPath" $Green
+Write-Status "Config found: $configPath (Mistral-based evaluation)" $Green
 
 # Start server if needed
 $serverJob = $null
@@ -190,8 +171,8 @@ if (-not $SkipServer -and -not $JustReport) {
 if (-not $JustReport) {
     Write-Host ""
     Write-Status "=== Starting Evaluation ===" $Cyan
-    Write-Status "This will take approximately 15-30 minutes (LLaDA generates then Ollama judges)" $Yellow
-    Write-Status "Running sequentially to avoid VRAM collision between LLaDA and Ollama" $Cyan
+    Write-Status "This will take approximately 15-30 minutes (LLaDA generates then Mistral-7B judges)" $Yellow
+    Write-Status "Running sequentially to avoid VRAM collision between LLaDA and Mistral" $Cyan
     Write-Host ""
 
     # Change to promptfoo directory so relative paths in config work
@@ -199,7 +180,7 @@ if (-not $JustReport) {
 
     try {
         # Run with concurrency=1 to ensure sequential execution (avoid VRAM collision)
-        npx promptfoo eval -o $ResultsFile --max-concurrency 1
+        npx promptfoo eval -c $ConfigFile -o $ResultsFile --max-concurrency 1
 
         if ($LASTEXITCODE -ne 0) {
             Write-Status "Evaluation completed with warnings (exit code: $LASTEXITCODE)" $Yellow

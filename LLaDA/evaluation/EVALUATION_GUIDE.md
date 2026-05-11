@@ -1,19 +1,27 @@
 # LLaDA Evaluation Guide
 
-This guide explains how to evaluate your LLaDA student model using **promptfoo** with a local **Ollama** judge (llama3.1:8b) that answers Yes/No questions about model outputs.
+This guide explains how to evaluate your LLaDA student model using **promptfoo** with a **local LLM judge** that answers Yes/No questions about model outputs.
 
 ## Overview
 
-The evaluation system supports two complementary evaluation methods:
+The evaluation system supports **two evaluation backends** (choose one):
 
-### 1. Promptfoo + Ollama (Task-Specific Accuracy)
-Evaluates whether LLaDA outputs meet specific criteria using Yes/No rubrics:
-1. **LLaDA Model Server** (`serve_llada.py`) - Loads your trained model and serves it via a local API
-2. **Promptfoo Configuration** (`promptfooconfig.yaml`) - Defines test prompts and evaluation criteria
-3. **Ollama Judge** (llama3.1:8b running locally) - Evaluates each response with Yes/No questions
-4. **Report Generator** (`generate_report.py`) - Creates a visual HTML report with results
+### Option A: Mistral-7B-Instruct (Recommended - No External Service)
+✅ **Default option** - Uses free Hugging Face model, runs locally
+- **LLaDA Model Server** (`serve_llada.py`) - Generates responses
+- **Mistral-7B-Instruct** (`mistral_judge_provider.py`) - Evaluates locally
+- **No Ollama required** - Everything is local Python
+- **No external services** - No API keys, no rate limits
+- **One-time download** (~15GB) - Then cached locally
 
-### 2. Perplexity Evaluation (Text Fluency)
+See `./promptfoo/MISTRAL_SETUP.md` for detailed Mistral setup.
+
+### Option B: Ollama + llama3.1:8b (Legacy)
+⚠️ **Alternative option** - Requires running Ollama as external service
+- See instructions below for manual Ollama setup
+- Config: `promptfooconfig.yaml` (uses Ollama HTTP API)
+
+### Plus: Perplexity Evaluation (Text Fluency)
 Measures how natural/fluent the generated text is using GPT-2 perplexity:
 - **Lower perplexity** = More natural, fluent text
 - **Higher perplexity** = More surprising, potentially lower quality text
@@ -21,22 +29,25 @@ Measures how natural/fluent the generated text is using GPT-2 perplexity:
 
 ## Prerequisites
 
+**For Mistral-7B-Instruct (Recommended):**
 1. **Node.js** (v18 or later) - Download from [nodejs.org](https://nodejs.org/)
-2. **Python** (3.10 or later) with your LLaDA environment activated
-3. **Ollama** - Install from [ollama.com](https://ollama.com) and pull the model:
-   ```bash
-   ollama pull llama3.1:8b
-   ```
+2. **Python** (3.10 or later) with `transformers`, `torch` installed
+3. **GPU with CUDA** (recommended) or CPU (slower)
+
+**For Ollama (Legacy):**
+1. All of the above, plus:
+2. **Ollama** - Install from [ollama.com](https://ollama.com)
+3. Pull the model: `ollama pull llama3.1:8b`
 
 ## Quick Start (Automated)
 
-The easiest way to run the evaluation is using the provided PowerShell script:
+The easiest way to run evaluation with **Mistral** (default):
 
 ```powershell
-# Run everything (checks Ollama, runs evaluation, generates report)
+# Run everything (starts LLaDA, downloads Mistral on first run, generates report)
 .\evaluation\promptfoo\run_evaluation.ps1
 
-# If LLaDA server is already running (in another terminal)
+# If LLaDA server is already running
 .\evaluation\promptfoo\run_evaluation.ps1 -SkipServer
 
 # Just generate report from existing results
@@ -44,9 +55,9 @@ The easiest way to run the evaluation is using the provided PowerShell script:
 ```
 
 The script will:
-1. Check that Ollama is running with llama3.1:8b available
+1. Download Mistral-7B-Instruct if it is not present locally (one-time, ~15GB)
 2. Check that all dependencies are installed
-3. Run the evaluation (LLaDA generates, Ollama judges sequentially to avoid VRAM collision)
+3. Run the evaluation (LLaDA generates, Mistral judges sequentially to avoid VRAM collision)
 4. Generate an HTML report
 5. Optionally open the report in your browser
 
@@ -54,16 +65,13 @@ The script will:
 
 If you prefer to run steps manually:
 
-### 1. Start Ollama
+### 1. Prepare the local judge (Mistral)
 
-Make sure Ollama is running in the background:
-```bash
-ollama serve
-```
+No separate server is required for the judge. The `mistral_judge_provider.py` will download and load `mistralai/Mistral-7B-Instruct-v0.2` automatically on first use. Ensure you have an internet connection for the initial download and `transformers` + `torch` installed.
 
-Verify the model is available:
+To test the Mistral download and tokenizer quickly:
 ```bash
-ollama list  # Should show llama3.1:8b
+python -c "from transformers import AutoTokenizer, AutoModelForCausalLM; AutoTokenizer.from_pretrained('mistralai/Mistral-7B-Instruct-v0.2'); print('Mistral tokenizer OK')"
 ```
 
 ### 2. Start the LLaDA Server
@@ -179,14 +187,13 @@ Edit `promptfooconfig.yaml` and add entries under `tests:`
 
 ## Troubleshooting
 
-### "Ollama is not running"
+### "Judge failed to load"
 
-Start Ollama first:
+If the Mistral judge fails to load or respond, ensure that `transformers` and `torch` are installed and that the initial model download completed. Test with:
 ```bash
-ollama serve
+python -c "from transformers import AutoTokenizer; AutoTokenizer.from_pretrained('mistralai/Mistral-7B-Instruct-v0.2'); print('Mistral OK')"
 ```
-
-Or install it if not present: [ollama.com](https://ollama.com)
+If the download failed due to connectivity, re-run the evaluation with internet access or download manually.
 
 ### "Cannot connect to LLaDA server"
 
@@ -211,10 +218,10 @@ Model loading can take 5-10 minutes depending on your hardware. Check that:
 
 ### VRAM Issues
 
-The evaluation runs **sequentially** (concurrency=1) to avoid VRAM collision between LLaDA and Ollama. If you still have issues:
+The evaluation runs **sequentially** (concurrency=1) to avoid VRAM collision between LLaDA and the local judge. If you still have issues:
 - Close other GPU-intensive applications
 - Reduce batch size or generation length in `serve_llada.py`
-- Run Ollama on CPU: `OLLAMA_GPU_OVERHEAD=1 ollama serve`
+-- Reduce model sizes or run on CPU where possible
 
 ## File Reference
 
@@ -228,16 +235,16 @@ The evaluation runs **sequentially** (concurrency=1) to avoid VRAM collision bet
 
 ## Architecture Notes
 
-Unlike the previous Gemini-based approach that required API keys and had rate limits, this Ollama-based evaluation:
+Unlike the previous Gemini-based approach that required API keys and had rate limits, this evaluation:
 - Runs entirely **locally** - no API keys needed
-- Uses **llama3.1:8b** as a capable but lightweight judge
+- Uses **Mistral-7B-Instruct** as the local judge (downloaded once from Hugging Face)
 - Runs **sequentially** to avoid VRAM collision on consumer GPUs
-- Completes in ~15-30 minutes instead of hours of rate-limited waiting
+- Completes in ~15-30 minutes on capable hardware (may be slower on CPU)
 
 ## Getting Help
 
 1. Check server logs in the terminal running `serve_llada.py`
-2. Check Ollama logs: `ollama logs`
+2. If the judge is failing, run the quick Mistral test shown above to verify the model/tokenizer
 3. Run promptfoo with verbose output: `npx promptfoo eval --verbose`
 4. Test the server directly:
    ```bash
@@ -245,7 +252,9 @@ Unlike the previous Gemini-based approach that required API keys and had rate li
      -H "Content-Type: application/json" \
      -d '{"prompt": "Hello"}'
    ```
-5. Test Ollama directly:
-   ```bash
-   curl http://127.0.0.1:11434/api/tags
-   ```
+5. Test the server directly:
+  ```bash
+  curl -X POST http://127.0.0.1:5000/generate \
+    -H "Content-Type: application/json" \
+    -d '{"prompt": "Hello"}'
+  ```

@@ -171,7 +171,7 @@ Student 125 steps: promptfoo 29.4 percent, perplexity 23.9, stopped
 
 ### Requirements
 
-- **Ollama**: Must be running for promptfoo evaluation (`ollama serve`)
+- **Mistral-7B-Instruct**: The evaluation uses `mistralai/Mistral-7B-Instruct-v0.2` as the local judge; it will be downloaded automatically on first run (requires internet) and cached locally.
 - **GPU**: CUDA-capable GPU with sufficient VRAM
 - **Node.js**: Required for promptfoo (`npx promptfoo`)
 

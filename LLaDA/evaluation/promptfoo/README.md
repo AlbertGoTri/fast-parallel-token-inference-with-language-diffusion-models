@@ -2,13 +2,22 @@
 
 This directory contains the promptfoo-based evaluation system for LLaDA models.
 
+## Evaluation Method
+
+Evaluation uses:
+- **LLaDA Student Model** - Generates responses via local Flask server
+- **Mistral-7B-Instruct** - Local LLM judge (from Hugging Face) evaluates responses
+- **No external services** - Everything runs locally, no API keys needed
+
+The Mistral model is automatically downloaded on first run (~15GB) and cached locally.
+
 ## Files
 
 | File | Purpose |
 |------|---------|
-| `promptfooconfig.yaml` | Main evaluation configuration (12 prompts, 5 assertions each) |
+| `promptfooconfig_mistral.yaml` | Main evaluation config (12 prompts, ~5 assertions each) |
+| `mistral_judge_provider.py` | Mistral-7B-Instruct judge provider |
 | `llada_api_provider.py` | Python provider that calls the LLaDA Flask server |
-| `gemini_judge_provider.js` | JavaScript provider for Gemini-based evaluation |
 | `run_evaluation.ps1` | Automated PowerShell runner script |
 | `generate_report.py` | HTML report generator |
 
@@ -17,39 +26,45 @@ This directory contains the promptfoo-based evaluation system for LLaDA models.
 From the **LLaDA root directory**:
 
 ```powershell
-evaluation\promptfoo\run_evaluation.ps1 -ApiKey "your-google-api-key"
+evaluation\promptfoo\run_evaluation.ps1
 ```
 
-Or manually:
+The script will:
+1. Start the LLaDA server automatically (if not running)
+2. Download Mistral-7B-Instruct on first run (one-time, ~15GB download)
+3. Run evaluation (LLaDA generates, Mistral judges sequentially)
+4. Generate HTML report
+5. Optionally open the report in your browser
 
-1. Start the LLaDA server (from LLaDA root):
-   ```powershell
-   python serve_llada.py
-   ```
+## Manual Setup
 
-2. Set environment variables:
-   ```powershell
-   $env:GOOGLE_API_KEY="your-key"
-   $env:PROMPTFOO_REQUEST_TIMEOUT_MS="7200000"
-   ```
+If you prefer to run steps manually:
 
-3. Run evaluation (from this directory):
-   ```powershell
-   cd evaluation\promptfoo
-   npx promptfoo eval
-   ```
+### 1. Start the LLaDA Server
 
-4. Generate report:
-   ```powershell
-   python generate_report.py
-   ```
+```bash
+python serve_llada.py
+```
 
-## Configuration
+Wait until you see: **"Model loaded and ready to serve."**
 
-The `promptfooconfig.yaml` defines:
-- 12 diverse test prompts
-- 5 Yes/No evaluation assertions per prompt
-- LLaDA model provider (local API)
-- Gemini judge provider (for evaluation)
+### 2. Run Evaluation
 
-See `..EVALUATION_GUIDE.md` for full documentation.
+```bash
+cd evaluation/promptfoo
+npx promptfoo eval -c promptfooconfig_mistral.yaml
+```
+
+### 3. Generate Report
+
+```bash
+python generate_report.py
+```
+
+## System Requirements
+
+- **GPU** with CUDA support (VRAM usage: LLaDA ~16GB + Mistral ~15GB sequentially)
+- **Python 3.10+** with transformers, torch
+- **Node.js 18+** for promptfoo
+- **~30GB free disk** for model caches
+- **~30 mins** for full evaluation (15-30 depending on hardware)

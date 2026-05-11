@@ -1,0 +1,199 @@
+env:
+  PROMPTFOO_REQUEST_TIMEOUT_MS: '3600000'  # 1 hour (Mistral is local, usually faster)
+
+evaluateOptions:
+  maxConcurrency: 1  # Sequential to avoid VRAM collision between LLaDA and Mistral
+
+prompts:
+- '{{prompt}}'
+
+providers:
+- id: file://..\..\..\..\..\evaluation\promptfoo\llada_api_provider.py
+  label: LLaDA Student
+
+tests:
+# Test 1: Football Coach Motivation Speech (5 assertions)
+- assert:
+  - type: python
+    value: |
+      import sys
+      sys.path.insert(0, '.')
+      from mistral_judge_provider import evaluate_yes_no
+      return evaluate_yes_no(output, "Does the output sound like it was written from the perspective of a football coach (appropriate tone, authority, team focus)?")
+  - type: python
+    value: |
+      import sys
+      sys.path.insert(0, '.')
+      from mistral_judge_provider import evaluate_yes_no
+      return evaluate_yes_no(output, "Does the output acknowledge or reference the current 2-0 deficit?")
+  - type: python
+    value: |
+      import sys
+      sys.path.insert(0, '.')
+      from mistral_judge_provider import evaluate_yes_no
+      return evaluate_yes_no(output, "Does the output include specific, actionable tactical advice for the second half (e.g. pressing higher, defensive adjustments, set pieces)?")
+  - type: python
+    value: |
+      import sys
+      sys.path.insert(0, '.')
+      from mistral_judge_provider import evaluate_yes_no
+      return evaluate_yes_no(output, "Does the speech address the team's mindset or belief in a comeback, beyond just tactical points?")
+  - type: python
+    value: |
+      import sys
+      sys.path.insert(0, '.')
+      from mistral_judge_provider import evaluate_yes_no
+      return evaluate_yes_no(output, "Is the speech motivational in tone (inspiring, energetic, positive)?")
+  vars:
+    prompt: Act as a football coach. My team is losing 2-0 at halftime. What should I say to my players to motivate them for the second half?
+
+# Test 2: Explain Relativity to 5-Year-Old (5 assertions)
+- assert:
+  - type: python
+    value: |
+      import sys
+      sys.path.insert(0, '.')
+      from mistral_judge_provider import evaluate_yes_no
+      return evaluate_yes_no(output, "Is the vocabulary and sentence structure simple enough for a young child — free of technical jargon?")
+  - type: python
+    value: |
+      import sys
+      sys.path.insert(0, '.')
+      from mistral_judge_provider import evaluate_yes_no
+      return evaluate_yes_no(output, "Does the output use at least one concrete analogy or real-world comparison to explain the concept (e.g. a vehicle, a playground, running, or similar)?")
+  - type: python
+    value: |
+      import sys
+      sys.path.insert(0, '.')
+      from mistral_judge_provider import evaluate_yes_no
+      return evaluate_yes_no(output, "Does the output convey that time or space can change depending on how fast something moves?")
+  - type: python
+    value: |
+      import sys
+      sys.path.insert(0, '.')
+      from mistral_judge_provider import evaluate_yes_no
+      return evaluate_yes_no(output, "Does the output avoid complex mathematical equations or formulas?")
+  - type: python
+    value: |
+      import sys
+      sys.path.insert(0, '.')
+      from mistral_judge_provider import evaluate_yes_no
+      return evaluate_yes_no(output, "Does the explanation correctly convey the core idea that the speed of light is constant and/or that motion affects time or space?")
+  vars:
+    prompt: Explain the theory of relativity to a 5-year-old.
+
+# Test 3: Python Script for CSV Average (5 assertions)
+- assert:
+  - type: python
+    value: |
+      import sys
+      sys.path.insert(0, '.')
+      from mistral_judge_provider import evaluate_yes_no
+      return evaluate_yes_no(output, "Is the output syntactically valid Python code?")
+  - type: python
+    value: |
+      import sys
+      sys.path.insert(0, '.')
+      from mistral_judge_provider import evaluate_yes_no
+      return evaluate_yes_no(output, "Does the script read from a CSV file using an appropriate library (e.g. csv module, pandas)?")
+  - type: python
+    value: |
+      import sys
+      sys.path.insert(0, '.')
+      from mistral_judge_provider import evaluate_yes_no
+      return evaluate_yes_no(output, "Does the script correctly calculate the numerical average (mean) of the values?")
+  - type: python
+    value: |
+      import sys
+      sys.path.insert(0, '.')
+      from mistral_judge_provider import evaluate_yes_no
+      return evaluate_yes_no(output, "Does the script specifically target the column named 'Price' (not a generic column)?")
+  - type: python
+    value: |
+      import sys
+      sys.path.insert(0, '.')
+      from mistral_judge_provider import evaluate_yes_no
+      return evaluate_yes_no(output, "Does the script include error handling for when the file does not exist (e.g. try/except FileNotFoundError or equivalent)?")
+  vars:
+    prompt: Write a Python script that reads a CSV file and calculates the average of a column named 'Price'. Handle missing file errors gracefully.
+
+# Test 4: Meeting Summary (5 assertions)
+- assert:
+  - type: python
+    value: |
+      import sys
+      sys.path.insert(0, '.')
+      from mistral_judge_provider import evaluate_yes_no
+      return evaluate_yes_no(output, "Does it present exactly 3 bullet points?")
+  - type: python
+    value: |
+      import sys
+      sys.path.insert(0, '.')
+      from mistral_judge_provider import evaluate_yes_no
+      return evaluate_yes_no(output, "Does it mention moving feature X to October?")
+  - type: python
+    value: |
+      import sys
+      sys.path.insert(0, '.')
+      from mistral_judge_provider import evaluate_yes_no
+      return evaluate_yes_no(output, "Does it mention Alice drafting the spec by Friday?")
+  - type: python
+    value: |
+      import sys
+      sys.path.insert(0, '.')
+      from mistral_judge_provider import evaluate_yes_no
+      return evaluate_yes_no(output, "Does it mention the Q3 roadmap discussion?")
+  - type: python
+    value: |
+      import sys
+      sys.path.insert(0, '.')
+      from mistral_judge_provider import evaluate_yes_no
+      return evaluate_yes_no(output, "Are the bullet points concise and focused?")
+  vars:
+    prompt: 'Summarize the following meeting note in 3 bullet points: We discussed the Q3 roadmap, agreed to move feature X to October, and assigned Alice to draft the spec by Friday.'
+
+# Test 5: Matrix Movie Summary (5 assertions)
+- assert:
+  - type: python
+    value: |
+      import re
+      text = output.strip()
+      sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', text) if s.strip()]
+      return len(sentences) == 3
+  - type: python
+    value: |
+      import sys
+      sys.path.insert(0, '.')
+      from mistral_judge_provider import evaluate_yes_no
+      return evaluate_yes_no(output, "Does the summary mention Neo as the main character?")
+  - type: python
+    value: |
+      import sys
+      sys.path.insert(0, '.')
+      from mistral_judge_provider import evaluate_yes_no
+      return evaluate_yes_no(output, "Does the summary explain that reality is a simulated world (the Matrix) controlled by machines?")
+  - type: python
+    value: |
+      import sys
+      sys.path.insert(0, '.')
+      from mistral_judge_provider import evaluate_yes_no
+      return evaluate_yes_no(output, "Does the summary mention the conflict between humans and machines or AI?")
+  - type: python
+    value: |
+      import sys
+      sys.path.insert(0, '.')
+      from mistral_judge_provider import evaluate_yes_no
+      return evaluate_yes_no(output, "Does the summary stay focused on the 1999 film only, without describing events from the sequels?")
+  vars:
+    prompt: Summarize the plot of the movie 'The Matrix' (1999) in exactly 3 sentences.
+
+# Test 6: Margherita Pizza (bonus test, 1 assertion)
+- assert:
+  - type: python
+    value: |
+      import sys
+      sys.path.insert(0, '.')
+      from mistral_judge_provider import evaluate_yes_no
+      return evaluate_yes_no(output, "Do the listed ingredients match traditional Margherita pizza components, specifically including pizza dough or flour, tomatoes or tomato sauce, mozzarella, fresh basil, and olive oil?")
+  vars:
+    prompt: List the main ingredients needed to make a traditional Margherita pizza.
