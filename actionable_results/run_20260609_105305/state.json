@@ -1,0 +1,17 @@
+{
+  "experiment_name": "nested_distillation",
+  "current_round": 7,
+  "current_teacher_path": "C:\\Users\\Gotri\\Documents\\tfg\\LLaDA\\workspace\\LLaDA_outputs\\nested_distillation\\runs\\run_20260609_105305\\round_007_steps_1\\checkpoint",
+  "current_teacher_steps": 1,
+  "completed_rounds": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "is_running": false,
+  "last_updated": "2026-06-09T14:26:21.694096"
+}

@@ -1,0 +1,12 @@
+The model weights are not tied. Please use the `tie_weights` method before using the `infer_auto_device` function.
+Loading tokenizer from GSAI-ML/LLaDA-8B-Instruct...
+Loading base model...
+Loading checkpoint shards:   0%|          | 0/6 [00:00<?, ?it/s]C:\Users\Gotri\Documents\tfg\workspace\llada_env\Lib\site-packages\bitsandbytes\nn\modules.py:299: UserWarning: expandable_segments not supported on this platform (Triggered internally at C:\actions-runner\_work\pytorch\pytorch\builder\windows\pytorch\c10/cuda/CUDAAllocatorConfig.h:28.)
+  w = self.data.contiguous().to(device)
+Loading checkpoint shards:  17%|#6        | 1/6 [00:39<03:17, 39.53s/it]Loading checkpoint shards:  33%|###3      | 2/6 [01:39<03:25, 51.39s/it]Loading checkpoint shards:  50%|#####     | 3/6 [02:38<02:44, 54.94s/it]Loading checkpoint shards:  67%|######6   | 4/6 [03:39<01:55, 57.51s/it]Loading checkpoint shards:  83%|########3 | 5/6 [04:24<00:52, 52.74s/it]Loading checkpoint shards: 100%|##########| 6/6 [04:59<00:00, 46.97s/it]Loading checkpoint shards: 100%|##########| 6/6 [04:59<00:00, 49.98s/it]
+ * Tip: There are .env files present. Install python-dotenv to use them.
+Loading LoRA checkpoint from C:\Users\Gotri\Documents\tfg\LLaDA\workspace\LLaDA_outputs\nested_distillation\runs\run_20260609_105305\round_006_steps_2\checkpoint...
+Model loaded and ready to serve.
+Starting server on port 5000...
+ * Serving Flask app 'serve_eval'
+ * Debug mode: off

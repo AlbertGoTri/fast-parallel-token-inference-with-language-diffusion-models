@@ -1,0 +1,447 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.3 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{none/global//global/global/global}
+    \entry{nie2025llada}{article}{}{}
+      \name{author}{3}{}{%
+        {{hash=43852e0ca607951eb54b95b630a453e1}{%
+           family={Nie},
+           familyi={N\bibinitperiod},
+           given={Shuming},
+           giveni={S\bibinitperiod}}}%
+        {{hash=8d3346030389bb4358dd53ef845ff0b1}{%
+           family={Zhang},
+           familyi={Z\bibinitperiod},
+           given={Dan},
+           giveni={D\bibinitperiod}}}%
+        {{hash=4b44bba1743c2ad874f7d960887af663}{%
+           family={Liu},
+           familyi={L\bibinitperiod},
+           given={X.},
+           giveni={X\bibinitperiod}}}%
+      }
+      \strng{namehash}{c8151ad3bd89bab9942b7ed71fada029}
+      \strng{fullhash}{5cd8a8e764f7fae9b0f997c9821071e9}
+      \strng{fullhashraw}{5cd8a8e764f7fae9b0f997c9821071e9}
+      \strng{bibnamehash}{5cd8a8e764f7fae9b0f997c9821071e9}
+      \strng{authorbibnamehash}{5cd8a8e764f7fae9b0f997c9821071e9}
+      \strng{authornamehash}{c8151ad3bd89bab9942b7ed71fada029}
+      \strng{authorfullhash}{5cd8a8e764f7fae9b0f997c9821071e9}
+      \strng{authorfullhashraw}{5cd8a8e764f7fae9b0f997c9821071e9}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{arXiv preprint arXiv:2502.09992}
+      \field{title}{Large Language Diffusion Models (LLaDA): A New Paradigm for Parallel Generation}
+      \field{year}{2025}
+    \endentry
+    \entry{salimans2022progressive}{article}{}{}
+      \name{author}{2}{}{%
+        {{hash=e6f76e1a4d058df028530916774ad3a7}{%
+           family={Salimans},
+           familyi={S\bibinitperiod},
+           given={Tim},
+           giveni={T\bibinitperiod}}}%
+        {{hash=2ac2ca10b22e4d13af1767e87495412f}{%
+           family={Ho},
+           familyi={H\bibinitperiod},
+           given={Jonathan},
+           giveni={J\bibinitperiod}}}%
+      }
+      \strng{namehash}{8035bf4cbd215d18ec6655dfa2a145b0}
+      \strng{fullhash}{8035bf4cbd215d18ec6655dfa2a145b0}
+      \strng{fullhashraw}{8035bf4cbd215d18ec6655dfa2a145b0}
+      \strng{bibnamehash}{8035bf4cbd215d18ec6655dfa2a145b0}
+      \strng{authorbibnamehash}{8035bf4cbd215d18ec6655dfa2a145b0}
+      \strng{authornamehash}{8035bf4cbd215d18ec6655dfa2a145b0}
+      \strng{authorfullhash}{8035bf4cbd215d18ec6655dfa2a145b0}
+      \strng{authorfullhashraw}{8035bf4cbd215d18ec6655dfa2a145b0}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{ICLR}
+      \field{title}{Progressive Distillation for Fast Sampling of Diffusion Models}
+      \field{year}{2022}
+    \endentry
+    \entry{song2023consistency}{article}{}{}
+      \name{author}{2}{}{%
+        {{hash=7dacbb5a6e92ab16944d46ba03705563}{%
+           family={Song},
+           familyi={S\bibinitperiod},
+           given={Yang},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=4164e43d8cf919f5e3f8d80f5ea23f36}{%
+           family={Dhariwal},
+           familyi={D\bibinitperiod},
+           given={Prafulla},
+           giveni={P\bibinitperiod}}}%
+      }
+      \strng{namehash}{9634e8c4b2cc150bfda667667cd68dd9}
+      \strng{fullhash}{9634e8c4b2cc150bfda667667cd68dd9}
+      \strng{fullhashraw}{9634e8c4b2cc150bfda667667cd68dd9}
+      \strng{bibnamehash}{9634e8c4b2cc150bfda667667cd68dd9}
+      \strng{authorbibnamehash}{9634e8c4b2cc150bfda667667cd68dd9}
+      \strng{authornamehash}{9634e8c4b2cc150bfda667667cd68dd9}
+      \strng{authorfullhash}{9634e8c4b2cc150bfda667667cd68dd9}
+      \strng{authorfullhashraw}{9634e8c4b2cc150bfda667667cd68dd9}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{ICML}
+      \field{title}{Consistency Models}
+      \field{year}{2023}
+    \endentry
+    \entry{survey2025diffusion}{article}{}{}
+      \name{author}{2}{}{%
+        {{hash=59d10f8a548ee180b28909fb783a76eb}{%
+           family={Zhang},
+           familyi={Z\bibinitperiod},
+           given={D.},
+           giveni={D\bibinitperiod}}}%
+        {{hash=66d548e0e670e107fc4a80dc0c3825b3}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={Y.},
+           giveni={Y\bibinitperiod}}}%
+      }
+      \strng{namehash}{ff80cef7d23edc7d47b8297aacb9ac18}
+      \strng{fullhash}{ff80cef7d23edc7d47b8297aacb9ac18}
+      \strng{fullhashraw}{ff80cef7d23edc7d47b8297aacb9ac18}
+      \strng{bibnamehash}{ff80cef7d23edc7d47b8297aacb9ac18}
+      \strng{authorbibnamehash}{ff80cef7d23edc7d47b8297aacb9ac18}
+      \strng{authornamehash}{ff80cef7d23edc7d47b8297aacb9ac18}
+      \strng{authorfullhash}{ff80cef7d23edc7d47b8297aacb9ac18}
+      \strng{authorfullhashraw}{ff80cef7d23edc7d47b8297aacb9ac18}
+      \field{sortinit}{4}
+      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{IEEE Transactions on Pattern Analysis and Machine Intelligence}
+      \field{title}{A Comprehensive Survey on Diffusion Language Models: 2024-2026}
+      \field{year}{2026}
+    \endentry
+    \entry{li2024accelerating}{article}{}{}
+      \true{moreauthor}
+      \true{morelabelname}
+      \name{author}{2}{}{%
+        {{hash=29518fd61a56458b9a5c274ce9621132}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={Xiangcheng},
+           giveni={X\bibinitperiod}}}%
+        {{hash=471e61c37bc3e62dbe8655e02a002343}{%
+           family={Wang},
+           familyi={W\bibinitperiod},
+           given={Yue},
+           giveni={Y\bibinitperiod}}}%
+      }
+      \strng{namehash}{0f5f5d9163c3f4995d8651074c25c4a0}
+      \strng{fullhash}{0f5f5d9163c3f4995d8651074c25c4a0}
+      \strng{fullhashraw}{0f5f5d9163c3f4995d8651074c25c4a0}
+      \strng{bibnamehash}{0f5f5d9163c3f4995d8651074c25c4a0}
+      \strng{authorbibnamehash}{0f5f5d9163c3f4995d8651074c25c4a0}
+      \strng{authornamehash}{0f5f5d9163c3f4995d8651074c25c4a0}
+      \strng{authorfullhash}{0f5f5d9163c3f4995d8651074c25c4a0}
+      \strng{authorfullhashraw}{0f5f5d9163c3f4995d8651074c25c4a0}
+      \field{sortinit}{5}
+      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{arXiv preprint arXiv:2406.10998}
+      \field{title}{Accelerating Diffusion Language Models: A Survey on Sampling and Post-Training Methods}
+      \field{year}{2024}
+    \endentry
+    \entry{ho2020ddpm}{article}{}{}
+      \name{author}{3}{}{%
+        {{hash=2ac2ca10b22e4d13af1767e87495412f}{%
+           family={Ho},
+           familyi={H\bibinitperiod},
+           given={Jonathan},
+           giveni={J\bibinitperiod}}}%
+        {{hash=31ac0835ffc3ba6d612252522a6a2011}{%
+           family={Jain},
+           familyi={J\bibinitperiod},
+           given={Ajay},
+           giveni={A\bibinitperiod}}}%
+        {{hash=e28d4ee199593959d8c29980a64f1974}{%
+           family={Abbeel},
+           familyi={A\bibinitperiod},
+           given={Pieter},
+           giveni={P\bibinitperiod}}}%
+      }
+      \strng{namehash}{d9c72e0919aac578c7e983d804becd3d}
+      \strng{fullhash}{1ef17e0fed8d834b029ebb1c6adf76b4}
+      \strng{fullhashraw}{1ef17e0fed8d834b029ebb1c6adf76b4}
+      \strng{bibnamehash}{1ef17e0fed8d834b029ebb1c6adf76b4}
+      \strng{authorbibnamehash}{1ef17e0fed8d834b029ebb1c6adf76b4}
+      \strng{authornamehash}{d9c72e0919aac578c7e983d804becd3d}
+      \strng{authorfullhash}{1ef17e0fed8d834b029ebb1c6adf76b4}
+      \strng{authorfullhashraw}{1ef17e0fed8d834b029ebb1c6adf76b4}
+      \field{sortinit}{6}
+      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Advances in Neural Information Processing Systems}
+      \field{title}{Denoising Diffusion Probabilistic Models}
+      \field{volume}{33}
+      \field{year}{2020}
+      \field{pages}{6840\bibrangedash 6851}
+      \range{pages}{12}
+    \endentry
+    \entry{song2020ddim}{article}{}{}
+      \name{author}{3}{}{%
+        {{hash=78372b7167d001d4c80db2b19d6a76f3}{%
+           family={Song},
+           familyi={S\bibinitperiod},
+           given={Jiaming},
+           giveni={J\bibinitperiod}}}%
+        {{hash=58f87d1ad306023b7f8301b2b85c1584}{%
+           family={Meng},
+           familyi={M\bibinitperiod},
+           given={Chenlin},
+           giveni={C\bibinitperiod}}}%
+        {{hash=160929a7e6ceecdf3f7c9a13abd5ea35}{%
+           family={Ermon},
+           familyi={E\bibinitperiod},
+           given={Stefano},
+           giveni={S\bibinitperiod}}}%
+      }
+      \strng{namehash}{48b91413191c8335a53fdbd2568bafd4}
+      \strng{fullhash}{ebc7e264c58ec8ac9b0159b127245547}
+      \strng{fullhashraw}{ebc7e264c58ec8ac9b0159b127245547}
+      \strng{bibnamehash}{ebc7e264c58ec8ac9b0159b127245547}
+      \strng{authorbibnamehash}{ebc7e264c58ec8ac9b0159b127245547}
+      \strng{authornamehash}{48b91413191c8335a53fdbd2568bafd4}
+      \strng{authorfullhash}{ebc7e264c58ec8ac9b0159b127245547}
+      \strng{authorfullhashraw}{ebc7e264c58ec8ac9b0159b127245547}
+      \field{sortinit}{7}
+      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{ICLR}
+      \field{title}{Denoising Diffusion Implicit Models}
+      \field{year}{2021}
+    \endentry
+    \entry{sahoo2024mdlm}{inproceedings}{}{}
+      \true{moreauthor}
+      \true{morelabelname}
+      \name{author}{1}{}{%
+        {{hash=af5e40d1a92c5b6bfc6a8506ba4c3f21}{%
+           family={Sahoo},
+           familyi={S\bibinitperiod},
+           given={S.},
+           giveni={S\bibinitperiod}}}%
+      }
+      \strng{namehash}{517eabd40919379a41b39c3c67193087}
+      \strng{fullhash}{517eabd40919379a41b39c3c67193087}
+      \strng{fullhashraw}{517eabd40919379a41b39c3c67193087}
+      \strng{bibnamehash}{517eabd40919379a41b39c3c67193087}
+      \strng{authorbibnamehash}{517eabd40919379a41b39c3c67193087}
+      \strng{authornamehash}{517eabd40919379a41b39c3c67193087}
+      \strng{authorfullhash}{517eabd40919379a41b39c3c67193087}
+      \strng{authorfullhashraw}{517eabd40919379a41b39c3c67193087}
+      \field{sortinit}{8}
+      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{NeurIPS}
+      \field{title}{Masked Diffusion Language Models}
+      \field{year}{2024}
+    \endentry
+    \entry{vaswani2017attention}{article}{}{}
+      \true{moreauthor}
+      \true{morelabelname}
+      \name{author}{1}{}{%
+        {{hash=7f28e84700536646dd6620a0db07ad09}{%
+           family={Vaswani},
+           familyi={V\bibinitperiod},
+           given={Ashish},
+           giveni={A\bibinitperiod}}}%
+      }
+      \strng{namehash}{ee273ab30cfb889666f8c4d806eb9ce7}
+      \strng{fullhash}{ee273ab30cfb889666f8c4d806eb9ce7}
+      \strng{fullhashraw}{ee273ab30cfb889666f8c4d806eb9ce7}
+      \strng{bibnamehash}{ee273ab30cfb889666f8c4d806eb9ce7}
+      \strng{authorbibnamehash}{ee273ab30cfb889666f8c4d806eb9ce7}
+      \strng{authornamehash}{ee273ab30cfb889666f8c4d806eb9ce7}
+      \strng{authorfullhash}{ee273ab30cfb889666f8c4d806eb9ce7}
+      \strng{authorfullhashraw}{ee273ab30cfb889666f8c4d806eb9ce7}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Advances in neural information processing systems}
+      \field{title}{Attention is all you need}
+      \field{volume}{30}
+      \field{year}{2017}
+    \endentry
+    \entry{su2024rope}{article}{}{}
+      \true{moreauthor}
+      \true{morelabelname}
+      \name{author}{1}{}{%
+        {{hash=35a1322f255378805b1ccafcdc79bc6e}{%
+           family={Su},
+           familyi={S\bibinitperiod},
+           given={Jianlin},
+           giveni={J\bibinitperiod}}}%
+      }
+      \strng{namehash}{614a8a3ef11d5db640d9715c31aa0cbc}
+      \strng{fullhash}{614a8a3ef11d5db640d9715c31aa0cbc}
+      \strng{fullhashraw}{614a8a3ef11d5db640d9715c31aa0cbc}
+      \strng{bibnamehash}{614a8a3ef11d5db640d9715c31aa0cbc}
+      \strng{authorbibnamehash}{614a8a3ef11d5db640d9715c31aa0cbc}
+      \strng{authornamehash}{614a8a3ef11d5db640d9715c31aa0cbc}
+      \strng{authorfullhash}{614a8a3ef11d5db640d9715c31aa0cbc}
+      \strng{authorfullhashraw}{614a8a3ef11d5db640d9715c31aa0cbc}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Neurocomputing}
+      \field{title}{RoFormer: Enhanced Transformer with Rotary Position Embedding}
+      \field{volume}{568}
+      \field{year}{2024}
+    \endentry
+    \entry{hinton2015distilling}{article}{}{}
+      \name{author}{3}{}{%
+        {{hash=9a8750ccdb2a4cf14d2655face1ce016}{%
+           family={Hinton},
+           familyi={H\bibinitperiod},
+           given={Geoffrey},
+           giveni={G\bibinitperiod}}}%
+        {{hash=494b568c5dc85ba8f3f409635f9c5f25}{%
+           family={Vinyals},
+           familyi={V\bibinitperiod},
+           given={Oriol},
+           giveni={O\bibinitperiod}}}%
+        {{hash=62f954323339abeba6c6a240e9d2855b}{%
+           family={Dean},
+           familyi={D\bibinitperiod},
+           given={Jeff},
+           giveni={J\bibinitperiod}}}%
+      }
+      \strng{namehash}{394c7f90c50c43b0c3394f0b9f423e53}
+      \strng{fullhash}{ffe4fa3a93a3b1a8ca1d3c8b76f864d7}
+      \strng{fullhashraw}{ffe4fa3a93a3b1a8ca1d3c8b76f864d7}
+      \strng{bibnamehash}{ffe4fa3a93a3b1a8ca1d3c8b76f864d7}
+      \strng{authorbibnamehash}{ffe4fa3a93a3b1a8ca1d3c8b76f864d7}
+      \strng{authornamehash}{394c7f90c50c43b0c3394f0b9f423e53}
+      \strng{authorfullhash}{ffe4fa3a93a3b1a8ca1d3c8b76f864d7}
+      \strng{authorfullhashraw}{ffe4fa3a93a3b1a8ca1d3c8b76f864d7}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{arXiv preprint arXiv:1503.02531}
+      \field{title}{Distilling the Knowledge in a Neural Network}
+      \field{year}{2015}
+    \endentry
+    \entry{hu2022lora}{article}{}{}
+      \true{moreauthor}
+      \true{morelabelname}
+      \name{author}{1}{}{%
+        {{hash=e6a95d07b8ae7f14e4eb777c6980a059}{%
+           family={Hu},
+           familyi={H\bibinitperiod},
+           given={Edward\bibnamedelima J.},
+           giveni={E\bibinitperiod\bibinitdelim J\bibinitperiod}}}%
+      }
+      \strng{namehash}{d775178c34083951ab1e07df578582c3}
+      \strng{fullhash}{d775178c34083951ab1e07df578582c3}
+      \strng{fullhashraw}{d775178c34083951ab1e07df578582c3}
+      \strng{bibnamehash}{d775178c34083951ab1e07df578582c3}
+      \strng{authorbibnamehash}{d775178c34083951ab1e07df578582c3}
+      \strng{authornamehash}{d775178c34083951ab1e07df578582c3}
+      \strng{authorfullhash}{d775178c34083951ab1e07df578582c3}
+      \strng{authorfullhashraw}{d775178c34083951ab1e07df578582c3}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{ICLR}
+      \field{title}{{LoRA}: Low-Rank Adaptation of Large Language Models}
+      \field{year}{2022}
+    \endentry
+    \entry{promptfoo2024}{misc}{}{}
+      \name{author}{1}{}{%
+        {{hash=6e8df9cc56c98960e81b27d608533ef4}{%
+           family={{Promptfoo}},
+           familyi={P\bibinitperiod}}}%
+      }
+      \strng{namehash}{6e8df9cc56c98960e81b27d608533ef4}
+      \strng{fullhash}{6e8df9cc56c98960e81b27d608533ef4}
+      \strng{fullhashraw}{6e8df9cc56c98960e81b27d608533ef4}
+      \strng{bibnamehash}{6e8df9cc56c98960e81b27d608533ef4}
+      \strng{authorbibnamehash}{6e8df9cc56c98960e81b27d608533ef4}
+      \strng{authornamehash}{6e8df9cc56c98960e81b27d608533ef4}
+      \strng{authorfullhash}{6e8df9cc56c98960e81b27d608533ef4}
+      \strng{authorfullhashraw}{6e8df9cc56c98960e81b27d608533ef4}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://www.promptfoo.dev}}
+      \field{title}{{Promptfoo}: Open-source LLM Testing and Evaluation}
+      \field{year}{2024}
+    \endentry
+    \entry{strubell2019energy}{report}{}{}
+      \name{author}{3}{}{%
+        {{hash=d3bf550429e9ba5e3e93b995e9b40d85}{%
+           family={Strubell},
+           familyi={S\bibinitperiod},
+           given={Emma},
+           giveni={E\bibinitperiod}}}%
+        {{hash=f6ed9182b4527a73a06c24556f54acef}{%
+           family={Ganesh},
+           familyi={G\bibinitperiod},
+           given={Ananya},
+           giveni={A\bibinitperiod}}}%
+        {{hash=17d73a3a5be48993791cbe4db8855331}{%
+           family={McCallum},
+           familyi={M\bibinitperiod},
+           given={Andrew},
+           giveni={A\bibinitperiod}}}%
+      }
+      \list{institution}{1}{%
+        {University of Massachusetts Amherst}%
+      }
+      \strng{namehash}{6f41e3eda2632aec246e5a440ff36f6f}
+      \strng{fullhash}{885b3b62ebd4bca1bb8cde91020e4c6f}
+      \strng{fullhashraw}{885b3b62ebd4bca1bb8cde91020e4c6f}
+      \strng{bibnamehash}{885b3b62ebd4bca1bb8cde91020e4c6f}
+      \strng{authorbibnamehash}{885b3b62ebd4bca1bb8cde91020e4c6f}
+      \strng{authornamehash}{6f41e3eda2632aec246e5a440ff36f6f}
+      \strng{authorfullhash}{885b3b62ebd4bca1bb8cde91020e4c6f}
+      \strng{authorfullhashraw}{885b3b62ebd4bca1bb8cde91020e4c6f}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{Energy and Policy Considerations for Deep Learning in NLP}
+      \field{type}{techreport}
+      \field{year}{2019}
+    \endentry
+  \enddatalist
+\endrefsection
+\endinput
+

@@ -9,6 +9,7 @@ import json
 import urllib.request
 import urllib.error
 import socket
+import time
 
 
 def call_api(prompt, options, context):
@@ -23,11 +24,21 @@ def call_api(prompt, options, context):
     # Use longer timeout for LLaDA generation (can take several minutes)
     timeout_seconds = 300  # 5 minutes
 
+    http_start = time.time()
     try:
         req = urllib.request.Request(url, data=data, headers=headers)
         with urllib.request.urlopen(req, timeout=timeout_seconds) as response:
             result = json.loads(response.read().decode('utf-8'))
-            return {"output": result.get('response', '')}
+            http_ms = (time.time() - http_start) * 1000
+
+            # Capture server-reported timing and attach HTTP round-trip overhead
+            server_timing = result.get('timing', {})
+            server_timing['http_roundtrip_ms'] = round(http_ms, 2)
+
+            return {
+                "output": result.get('response', ''),
+                "metadata": {"timing": server_timing}
+            }
 
     except urllib.error.URLError as e:
         error_msg = str(e)

@@ -1,0 +1,80 @@
+{
+  "average_perplexity": 24.8578,
+  "num_samples": 12,
+  "samples": [
+    {
+      "prompt_id": 1,
+      "prompt": "You are a football coach. Your team is losing 2-0 at halftime. Write a short motivational speech for...",
+      "output_preview": "Alright team, let's getroup. We've been this before,,, and we've come back before.. We're't losing,, we're're playing momentum. 's, stay strong, and s...",
+      "perplexity": 59.2527
+    },
+    {
+      "prompt_id": 2,
+      "prompt": "Explain the theory of relativity to a 5-year-old. Use simple words and a short analogy.",
+      "output_preview": "Imagine you're on a a fast car. When you're moving, fast and slow seem to. But when you're really really fast, time seems to stretch. That's the relat...",
+      "perplexity": 32.2126
+    },
+    {
+      "prompt_id": 3,
+      "prompt": "Write a Python script that reads a CSV file and calculates the average of a column named 'Price'. Ha...",
+      "output_preview": "import pandas\n pd\n\n:\n    df = pd.read_csv('data.csv.csv')\n    average_price = df['Price'].mean()\n    print(f\"The average price is: average_price:.2f}\"...",
+      "perplexity": 30.0395
+    },
+    {
+      "prompt_id": 4,
+      "prompt": "Summarize the following meeting note in exactly 3 bullet points: We discussed the Q3 roadmap, agreed...",
+      "output_preview": "- Q3 roadmap discussion\n- Feature X moved to October\n- Alice to draft spec assigned by Friday",
+      "perplexity": 1353.4899
+    },
+    {
+      "prompt_id": 5,
+      "prompt": "Summarize the plot of the movie 'The Matrix' (1999) in exactly 3 sentences.",
+      "output_preview": "In 'The Matrix' (1999), Neo discovers a computer hacker program that allows him to enter a simulated reality known as the Matrix. He joins a group of ...",
+      "perplexity": 33.275
+    },
+    {
+      "prompt_id": 6,
+      "prompt": "Create a 3-day workout plan for a beginner using only bodyweight exercises. Include sets and reps fo...",
+      "output_preview": "Day 1: 3 sets of 10 push-ups, 3 sets of 10 squats. Day 2: 3 sets of 10 lung-ups, 3 sets of 10 leges. Day 3: 3 sets of 10 mountain planks.",
+      "perplexity": 9.2758
+    },
+    {
+      "prompt_id": 7,
+      "prompt": "Explain why the sky is blue. Keep it under 100 words.",
+      "output_preview": "The sky appears blue because sunlight sunlight enters the Earth's atmosphere and interacts with molecules and tiny particles. This light is made up of...",
+      "perplexity": 21.7957
+    },
+    {
+      "prompt_id": 8,
+      "prompt": "Write a short professional email declining a job offer. The reason is that the salary is too low.",
+      "output_preview": "Subject: Re: Job Offer\n\nDear [Manager's Name],\n\nThank you for the opportunity offer. I, I am to decline the job offer. the salary is too too low to me...",
+      "perplexity": 27.6984
+    },
+    {
+      "prompt_id": 9,
+      "prompt": "List exactly 5 ingredients for a traditional Margherita pizza. Use a numbered list.",
+      "output_preview": "1. Tomato sauce\n2. Fresh mozzarella\n3. Fresh mozzarella\n4. Fresh basil\n5. Fresh basil",
+      "perplexity": 8.2011
+    },
+    {
+      "prompt_id": 10,
+      "prompt": "Compare and contrast Batman and Superman in two short paragraphs.",
+      "output_preview": "Batman and Superman are two iconic characters in comic book history. While Batman is a vigilanteante with a troubled past, Superman is a superhero bor...",
+      "perplexity": 30.6572
+    },
+    {
+      "prompt_id": 11,
+      "prompt": "Create a short troubleshooting checklist for a Wi-Fi connection that keeps dropping. Format it as nu...",
+      "output_preview": "1. Restart your router.\n2. Restart your device.\n3. Check for Wi-Fi settings...\n\n.\n\n..\n.\n\n.\n\n.",
+      "perplexity": 14.0564
+    },
+    {
+      "prompt_id": 12,
+      "prompt": "Give step-by-step instructions for boiling an egg to medium-boiled. Number each step.",
+      "output_preview": "1. Fill the saucepan with a pot of cold water. 2. Place the egg in the water. 3. Bring the water to a boil. 4. Reduce the heat to low and simmer for 7...",
+      "perplexity": 6.971
+    }
+  ],
+  "excluded_max_perplexity": 1353.4899,
+  "trimmed_sample_count": 11
+}

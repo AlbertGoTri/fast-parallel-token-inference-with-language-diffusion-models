@@ -1,0 +1,80 @@
+{
+  "average_perplexity": 161.9322,
+  "num_samples": 12,
+  "samples": [
+    {
+      "prompt_id": 1,
+      "prompt": "You are a football coach. Your team is losing 2-0 at halftime. Write a short motivational speech for...",
+      "output_preview": "Alright,,, we we we we,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,, and, and and and and and and and and and and!",
+      "perplexity": 34.6424
+    },
+    {
+      "prompt_id": 2,
+      "prompt": "Explain the theory of relativity to a 5-year-old. Use simple words and a short analogy.",
+      "output_preview": "Imagine you of of a a a big,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,, on the sun and.",
+      "perplexity": 233.2423
+    },
+    {
+      "prompt_id": 3,
+      "prompt": "Write a Python script that reads a CSV file and calculates the average of a column named 'Price'. Ha...",
+      "output_preview": "import pandas\n pd\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n```",
+      "perplexity": 22.474
+    },
+    {
+      "prompt_id": 4,
+      "prompt": "Summarize the following meeting note in exactly 3 bullet points: We discussed the Q3 roadmap, agreed...",
+      "output_preview": "- Q3 roadmap discussion\n- Feature X Xoved to October\n\n Alice Alice Alice to to by by Friday Friday",
+      "perplexity": 3971.6116
+    },
+    {
+      "prompt_id": 5,
+      "prompt": "Summarize the plot of the movie 'The Matrix' (1999) in exactly 3 sentences.",
+      "output_preview": "In 'The9 (9999), a a a a a reality a reality a a reality a reality a reality a a a reality a reality a a a a a a a a a a a a a a a a the the the the t...",
+      "perplexity": 21.6956
+    },
+    {
+      "prompt_id": 6,
+      "prompt": "Create a 3-day workout plan for a beginner using only bodyweight exercises. Include sets and reps fo...",
+      "output_preview": "Day 1: \n         \n                                            ats.",
+      "perplexity": 4.1927
+    },
+    {
+      "prompt_id": 7,
+      "prompt": "Explain why the sky is blue. Keep it under 100 words.",
+      "output_preview": "The sky appears blue because to the scattering scattering sunlight,,,,, wavelengths wavelengths wavelengths wavelengths wavelengths wavelengths wavele...",
+      "perplexity": 33.7911
+    },
+    {
+      "prompt_id": 8,
+      "prompt": "Write a short professional email declining a job offer. The reason is that the salary is too low.",
+      "output_preview": "Subject [ Hiring,\n\n\n\n\n for for the offer.\n\nI am the the\n\n\n\nUnfortunately, I cannot decline the offer for the salary. too\n..\n\n\n\n\n the the the the\n...\n\n...",
+      "perplexity": 264.3618
+    },
+    {
+      "prompt_id": 9,
+      "prompt": "List exactly 5 ingredients for a traditional Margherita pizza. Use a numbered list.",
+      "output_preview": "1. Dough dough\n2. Marg Margherita sauce\n3. Freshzzarella\n44..4\n\n555 basil",
+      "perplexity": 462.1201
+    },
+    {
+      "prompt_id": 10,
+      "prompt": "Compare and contrast Batman and Superman in two short paragraphs.",
+      "output_preview": "Batman and Superman are both iconic superheroes from comic Comics.......\n\n\n................\n,,,,,,.",
+      "perplexity": 516.8561
+    },
+    {
+      "prompt_id": 11,
+      "prompt": "Create a short troubleshooting checklist for a Wi-Fi connection that keeps dropping. Format it as nu...",
+      "output_preview": "1. Check for router...\n.....\n....2.\n2.\n\n\n.\n\n..\n..\n.\n........\n..\n.....\n.... router.",
+      "perplexity": 77.3878
+    },
+    {
+      "prompt_id": 12,
+      "prompt": "Give step-by-step instructions for boiling an egg to medium-boiled. Number each step.",
+      "output_preview": "1. Place the egg a a water.\n......2.2.....2.\n..............4...4.\n.....\n... the peeling as desired.",
+      "perplexity": 110.4896
+    }
+  ],
+  "excluded_max_perplexity": 3971.6116,
+  "trimmed_sample_count": 11
+}

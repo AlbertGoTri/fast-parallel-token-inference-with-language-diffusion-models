@@ -159,11 +159,11 @@ def evaluate_from_promptfoo(
     print(f"Found {len(outputs)} outputs to evaluate.")
 
     results = []
-    total_ppl = 0
+    ppls = []
 
     for item in tqdm(outputs, desc="Calculating perplexity"):
         ppl = calculate_perplexity(item['output'], model, tokenizer, device)
-        total_ppl += ppl
+        ppls.append(ppl)
 
         results.append({
             'prompt_id': item['prompt_id'],
@@ -172,13 +172,29 @@ def evaluate_from_promptfoo(
             'perplexity': round(ppl, 4)
         })
 
-    avg_ppl = total_ppl / len(results) if results else 0
+    excluded_max_ppl = None
+    if len(ppls) > 1:
+        excluded_max_ppl = max(ppls)
+        trimmed_ppls = [ppl for ppl in ppls if ppl != excluded_max_ppl]
+        if not trimmed_ppls:
+            trimmed_ppls = ppls
+            excluded_max_ppl = None
+    else:
+        trimmed_ppls = ppls
 
-    return {
+    avg_ppl = sum(trimmed_ppls) / len(trimmed_ppls) if trimmed_ppls else 0
+
+    summary = {
         'average_perplexity': round(avg_ppl, 4),
         'num_samples': len(results),
         'samples': results
     }
+
+    if excluded_max_ppl is not None:
+        summary['excluded_max_perplexity'] = round(excluded_max_ppl, 4)
+        summary['trimmed_sample_count'] = len(trimmed_ppls)
+
+    return summary
 
 
 def evaluate_from_text_file(file_path: str, model, tokenizer, device) -> Dict:
@@ -189,11 +205,11 @@ def evaluate_from_text_file(file_path: str, model, tokenizer, device) -> Dict:
     print(f"Found {len(lines)} lines to evaluate.")
 
     results = []
-    total_ppl = 0
+    ppls = []
 
     for i, text in enumerate(tqdm(lines, desc="Calculating perplexity")):
         ppl = calculate_perplexity(text, model, tokenizer, device)
-        total_ppl += ppl
+        ppls.append(ppl)
 
         results.append({
             'line_id': i + 1,
@@ -201,19 +217,37 @@ def evaluate_from_text_file(file_path: str, model, tokenizer, device) -> Dict:
             'perplexity': round(ppl, 4)
         })
 
-    avg_ppl = total_ppl / len(results) if results else 0
+    excluded_max_ppl = None
+    if len(ppls) > 1:
+        excluded_max_ppl = max(ppls)
+        trimmed_ppls = [ppl for ppl in ppls if ppl != excluded_max_ppl]
+        if not trimmed_ppls:
+            trimmed_ppls = ppls
+            excluded_max_ppl = None
+    else:
+        trimmed_ppls = ppls
 
-    return {
+    avg_ppl = sum(trimmed_ppls) / len(trimmed_ppls) if trimmed_ppls else 0
+
+    summary = {
         'average_perplexity': round(avg_ppl, 4),
         'num_samples': len(results),
         'samples': results
     }
+
+    if excluded_max_ppl is not None:
+        summary['excluded_max_perplexity'] = round(excluded_max_ppl, 4)
+        summary['trimmed_sample_count'] = len(trimmed_ppls)
+
+    return summary
 
 
 def generate_html_report(results: Dict, output_path: str):
     """Generate an HTML report similar to the promptfoo report."""
     avg_ppl = results['average_perplexity']
     num_samples = results['num_samples']
+    excluded_max_ppl = results.get('excluded_max_perplexity')
+    trimmed_sample_count = results.get('trimmed_sample_count')
 
     # Color code based on perplexity
     if avg_ppl < 20:
@@ -320,6 +354,7 @@ def generate_html_report(results: Dict, output_path: str):
                         <p class="text-sm text-gray-300 mt-2">Lower is better.<br/>&lt;20: Excellent, &lt;50: Good, &gt;50: High</p>
                     </div>
                 </div>
+                {f'<div class="mt-4 text-center text-xs text-gray-500">Average computed excluding the highest perplexity value ({excluded_max_ppl:.2f}); trimmed sample count: {trimmed_sample_count}.</div>' if excluded_max_ppl is not None else ''}
             </div>
 
             <h2 class="text-xl font-bold mb-4 text-white">Individual Scores</h2>

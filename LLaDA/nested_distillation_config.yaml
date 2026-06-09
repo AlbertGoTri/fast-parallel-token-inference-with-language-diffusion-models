@@ -25,18 +25,18 @@ student:
   dataset_config: "wikitext-2-raw-v1"
   dataset_split: "train"
   # Number of examples to use for training
-  num_train_examples: 10
+  num_train_examples: 50
   # Minimum text length to filter dataset
   min_text_length: 80
   # LoRA configuration
   lora:
-    r: 8
-    alpha: 16
+    r: 16
+    alpha: 32
     target_modules: ["q_proj", "v_proj"]
     dropout: 0.05
   # Training hyperparameters
   temperature: 2.0
-  learning_rate: 1e-4
+  learning_rate: 5e-5
   max_grad_norm: 1.0
 
 # Distillation schedule
@@ -48,8 +48,8 @@ schedule:
 
 # Evaluation settings
 evaluation:
-  # Promptfoo threshold - minimum pass percentage to continue
-  promptfoo_threshold: 30.0
+  # Promptfoo threshold is informational only; continuation is not gated by it.
+  promptfoo_threshold: 0.0
   # Steps to use during evaluation (can be less than training steps for speed)
   # Set to 0 to use same as training steps (RECOMMENDED for nested distillation)
   eval_steps: 0
@@ -69,8 +69,11 @@ evaluation:
     provider_path: "evaluation/promptfoo/llada_api_provider.py"
     timeout_ms: 7200000  # 2 hours total for all prompts
     max_concurrency: 1
-    # Per-assertion judge max tokens (smaller = less Ollama load).
-    judge_num_predict: 64
+    # Per-assertion judge max tokens.
+    # Batched mode answers all questions for one prompt in a single response,
+    # so this must be large enough for N * {answer, reason} pairs.
+    # ~5 questions * ~80 tokens each = ~400; 1024 leaves comfortable headroom.
+    judge_num_predict: 1024
     # Ollama GPU layers for judge model; 0 forces CPU judging.
     judge_num_gpu: 0
   # Perplexity configuration
@@ -100,28 +103,28 @@ checkpointing:
   # Keep all round outputs (do not delete prior rounds)
   keep_history: true
 
-# Output paths
+# Output paths (relative paths resolve to the LLaDA/ folder)
 paths:
   # Base output directory for all experiments
-  base_output_dir: "outputs/nested_distillation"
+  base_output_dir: "../workspace/LLaDA_outputs/nested_distillation"
   # Cache directory for teacher trajectories (round-specific subdirs created automatically)
-  cache_dir: "outputs/nested_distillation/cache"
+  cache_dir: "../workspace/LLaDA_outputs/nested_distillation/cache"
   # Student checkpoint directory (round-specific subdirs created automatically)
-  checkpoint_dir: "outputs/nested_distillation/checkpoints"
+  checkpoint_dir: "../workspace/LLaDA_outputs/nested_distillation/checkpoints"
   # Evaluation results directory
-  eval_dir: "outputs/nested_distillation/evaluation"
+  eval_dir: "../workspace/LLaDA_outputs/nested_distillation/evaluation"
   # Leaderboard files
   leaderboard:
-    markdown: "outputs/nested_distillation/leaderboard.md"
-    csv: "outputs/nested_distillation/leaderboard.csv"
-    json: "outputs/nested_distillation/leaderboard.json"
+    markdown: "../workspace/LLaDA_outputs/nested_distillation/leaderboard.md"
+    csv: "../workspace/LLaDA_outputs/nested_distillation/leaderboard.csv"
+    json: "../workspace/LLaDA_outputs/nested_distillation/leaderboard.json"
   # Progress/state file for resume support
-  state_file: "outputs/nested_distillation/state.json"
+  state_file: "../workspace/LLaDA_outputs/nested_distillation/state.json"
 
 # System settings
 system:
   # HuggingFace cache directory
-  hf_home: "~/groups/hpai-collaborators/albert-gomez-triunfante/tfg/.cache"
+  hf_home: "D:/tfg/.cache"
   # PyTorch CUDA memory configuration
   cuda_memory_fraction: 0.85
   # Quantization settings

@@ -12,8 +12,48 @@ import shutil
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, Optional, Tuple
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 
+
+# Aggregate generation timer — stored with stage durations per round.
+class StageTimings:
+    """Wall-clock stage durations and per-prompt latency aggregates."""
+
+    def __init__(self):
+        self.cache_s: float = 0.0
+        self.train_s: float = 0.0
+        self.eval_s: float = 0.0
+        self.total_pipeline_s: float = 0.0
+
+        # Per-prompt generation timing aggregates (ms)
+        self.avg_generation_ms: float = 0.0
+        self.median_generation_ms: float = 0.0
+        self.p95_generation_ms: float = 0.0
+        self.min_generation_ms: float = 0.0
+        self.max_generation_ms: float = 0.0
+        self.num_prompts: int = 0
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "cache_s": round(self.cache_s, 2),
+            "train_s": round(self.train_s, 2),
+            "eval_s": round(self.eval_s, 2),
+            "total_pipeline_s": round(self.total_pipeline_s, 2),
+            "avg_generation_ms": round(self.avg_generation_ms, 2),
+            "median_generation_ms": round(self.median_generation_ms, 2),
+            "p95_generation_ms": round(self.p95_generation_ms, 2),
+            "min_generation_ms": round(self.min_generation_ms, 2),
+            "max_generation_ms": round(self.max_generation_ms, 2),
+            "num_prompts": self.num_prompts,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "StageTimings":
+        t = cls()
+        for key, value in data.items():
+            if hasattr(t, key):
+                setattr(t, key, value)
+        return t
 import torch
 import psutil
 
@@ -250,17 +290,49 @@ class RoundResult:
     cache_dir: str
     checkpoint_dir: str
     eval_dir: str
+    latency_seconds: float = 0.0
+    previous_latency: float = 0.0
+    stage_timings: StageTimings = field(default_factory=StageTimings)
+    # Raw per-prompt latency list (optional, for JSON detail, omitted from CSV by default)
+    per_prompt_latencies: list = field(default_factory=list, repr=False)
+    previous_avg_generation_ms: float = 0.0
 
     def to_dict(self) -> Dict[str, Any]:
-        return asdict(self)
+        data = asdict(self)
+        data['stage_timings'] = self.stage_timings.to_dict()
+        return data
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'RoundResult':
-        return cls(**data)
+        # Separate per_prompt_latencies if present to avoid kwarg conflict
+        pd = data.pop('per_prompt_latencies', []) if isinstance(data, dict) else []
+        timings = StageTimings.from_dict(data.pop('stage_timings', {})) if isinstance(data, dict) else StageTimings()
+        obj = cls(**data, per_prompt_latencies=pd, stage_timings=timings)
+        return obj
 
     def format_summary(self) -> str:
-        """Format a one-line summary with assertion-level Promptfoo score."""
-        return f"Student {self.student_steps} steps: promptfoo assertion {self.promptfoo_percent:.1f} percent, perplexity {self.perplexity:.1f}"
+        """Format a one-line summary with assertion-level Promptfoo score and speedup."""
+        st = self.stage_timings
+        avg_ms = st.avg_generation_ms
+        med_ms = st.median_generation_ms
+        p95_ms = st.p95_generation_ms
+        num = st.num_prompts
+
+        speedup_avg = ""
+        speedup_med = ""
+        if self.previous_avg_generation_ms > 0 and avg_ms > 0:
+            s_avg = self.previous_avg_generation_ms / avg_ms
+            speedup_avg = f", avg_speedup={s_avg:.2f}x"
+        if self.previous_avg_generation_ms > 0 and med_ms > 0:
+            s_med = self.previous_avg_generation_ms / med_ms
+            speedup_med = f", med_speedup={s_med:.2f}x"
+
+        return (
+            f"Student {self.student_steps} steps: promptfoo assertion {self.promptfoo_percent:.1f}%, "
+            f"perplexity {self.perplexity:.1f}, "
+            f"avg_gen={avg_ms:.0f}ms, med_gen={med_ms:.0f}ms, p95={p95_ms:.0f}ms, n={num}"
+            f"{speedup_avg}{speedup_med}"
+        )
 
 
 @dataclass
@@ -434,6 +506,46 @@ def run_command(cmd: str, cwd: Optional[str] = None, check: bool = True) -> Tupl
         raise RuntimeError(f"Command failed with exit code {result.returncode}: {cmd}")
 
     return result.returncode, result.stdout, result.stderr
+
+
+def compute_latency_aggregates(latencies: list[Dict[str, Any]]) -> "StageTimings":
+    """Compute aggregate timing statistics from a list of per-prompt timing dicts.
+
+    Each dict should contain at least a 'generation_ms' key (float, milliseconds).
+    """
+    t = StageTimings()
+    generation_times = [float(item.get("generation_ms", 0)) for item in latencies if isinstance(item, dict)]
+    n = len(generation_times)
+    t.num_prompts = n
+    if n == 0:
+        return t
+
+    total = sum(generation_times)
+    avg = total / n
+    t.avg_generation_ms = avg
+
+    sorted_g = sorted(generation_times)
+    t.min_generation_ms = sorted_g[0]
+    t.max_generation_ms = sorted_g[-1]
+
+    # Median
+    mid = n // 2
+    if n % 2 == 0:
+        t.median_generation_ms = (sorted_g[mid - 1] + sorted_g[mid]) / 2.0
+    else:
+        t.median_generation_ms = sorted_g[mid]
+
+    # P95: 95th percentile (linear interpolation between closest ranks)
+    idx = 0.95 * (n - 1)
+    low = int(idx)
+    high = low + 1
+    frac = idx - low
+    if high < n:
+        t.p95_generation_ms = sorted_g[low] + frac * (sorted_g[high] - sorted_g[low])
+    else:
+        t.p95_generation_ms = sorted_g[-1]
+
+    return t
 
 
 def check_ollama_running() -> bool:

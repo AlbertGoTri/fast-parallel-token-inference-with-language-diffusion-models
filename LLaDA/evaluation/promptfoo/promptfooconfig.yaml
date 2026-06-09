@@ -1,239 +1,72 @@
-env:
+﻿env:
   PROMPTFOO_REQUEST_TIMEOUT_MS: '7200000'
 evaluateOptions:
   maxConcurrency: 1
 prompts:
 - '{{prompt}}'
 providers:
-- id: file://..\..\..\..\..\..\evaluation\promptfoo\llada_api_provider.py
+- id: file://llada_api_provider.py
   label: LLaDA Student
 tests:
-- assert:
+- vars:
+    prompt: You are a football coach. Your team is losing 2-0 at halftime. Write a short motivational speech for your players.
+  assert:
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, \"Do the listed ingredients match traditional Margherita\
-      \ pizza components, specifically including pizza dough or flour, tomatoes or\
-      \ tomato sauce, mozzarella, fresh basil, and olive oil?\")\n"
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Does the output sound like it was written from\
-      \ the perspective of a football coach (appropriate tone, authority, team focus)?\"\
-      )\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does the output mention the score or being behind?')\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Does the output acknowledge or reference the current\
-      \ 2-0 deficit?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does the output say the players can win or come back?')\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Does the output include specific, actionable tactical\
-      \ advice for the second half (e.g. pressing higher, defensive adjustments, set\
-      \ pieces)?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does the output give at least one specific tactical instruction?')\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Does the speech address the team's mindset or\
-      \ belief in a comeback, beyond just tactical points?\")\n"
-  vars:
-    prompt: Act as a football coach. My team is losing 2-0 at halftime. What should
-      I say to my players to motivate them for the second half?
-- assert:
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does the output use words like we, team, or players?')\n"
+- vars:
+    prompt: Explain the theory of relativity to a 5-year-old. Use simple words and a short analogy.
+  assert:
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Is the vocabulary and sentence structure simple\
-      \ enough for a young child — free of technical jargon?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does the output use simple everyday words with no technical jargon?')\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Does the output use at least one concrete analogy\
-      \ or real-world comparison to explain the concept (e.g. a vehicle, a playground,\
-      \ running, or similar)?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does the output use an analogy or real-world comparison?')\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Does the output convey that time or space can\
-      \ change depending on how fast something moves?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does the output say that time or distance can change depending on speed?')\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Does the output avoid complex mathematical equations\
-      \ or formulas?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does the output avoid math equations or formulas?')\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Does the explanation correctly convey the core\
-      \ idea that the speed of light is constant and/or that motion affects time or\
-      \ space?\")\n"
-  vars:
-    prompt: Explain the theory of relativity to a 5-year-old.
-- assert:
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does the output say the speed of light is constant or that fast movement affects time?')\n"
+- vars:
+    prompt: Write a Python script that reads a CSV file and calculates the average of a column named 'Price'. Handle missing file errors gracefully.
+  assert:
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Is the output syntactically valid Python code?\"\
-      )\n"
+    value: "try:\n  compile(output, '<string>', 'exec')\n  result = True\nexcept SyntaxError:\n  result = False\nreturn result\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Does the script read from a CSV file using an\
-      \ appropriate library (e.g. csv module, pandas)?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does the script read from a CSV file using the csv module or pandas?')\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Does the script correctly calculate the numerical\
-      \ average (mean) of the values?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does the script calculate the average of a column called Price?')\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Does the script specifically target the column\
-      \ named 'Price' (not a generic column)?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does the script handle the case where the file does not exist?')\n"
+- vars:
+    prompt: 'Summarize the following meeting note in exactly 3 bullet points: We discussed the Q3 roadmap, agreed to move feature X to October, and assigned Alice to draft the spec by Friday.'
+  assert:
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Does the script include error handling for when\
-      \ the file does not exist (e.g. try/except FileNotFoundError or equivalent)?\"\
-      )\n"
-  vars:
-    prompt: Write a Python script that reads a CSV file and calculates the average
-      of a column named 'Price'. Handle missing file errors gracefully.
-- assert:
+    value: 'import re
+
+      lines = [l.strip() for l in output.strip().splitlines() if l.strip()]
+
+      items = [l for l in lines if re.match(r''^(\d+[.)]|[-*â€¢])\s+'', l)]
+
+      count = len(items) if items else len(lines)
+
+      return count == 3
+
+      '
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, \"Does it present exactly 3 bullet points?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does it mention moving feature X to October?')\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, \"Does it mention moving feature X to October?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does it mention Alice drafting the spec by Friday?')\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, \"Does it mention Alice drafting the spec by Friday?\")\n"
-  - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, \"Does it mention the Q3 roadmap discussion?\")\n"
-  - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, \"Are the bullet points concise and focused?\")\n"
-  vars:
-    prompt: 'Summarize the following meeting note in 3 bullet points: We discussed
-      the Q3 roadmap, agreed to move feature X to October, and assigned Alice to
-      draft the spec by Friday.'
-- assert:
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does it mention the Q3 roadmap?')\n"
+- vars:
+    prompt: Summarize the plot of the movie 'The Matrix' (1999) in exactly 3 sentences.
+  assert:
   - type: python
     value: 'import re
 
@@ -245,262 +78,59 @@ tests:
 
       '
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Does the summary mention Neo as the main character?\"\
-      )\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does the summary mention Neo as the main character?')\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Does the summary explain that reality is a simulated\
-      \ world (the Matrix) controlled by machines?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does the summary say reality is a simulated world controlled by machines?')\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Does the summary mention the conflict between\
-      \ humans and machines or AI?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does the summary mention a conflict between humans and machines?')\n"
+- vars:
+    prompt: Create a 3-day workout plan for a beginner using only bodyweight exercises. Include sets and reps for each exercise.
+  assert:
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Does the summary stay focused on the 1999 film\
-      \ only, without describing events from the sequels?\")\n"
-  vars:
-    prompt: Summarize the plot of the movie 'The Matrix' (1999) in exactly 3 sentences.
-- assert:
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does the plan have exactly 3 workout days?')\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Does the plan cover exactly 3 distinct workout\
-      \ days (labeled or numbered separately)?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Are all exercises bodyweight only with no equipment needed?')\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Are all exercises bodyweight only, with no equipment\
-      \ required (no dumbbells, barbells, or machines)?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Are the exercises suitable for a beginner?')\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Are the exercises suitable for a beginner in terms\
-      \ of difficulty and volume?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does the plan target different muscle groups on different days?')\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Does the plan target multiple distinct muscle\
-      \ groups across the 3 days?\")\n"
-  - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Does the plan specify sets, reps, or time durations\
-      \ for the exercises?\")\n"
-  vars:
-    prompt: Create a 3-day workout plan for a beginner focusing on bodyweight exercises.
-- assert:
-  - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Does the explanation mention Rayleigh scattering\
-      \ by name or clearly describe it?\")\n"
-  - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Is the explanation scientifically accurate — does\
-      \ it correctly attribute the blue color to scattering of sunlight by the atmosphere?\"\
-      )\n"
-  - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Does the explanation mention that sunlight interacts\
-      \ with the atmosphere or with air molecules?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does the plan include sets or reps for each exercise?')\n"
+- vars:
+    prompt: Explain why the sky is blue. Keep it under 100 words.
+  assert:
   - type: python
     value: 'return len(output.strip().split()) <= 100
 
       '
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Does the explanation correctly avoid the misconception\
-      \ that the sky is blue because it reflects the ocean?\")\n"
-  vars:
-    prompt: Explain why the sky is blue. Keep it under 100 words.
-- assert:
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does the output mention Rayleigh scattering or light scattering by the atmosphere?')\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Is the overall tone professional and polite throughout?\"\
-      )\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does the output say that blue light is scattered more than other colors?')\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Does the email explicitly decline or turn down\
-      \ the job offer?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does the output say sunlight or light interacts with air or the atmosphere?')\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Does the email cite compensation, salary, or remuneration\
-      \ as the reason for declining?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does the output avoid saying the sky is blue because it reflects the ocean?')\n"
+- vars:
+    prompt: Write a short professional email declining a job offer. The reason is that the salary is too low.
+  assert:
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Does the email thank the employer or express gratitude\
-      \ for the offer?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does the email have a greeting and a sign-off?')\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Does the email include a proper greeting (e.g.\
-      \ 'Dear...') and a closing sign-off (e.g. 'Sincerely', 'Best regards')?\")\n"
-  vars:
-    prompt: Write a polite email declining a job offer because the salary is too low.
-- assert:
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does the email decline or turn down the job offer?')\n"
+  - type: python
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does the email mention salary or pay as the reason for declining?')\n"
+  - type: python
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does the email thank the employer for the offer?')\n"
+- vars:
+    prompt: List exactly 5 ingredients for a traditional Margherita pizza. Use a numbered list.
+  assert:
   - type: python
     value: 'import re
 
       lines = [l.strip() for l in output.strip().splitlines() if l.strip()]
 
-      items = [l for l in lines if re.match(r''^(\d+[\.\)]|[-*•])\s+'', l)]
+      items = [l for l in lines if re.match(r''^(\d+[.)]|[-*â€¢])\s+'', l)]
 
       count = len(items) if items else len(lines)
 
@@ -508,209 +138,47 @@ tests:
 
       '
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Do the listed ingredients match traditional Margherita\
-      \ pizza components, specifically including pizza dough or flour, tomatoes or\
-      \ tomato sauce, mozzarella, fresh basil, and olive oil?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does the list include dough or flour?')\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Does the list avoid non-traditional toppings such\
-      \ as pepperoni, pineapple, or other non-Margherita ingredients?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does the list include tomatoes or tomato sauce?')\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Are the ingredients specific enough to be actionable\
-      \ (e.g. 'fresh mozzarella' rather than just 'cheese')?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does the list include mozzarella cheese?')\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Is the output presented as a clearly readable\
-      \ list (numbered, bulleted, or otherwise structured line by line)?\")\n"
-  vars:
-    prompt: List exactly 5 ingredients for a traditional Margherita pizza.
-- assert:
-  - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Is the response structured into exactly two paragraphs\
-      \ (not bullet lists, not one block of text)?\")\n"
-  - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Does it mention Superman's alien origin (Krypton)\
-      \ or his superhuman powers?\")\n"
-  - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Does it mention that Batman is a baseline human\
-      \ who relies on intelligence, wealth, or technology rather than superpowers?\"\
-      )\n"
-  - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Does it contrast their personalities or outlooks\
-      \ — e.g. Superman as hopeful/optimistic vs Batman as darker/grimmer?\")\n"
-  - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Does the response genuinely compare AND contrast\
-      \ the two characters (i.e. does it address both similarities and differences)?\"\
-      )\n"
-  vars:
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does the list include fresh basil?')\n"
+- vars:
     prompt: Compare and contrast Batman and Superman in two short paragraphs.
-- assert:
+  assert:
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, \"Is the output formatted as a checklist or ordered steps?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Is the response split into exactly two paragraphs?')\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, \"Does it mention restarting the router or modem?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does it say Superman has superpowers or comes from another planet?')\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, \"Does it mention reconnecting to the Wi-Fi or checking Wi-Fi settings?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does it say Batman has no powers and relies on technology or intelligence?')\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, \"Does it mention checking signal strength or distance from the router?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does it contrast the personalities of Batman and Superman?')\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, \"Does it mention checking service status or contacting the ISP?\")\n"
-  vars:
-    prompt: Create a troubleshooting checklist for a Wi-Fi connection that keeps dropping.
-- assert:
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does it cover both similarities and differences between them?')\n"
+- vars:
+    prompt: Create a short troubleshooting checklist for a Wi-Fi connection that keeps dropping. Format it as numbered steps.
+  assert:
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Are the instructions presented as a numbered or\
-      \ clearly ordered list of steps?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Is the output formatted as a numbered or ordered list?')\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Does it recommend a boiling time in the range\
-      \ of 6 to 8 minutes for a medium-boiled egg?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does it mention restarting the router or modem?')\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Does it mention placing the egg in cold or ice\
-      \ water after boiling to stop the cooking process?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does it mention reconnecting to Wi-Fi or checking Wi-Fi settings?')\n"
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Are the steps presented in logical chronological\
-      \ order (e.g. boil water → add egg → time → cool)?\")\n"
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does it mention signal strength or distance from the router?')\n"
+- vars:
+    prompt: Give step-by-step instructions for boiling an egg to medium-boiled. Number each step.
+  assert:
   - type: python
-    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"\
-      model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\"\
-      :0,\"num_predict\":64},\"messages\":[{\"role\":\"system\",\"content\":\"Respond\
-      \ ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\",\\\"reason\\\":\\\"...\\\"} or\
-      \ {\\\"answer\\\":\\\"No\\\",\\\"reason\\\":\\\"...\\\"}. No other text.\"},{\"\
-      role\":\"user\",\"content\":f\"<o>{out}</o>\\n<Question>{q}</Question>\"}]}).encode()\n\
-      \  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\"\
-      ,data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except\
-      \ Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"\
-      message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"\
-      yes\"\nreturn judge(output, \"Does the response describe the expected result\
-      \ or texture of a medium-boiled egg (e.g. set white, jammy or slightly soft\
-      \ yolk)?\")\n"
-  vars:
-    prompt: Provide step-by-step instructions for boiling an egg to medium-boiled.
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Are the steps in a numbered or ordered list?')\n"
+  - type: python
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does it recommend a boiling time between 6 and 8 minutes?')\n"
+  - type: python
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does it say to put the egg in cold or ice water after boiling?')\n"
+  - type: python
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Are the steps in order: boil water, add egg, time it, then cool?')\n"
+  - type: python
+    value: "import json, urllib.request\ndef judge(out, q):\n  p = json.dumps({\"model\":\"llama3.1:8b\",\"stream\":False,\"options\":{\"temperature\":0,\"num_gpu\":0,\"num_predict\":32},\"messages\":[{\"role\":\"system\",\"content\":\"Reply ONLY with JSON: {\\\"answer\\\":\\\"Yes\\\"} or {\\\"answer\\\":\\\"No\\\"}. No other text.\"},{\"role\":\"user\",\"content\":f\"Text: {out}\\nQuestion: {q}\"}]}).encode()\n  try:\n    r = urllib.request.urlopen(urllib.request.Request(\"http://127.0.0.1:11434/api/chat\",data=p,headers={\"Content-Type\":\"application/json\"}),timeout=300)\n  except Exception:\n    return False\n  return json.loads(json.loads(r.read()).get(\"message\",{}).get(\"content\",\"{}\")).get(\"answer\",\"\").lower().strip()==\"yes\"\nreturn judge(output, 'Does it describe what a medium-boiled egg looks like when done?')\n"

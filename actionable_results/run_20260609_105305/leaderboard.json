@@ -1,0 +1,1018 @@
+[
+  {
+    "round_number": 0,
+    "student_name": "teacher_baseline",
+    "teacher_name": "GSAI-ML/LLaDA-8B-Instruct",
+    "student_steps": 128,
+    "teacher_steps": 128,
+    "promptfoo_percent": 74.07,
+    "perplexity": 13.0037,
+    "passed": true,
+    "timestamp": "2026-06-09T11:06:05.939732",
+    "cache_dir": "",
+    "checkpoint_dir": "GSAI-ML/LLaDA-8B-Instruct",
+    "eval_dir": "C:\\Users\\Gotri\\Documents\\tfg\\LLaDA\\workspace\\LLaDA_outputs\\nested_distillation\\runs\\run_20260609_105305\\teacher_eval",
+    "latency_seconds": 0.0,
+    "previous_latency": 0.0,
+    "stage_timings": {
+      "cache_s": 0.0,
+      "train_s": 0.0,
+      "eval_s": 780.26,
+      "total_pipeline_s": 780.26,
+      "avg_generation_ms": 17291.84,
+      "median_generation_ms": 17266.5,
+      "p95_generation_ms": 17533.67,
+      "min_generation_ms": 17018.09,
+      "max_generation_ms": 17622.86,
+      "num_prompts": 12
+    },
+    "per_prompt_latencies": [
+      {
+        "tokenization_ms": 4.9,
+        "generation_ms": 17622.86,
+        "total_ms": 17627.75,
+        "steps": 128,
+        "prompt_hash": "6dd85f1ac5b9b0ff",
+        "prompt_preview": "You are a football coach. Your team is losing 2-0 at halftime. Write a short motivational speech for your players."
+      },
+      {
+        "tokenization_ms": 1.04,
+        "generation_ms": 17018.09,
+        "total_ms": 17019.13,
+        "steps": 128,
+        "prompt_hash": "6255119c0b9e22c1",
+        "prompt_preview": "Explain the theory of relativity to a 5-year-old. Use simple words and a short analogy."
+      },
+      {
+        "tokenization_ms": 1.01,
+        "generation_ms": 17185.45,
+        "total_ms": 17186.46,
+        "steps": 128,
+        "prompt_hash": "a6ff3e002dd61015",
+        "prompt_preview": "Write a Python script that reads a CSV file and calculates the average of a column named 'Price'. Handle missing file er"
+      },
+      {
+        "tokenization_ms": 1.01,
+        "generation_ms": 17429.17,
+        "total_ms": 17430.18,
+        "steps": 128,
+        "prompt_hash": "1e8296b29a635141",
+        "prompt_preview": "Summarize the following meeting note in exactly 3 bullet points: We discussed the Q3 roadmap, agreed to move feature X t"
+      },
+      {
+        "tokenization_ms": 1.0,
+        "generation_ms": 17225.05,
+        "total_ms": 17226.05,
+        "steps": 128,
+        "prompt_hash": "b865be8a0aefd8cf",
+        "prompt_preview": "Summarize the plot of the movie 'The Matrix' (1999) in exactly 3 sentences."
+      },
+      {
+        "tokenization_ms": 0.97,
+        "generation_ms": 17292.62,
+        "total_ms": 17293.59,
+        "steps": 128,
+        "prompt_hash": "e6975066b40b91bf",
+        "prompt_preview": "Create a 3-day workout plan for a beginner using only bodyweight exercises. Include sets and reps for each exercise."
+      },
+      {
+        "tokenization_ms": 1.0,
+        "generation_ms": 17169.07,
+        "total_ms": 17171.08,
+        "steps": 128,
+        "prompt_hash": "10044634bbb2e473",
+        "prompt_preview": "Explain why the sky is blue. Keep it under 100 words."
+      },
+      {
+        "tokenization_ms": 1.01,
+        "generation_ms": 17269.2,
+        "total_ms": 17271.21,
+        "steps": 128,
+        "prompt_hash": "e916ee960eb06f5a",
+        "prompt_preview": "Write a short professional email declining a job offer. The reason is that the salary is too low."
+      },
+      {
+        "tokenization_ms": 1.12,
+        "generation_ms": 17263.8,
+        "total_ms": 17264.92,
+        "steps": 128,
+        "prompt_hash": "442e82743ee6fecb",
+        "prompt_preview": "List exactly 5 ingredients for a traditional Margherita pizza. Use a numbered list."
+      },
+      {
+        "tokenization_ms": 1.04,
+        "generation_ms": 17188.41,
+        "total_ms": 17189.45,
+        "steps": 128,
+        "prompt_hash": "1b75ac9742bd7a0e",
+        "prompt_preview": "Compare and contrast Batman and Superman in two short paragraphs."
+      },
+      {
+        "tokenization_ms": 1.1,
+        "generation_ms": 17377.61,
+        "total_ms": 17378.71,
+        "steps": 128,
+        "prompt_hash": "ec13442c549521bd",
+        "prompt_preview": "Create a short troubleshooting checklist for a Wi-Fi connection that keeps dropping. Format it as numbered steps."
+      },
+      {
+        "tokenization_ms": 2.01,
+        "generation_ms": 17460.7,
+        "total_ms": 17462.71,
+        "steps": 128,
+        "prompt_hash": "412926e4679b6ca9",
+        "prompt_preview": "Give step-by-step instructions for boiling an egg to medium-boiled. Number each step."
+      }
+    ],
+    "previous_avg_generation_ms": 0.0
+  },
+  {
+    "round_number": 1,
+    "student_name": "student_steps_64",
+    "teacher_name": "teacher_steps_128",
+    "student_steps": 64,
+    "teacher_steps": 128,
+    "promptfoo_percent": 74.07,
+    "perplexity": 12.9726,
+    "passed": true,
+    "timestamp": "2026-06-09T11:34:15.038213",
+    "cache_dir": "C:\\Users\\Gotri\\Documents\\tfg\\LLaDA\\workspace\\LLaDA_outputs\\nested_distillation\\runs\\run_20260609_105305\\round_001_steps_64\\cache",
+    "checkpoint_dir": "C:\\Users\\Gotri\\Documents\\tfg\\LLaDA\\workspace\\LLaDA_outputs\\nested_distillation\\runs\\run_20260609_105305\\round_001_steps_64\\checkpoint",
+    "eval_dir": "C:\\Users\\Gotri\\Documents\\tfg\\LLaDA\\workspace\\LLaDA_outputs\\nested_distillation\\runs\\run_20260609_105305\\round_001_steps_64\\evaluation",
+    "latency_seconds": 0.0,
+    "previous_latency": 0.0,
+    "stage_timings": {
+      "cache_s": 910.5,
+      "train_s": 136.4,
+      "eval_s": 641.7,
+      "total_pipeline_s": 1688.6,
+      "avg_generation_ms": 8934.46,
+      "median_generation_ms": 8838.47,
+      "p95_generation_ms": 9276.07,
+      "min_generation_ms": 8790.76,
+      "max_generation_ms": 9513.01,
+      "num_prompts": 12
+    },
+    "per_prompt_latencies": [
+      {
+        "tokenization_ms": 5.91,
+        "generation_ms": 9513.01,
+        "total_ms": 9520.89,
+        "steps": 64,
+        "prompt_hash": "6dd85f1ac5b9b0ff",
+        "prompt_preview": "You are a football coach. Your team is losing 2-0 at halftime. Write a short motivational speech for your players."
+      },
+      {
+        "tokenization_ms": 1.0,
+        "generation_ms": 8819.36,
+        "total_ms": 8820.36,
+        "steps": 64,
+        "prompt_hash": "6255119c0b9e22c1",
+        "prompt_preview": "Explain the theory of relativity to a 5-year-old. Use simple words and a short analogy."
+      },
+      {
+        "tokenization_ms": 0.0,
+        "generation_ms": 8833.74,
+        "total_ms": 8833.74,
+        "steps": 64,
+        "prompt_hash": "a6ff3e002dd61015",
+        "prompt_preview": "Write a Python script that reads a CSV file and calculates the average of a column named 'Price'. Handle missing file er"
+      },
+      {
+        "tokenization_ms": 0.0,
+        "generation_ms": 8946.54,
+        "total_ms": 8946.54,
+        "steps": 64,
+        "prompt_hash": "1e8296b29a635141",
+        "prompt_preview": "Summarize the following meeting note in exactly 3 bullet points: We discussed the Q3 roadmap, agreed to move feature X t"
+      },
+      {
+        "tokenization_ms": 10.07,
+        "generation_ms": 9082.21,
+        "total_ms": 9092.28,
+        "steps": 64,
+        "prompt_hash": "b865be8a0aefd8cf",
+        "prompt_preview": "Summarize the plot of the movie 'The Matrix' (1999) in exactly 3 sentences."
+      },
+      {
+        "tokenization_ms": 0.0,
+        "generation_ms": 8828.49,
+        "total_ms": 8828.49,
+        "steps": 64,
+        "prompt_hash": "e6975066b40b91bf",
+        "prompt_preview": "Create a 3-day workout plan for a beginner using only bodyweight exercises. Include sets and reps for each exercise."
+      },
+      {
+        "tokenization_ms": 0.0,
+        "generation_ms": 8790.76,
+        "total_ms": 8790.76,
+        "steps": 64,
+        "prompt_hash": "10044634bbb2e473",
+        "prompt_preview": "Explain why the sky is blue. Keep it under 100 words."
+      },
+      {
+        "tokenization_ms": 0.0,
+        "generation_ms": 8834.29,
+        "total_ms": 8834.29,
+        "steps": 64,
+        "prompt_hash": "e916ee960eb06f5a",
+        "prompt_preview": "Write a short professional email declining a job offer. The reason is that the salary is too low."
+      },
+      {
+        "tokenization_ms": 0.0,
+        "generation_ms": 8842.64,
+        "total_ms": 8842.64,
+        "steps": 64,
+        "prompt_hash": "442e82743ee6fecb",
+        "prompt_preview": "List exactly 5 ingredients for a traditional Margherita pizza. Use a numbered list."
+      },
+      {
+        "tokenization_ms": 0.0,
+        "generation_ms": 8805.2,
+        "total_ms": 8805.2,
+        "steps": 64,
+        "prompt_hash": "1b75ac9742bd7a0e",
+        "prompt_preview": "Compare and contrast Batman and Superman in two short paragraphs."
+      },
+      {
+        "tokenization_ms": 0.0,
+        "generation_ms": 8873.57,
+        "total_ms": 8873.57,
+        "steps": 64,
+        "prompt_hash": "ec13442c549521bd",
+        "prompt_preview": "Create a short troubleshooting checklist for a Wi-Fi connection that keeps dropping. Format it as numbered steps."
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 9043.76,
+        "total_ms": 9045.76,
+        "steps": 64,
+        "prompt_hash": "412926e4679b6ca9",
+        "prompt_preview": "Give step-by-step instructions for boiling an egg to medium-boiled. Number each step."
+      }
+    ],
+    "previous_avg_generation_ms": 17291.835833333334
+  },
+  {
+    "round_number": 2,
+    "student_name": "student_steps_32",
+    "teacher_name": "teacher_steps_64",
+    "student_steps": 32,
+    "teacher_steps": 64,
+    "promptfoo_percent": 75.93,
+    "perplexity": 15.9311,
+    "passed": true,
+    "timestamp": "2026-06-09T12:07:43.850404",
+    "cache_dir": "C:\\Users\\Gotri\\Documents\\tfg\\LLaDA\\workspace\\LLaDA_outputs\\nested_distillation\\runs\\run_20260609_105305\\round_002_steps_32\\cache",
+    "checkpoint_dir": "C:\\Users\\Gotri\\Documents\\tfg\\LLaDA\\workspace\\LLaDA_outputs\\nested_distillation\\runs\\run_20260609_105305\\round_002_steps_32\\checkpoint",
+    "eval_dir": "C:\\Users\\Gotri\\Documents\\tfg\\LLaDA\\workspace\\LLaDA_outputs\\nested_distillation\\runs\\run_20260609_105305\\round_002_steps_32\\evaluation",
+    "latency_seconds": 0.0,
+    "previous_latency": 0.0,
+    "stage_timings": {
+      "cache_s": 650.78,
+      "train_s": 116.69,
+      "eval_s": 1240.77,
+      "total_pipeline_s": 2008.23,
+      "avg_generation_ms": 4766.17,
+      "median_generation_ms": 4703.07,
+      "p95_generation_ms": 5293.91,
+      "min_generation_ms": 4388.72,
+      "max_generation_ms": 5473.67,
+      "num_prompts": 12
+    },
+    "per_prompt_latencies": [
+      {
+        "tokenization_ms": 5.97,
+        "generation_ms": 5146.83,
+        "total_ms": 5154.8,
+        "steps": 32,
+        "prompt_hash": "6dd85f1ac5b9b0ff",
+        "prompt_preview": "You are a football coach. Your team is losing 2-0 at halftime. Write a short motivational speech for your players."
+      },
+      {
+        "tokenization_ms": 1.0,
+        "generation_ms": 4654.54,
+        "total_ms": 4655.54,
+        "steps": 32,
+        "prompt_hash": "6255119c0b9e22c1",
+        "prompt_preview": "Explain the theory of relativity to a 5-year-old. Use simple words and a short analogy."
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 4705.82,
+        "total_ms": 4707.82,
+        "steps": 32,
+        "prompt_hash": "a6ff3e002dd61015",
+        "prompt_preview": "Write a Python script that reads a CSV file and calculates the average of a column named 'Price'. Handle missing file er"
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 4801.62,
+        "total_ms": 4803.62,
+        "steps": 32,
+        "prompt_hash": "1e8296b29a635141",
+        "prompt_preview": "Summarize the following meeting note in exactly 3 bullet points: We discussed the Q3 roadmap, agreed to move feature X t"
+      },
+      {
+        "tokenization_ms": 1.05,
+        "generation_ms": 4388.72,
+        "total_ms": 4389.76,
+        "steps": 32,
+        "prompt_hash": "b865be8a0aefd8cf",
+        "prompt_preview": "Summarize the plot of the movie 'The Matrix' (1999) in exactly 3 sentences."
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 4724.55,
+        "total_ms": 4726.54,
+        "steps": 32,
+        "prompt_hash": "e6975066b40b91bf",
+        "prompt_preview": "Create a 3-day workout plan for a beginner using only bodyweight exercises. Include sets and reps for each exercise."
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 4559.28,
+        "total_ms": 4561.28,
+        "steps": 32,
+        "prompt_hash": "10044634bbb2e473",
+        "prompt_preview": "Explain why the sky is blue. Keep it under 100 words."
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 5473.67,
+        "total_ms": 5475.67,
+        "steps": 32,
+        "prompt_hash": "e916ee960eb06f5a",
+        "prompt_preview": "Write a short professional email declining a job offer. The reason is that the salary is too low."
+      },
+      {
+        "tokenization_ms": 1.0,
+        "generation_ms": 4700.33,
+        "total_ms": 4701.34,
+        "steps": 32,
+        "prompt_hash": "442e82743ee6fecb",
+        "prompt_preview": "List exactly 5 ingredients for a traditional Margherita pizza. Use a numbered list."
+      },
+      {
+        "tokenization_ms": 1.0,
+        "generation_ms": 4712.3,
+        "total_ms": 4713.3,
+        "steps": 32,
+        "prompt_hash": "1b75ac9742bd7a0e",
+        "prompt_preview": "Compare and contrast Batman and Superman in two short paragraphs."
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 4632.38,
+        "total_ms": 4634.38,
+        "steps": 32,
+        "prompt_hash": "ec13442c549521bd",
+        "prompt_preview": "Create a short troubleshooting checklist for a Wi-Fi connection that keeps dropping. Format it as numbered steps."
+      },
+      {
+        "tokenization_ms": 1.0,
+        "generation_ms": 4694.02,
+        "total_ms": 4695.02,
+        "steps": 32,
+        "prompt_hash": "412926e4679b6ca9",
+        "prompt_preview": "Give step-by-step instructions for boiling an egg to medium-boiled. Number each step."
+      }
+    ],
+    "previous_avg_generation_ms": 8934.464166666667
+  },
+  {
+    "round_number": 3,
+    "student_name": "student_steps_16",
+    "teacher_name": "teacher_steps_32",
+    "student_steps": 16,
+    "teacher_steps": 32,
+    "promptfoo_percent": 68.52,
+    "perplexity": 24.8578,
+    "passed": true,
+    "timestamp": "2026-06-09T12:37:27.405062",
+    "cache_dir": "C:\\Users\\Gotri\\Documents\\tfg\\LLaDA\\workspace\\LLaDA_outputs\\nested_distillation\\runs\\run_20260609_105305\\round_003_steps_16\\cache",
+    "checkpoint_dir": "C:\\Users\\Gotri\\Documents\\tfg\\LLaDA\\workspace\\LLaDA_outputs\\nested_distillation\\runs\\run_20260609_105305\\round_003_steps_16\\checkpoint",
+    "eval_dir": "C:\\Users\\Gotri\\Documents\\tfg\\LLaDA\\workspace\\LLaDA_outputs\\nested_distillation\\runs\\run_20260609_105305\\round_003_steps_16\\evaluation",
+    "latency_seconds": 0.0,
+    "previous_latency": 0.0,
+    "stage_timings": {
+      "cache_s": 517.82,
+      "train_s": 90.88,
+      "eval_s": 1174.26,
+      "total_pipeline_s": 1782.97,
+      "avg_generation_ms": 2513.5,
+      "median_generation_ms": 2501.62,
+      "p95_generation_ms": 2680.8,
+      "min_generation_ms": 2373.81,
+      "max_generation_ms": 2809.02,
+      "num_prompts": 12
+    },
+    "per_prompt_latencies": [
+      {
+        "tokenization_ms": 5.88,
+        "generation_ms": 2809.02,
+        "total_ms": 2816.9,
+        "steps": 16,
+        "prompt_hash": "6dd85f1ac5b9b0ff",
+        "prompt_preview": "You are a football coach. Your team is losing 2-0 at halftime. Write a short motivational speech for your players."
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 2574.56,
+        "total_ms": 2576.57,
+        "steps": 16,
+        "prompt_hash": "6255119c0b9e22c1",
+        "prompt_preview": "Explain the theory of relativity to a 5-year-old. Use simple words and a short analogy."
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 2525.82,
+        "total_ms": 2527.82,
+        "steps": 16,
+        "prompt_hash": "a6ff3e002dd61015",
+        "prompt_preview": "Write a Python script that reads a CSV file and calculates the average of a column named 'Price'. Handle missing file er"
+      },
+      {
+        "tokenization_ms": 2.01,
+        "generation_ms": 2560.11,
+        "total_ms": 2562.12,
+        "steps": 16,
+        "prompt_hash": "1e8296b29a635141",
+        "prompt_preview": "Summarize the following meeting note in exactly 3 bullet points: We discussed the Q3 roadmap, agreed to move feature X t"
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 2575.9,
+        "total_ms": 2577.9,
+        "steps": 16,
+        "prompt_hash": "b865be8a0aefd8cf",
+        "prompt_preview": "Summarize the plot of the movie 'The Matrix' (1999) in exactly 3 sentences."
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 2444.14,
+        "total_ms": 2446.13,
+        "steps": 16,
+        "prompt_hash": "e6975066b40b91bf",
+        "prompt_preview": "Create a 3-day workout plan for a beginner using only bodyweight exercises. Include sets and reps for each exercise."
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 2407.79,
+        "total_ms": 2409.79,
+        "steps": 16,
+        "prompt_hash": "10044634bbb2e473",
+        "prompt_preview": "Explain why the sky is blue. Keep it under 100 words."
+      },
+      {
+        "tokenization_ms": 2.03,
+        "generation_ms": 2373.81,
+        "total_ms": 2376.84,
+        "steps": 16,
+        "prompt_hash": "e916ee960eb06f5a",
+        "prompt_preview": "Write a short professional email declining a job offer. The reason is that the salary is too low."
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 2477.43,
+        "total_ms": 2479.43,
+        "steps": 16,
+        "prompt_hash": "442e82743ee6fecb",
+        "prompt_preview": "List exactly 5 ingredients for a traditional Margherita pizza. Use a numbered list."
+      },
+      {
+        "tokenization_ms": 1.0,
+        "generation_ms": 2396.92,
+        "total_ms": 2397.92,
+        "steps": 16,
+        "prompt_hash": "1b75ac9742bd7a0e",
+        "prompt_preview": "Compare and contrast Batman and Superman in two short paragraphs."
+      },
+      {
+        "tokenization_ms": 2.01,
+        "generation_ms": 2570.1,
+        "total_ms": 2572.11,
+        "steps": 16,
+        "prompt_hash": "ec13442c549521bd",
+        "prompt_preview": "Create a short troubleshooting checklist for a Wi-Fi connection that keeps dropping. Format it as numbered steps."
+      },
+      {
+        "tokenization_ms": 1.0,
+        "generation_ms": 2446.42,
+        "total_ms": 2447.42,
+        "steps": 16,
+        "prompt_hash": "412926e4679b6ca9",
+        "prompt_preview": "Give step-by-step instructions for boiling an egg to medium-boiled. Number each step."
+      }
+    ],
+    "previous_avg_generation_ms": 4766.171666666666
+  },
+  {
+    "round_number": 4,
+    "student_name": "student_steps_8",
+    "teacher_name": "teacher_steps_16",
+    "student_steps": 8,
+    "teacher_steps": 16,
+    "promptfoo_percent": 62.96,
+    "perplexity": 68.4428,
+    "passed": true,
+    "timestamp": "2026-06-09T13:06:46.102674",
+    "cache_dir": "C:\\Users\\Gotri\\Documents\\tfg\\LLaDA\\workspace\\LLaDA_outputs\\nested_distillation\\runs\\run_20260609_105305\\round_004_steps_8\\cache",
+    "checkpoint_dir": "C:\\Users\\Gotri\\Documents\\tfg\\LLaDA\\workspace\\LLaDA_outputs\\nested_distillation\\runs\\run_20260609_105305\\round_004_steps_8\\checkpoint",
+    "eval_dir": "C:\\Users\\Gotri\\Documents\\tfg\\LLaDA\\workspace\\LLaDA_outputs\\nested_distillation\\runs\\run_20260609_105305\\round_004_steps_8\\evaluation",
+    "latency_seconds": 0.0,
+    "previous_latency": 0.0,
+    "stage_timings": {
+      "cache_s": 452.92,
+      "train_s": 85.55,
+      "eval_s": 1219.63,
+      "total_pipeline_s": 1758.11,
+      "avg_generation_ms": 1412.05,
+      "median_generation_ms": 1392.87,
+      "p95_generation_ms": 1521.85,
+      "min_generation_ms": 1293.87,
+      "max_generation_ms": 1620.37,
+      "num_prompts": 12
+    },
+    "per_prompt_latencies": [
+      {
+        "tokenization_ms": 5.01,
+        "generation_ms": 1620.37,
+        "total_ms": 1627.38,
+        "steps": 8,
+        "prompt_hash": "6dd85f1ac5b9b0ff",
+        "prompt_preview": "You are a football coach. Your team is losing 2-0 at halftime. Write a short motivational speech for your players."
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 1435.53,
+        "total_ms": 1437.54,
+        "steps": 8,
+        "prompt_hash": "6255119c0b9e22c1",
+        "prompt_preview": "Explain the theory of relativity to a 5-year-old. Use simple words and a short analogy."
+      },
+      {
+        "tokenization_ms": 1.97,
+        "generation_ms": 1293.87,
+        "total_ms": 1295.84,
+        "steps": 8,
+        "prompt_hash": "a6ff3e002dd61015",
+        "prompt_preview": "Write a Python script that reads a CSV file and calculates the average of a column named 'Price'. Handle missing file er"
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 1387.43,
+        "total_ms": 1389.43,
+        "steps": 8,
+        "prompt_hash": "1e8296b29a635141",
+        "prompt_preview": "Summarize the following meeting note in exactly 3 bullet points: We discussed the Q3 roadmap, agreed to move feature X t"
+      },
+      {
+        "tokenization_ms": 1.97,
+        "generation_ms": 1398.3,
+        "total_ms": 1400.27,
+        "steps": 8,
+        "prompt_hash": "b865be8a0aefd8cf",
+        "prompt_preview": "Summarize the plot of the movie 'The Matrix' (1999) in exactly 3 sentences."
+      },
+      {
+        "tokenization_ms": 1.97,
+        "generation_ms": 1381.02,
+        "total_ms": 1382.99,
+        "steps": 8,
+        "prompt_hash": "e6975066b40b91bf",
+        "prompt_preview": "Create a 3-day workout plan for a beginner using only bodyweight exercises. Include sets and reps for each exercise."
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 1441.25,
+        "total_ms": 1444.22,
+        "steps": 8,
+        "prompt_hash": "10044634bbb2e473",
+        "prompt_preview": "Explain why the sky is blue. Keep it under 100 words."
+      },
+      {
+        "tokenization_ms": 1.97,
+        "generation_ms": 1372.36,
+        "total_ms": 1375.34,
+        "steps": 8,
+        "prompt_hash": "e916ee960eb06f5a",
+        "prompt_preview": "Write a short professional email declining a job offer. The reason is that the salary is too low."
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 1439.87,
+        "total_ms": 1441.87,
+        "steps": 8,
+        "prompt_hash": "442e82743ee6fecb",
+        "prompt_preview": "List exactly 5 ingredients for a traditional Margherita pizza. Use a numbered list."
+      },
+      {
+        "tokenization_ms": 0.97,
+        "generation_ms": 1381.98,
+        "total_ms": 1382.95,
+        "steps": 8,
+        "prompt_hash": "1b75ac9742bd7a0e",
+        "prompt_preview": "Compare and contrast Batman and Superman in two short paragraphs."
+      },
+      {
+        "tokenization_ms": 1.97,
+        "generation_ms": 1380.86,
+        "total_ms": 1382.84,
+        "steps": 8,
+        "prompt_hash": "ec13442c549521bd",
+        "prompt_preview": "Create a short troubleshooting checklist for a Wi-Fi connection that keeps dropping. Format it as numbered steps."
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 1411.74,
+        "total_ms": 1413.74,
+        "steps": 8,
+        "prompt_hash": "412926e4679b6ca9",
+        "prompt_preview": "Give step-by-step instructions for boiling an egg to medium-boiled. Number each step."
+      }
+    ],
+    "previous_avg_generation_ms": 2513.5016666666666
+  },
+  {
+    "round_number": 5,
+    "student_name": "student_steps_4",
+    "teacher_name": "teacher_steps_8",
+    "student_steps": 4,
+    "teacher_steps": 8,
+    "promptfoo_percent": 59.26,
+    "perplexity": 79.183,
+    "passed": true,
+    "timestamp": "2026-06-09T13:34:08.626036",
+    "cache_dir": "C:\\Users\\Gotri\\Documents\\tfg\\LLaDA\\workspace\\LLaDA_outputs\\nested_distillation\\runs\\run_20260609_105305\\round_005_steps_4\\cache",
+    "checkpoint_dir": "C:\\Users\\Gotri\\Documents\\tfg\\LLaDA\\workspace\\LLaDA_outputs\\nested_distillation\\runs\\run_20260609_105305\\round_005_steps_4\\checkpoint",
+    "eval_dir": "C:\\Users\\Gotri\\Documents\\tfg\\LLaDA\\workspace\\LLaDA_outputs\\nested_distillation\\runs\\run_20260609_105305\\round_005_steps_4\\evaluation",
+    "latency_seconds": 0.0,
+    "previous_latency": 0.0,
+    "stage_timings": {
+      "cache_s": 422.84,
+      "train_s": 85.88,
+      "eval_s": 1133.22,
+      "total_pipeline_s": 1641.94,
+      "avg_generation_ms": 855.02,
+      "median_generation_ms": 833.39,
+      "p95_generation_ms": 1005.99,
+      "min_generation_ms": 745.05,
+      "max_generation_ms": 1099.27,
+      "num_prompts": 12
+    },
+    "per_prompt_latencies": [
+      {
+        "tokenization_ms": 5.87,
+        "generation_ms": 1099.27,
+        "total_ms": 1107.22,
+        "steps": 4,
+        "prompt_hash": "6dd85f1ac5b9b0ff",
+        "prompt_preview": "You are a football coach. Your team is losing 2-0 at halftime. Write a short motivational speech for your players."
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 840.86,
+        "total_ms": 842.86,
+        "steps": 4,
+        "prompt_hash": "6255119c0b9e22c1",
+        "prompt_preview": "Explain the theory of relativity to a 5-year-old. Use simple words and a short analogy."
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 919.15,
+        "total_ms": 922.15,
+        "steps": 4,
+        "prompt_hash": "a6ff3e002dd61015",
+        "prompt_preview": "Write a Python script that reads a CSV file and calculates the average of a column named 'Price'. Handle missing file er"
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 929.67,
+        "total_ms": 932.67,
+        "steps": 4,
+        "prompt_hash": "1e8296b29a635141",
+        "prompt_preview": "Summarize the following meeting note in exactly 3 bullet points: We discussed the Q3 roadmap, agreed to move feature X t"
+      },
+      {
+        "tokenization_ms": 1.0,
+        "generation_ms": 766.28,
+        "total_ms": 768.28,
+        "steps": 4,
+        "prompt_hash": "b865be8a0aefd8cf",
+        "prompt_preview": "Summarize the plot of the movie 'The Matrix' (1999) in exactly 3 sentences."
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 811.98,
+        "total_ms": 814.99,
+        "steps": 4,
+        "prompt_hash": "e6975066b40b91bf",
+        "prompt_preview": "Create a 3-day workout plan for a beginner using only bodyweight exercises. Include sets and reps for each exercise."
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 773.13,
+        "total_ms": 776.13,
+        "steps": 4,
+        "prompt_hash": "10044634bbb2e473",
+        "prompt_preview": "Explain why the sky is blue. Keep it under 100 words."
+      },
+      {
+        "tokenization_ms": 2.03,
+        "generation_ms": 745.05,
+        "total_ms": 747.09,
+        "steps": 4,
+        "prompt_hash": "e916ee960eb06f5a",
+        "prompt_preview": "Write a short professional email declining a job offer. The reason is that the salary is too low."
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 921.48,
+        "total_ms": 923.49,
+        "steps": 4,
+        "prompt_hash": "442e82743ee6fecb",
+        "prompt_preview": "List exactly 5 ingredients for a traditional Margherita pizza. Use a numbered list."
+      },
+      {
+        "tokenization_ms": 1.0,
+        "generation_ms": 825.92,
+        "total_ms": 826.92,
+        "steps": 4,
+        "prompt_hash": "1b75ac9742bd7a0e",
+        "prompt_preview": "Compare and contrast Batman and Superman in two short paragraphs."
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 753.14,
+        "total_ms": 755.14,
+        "steps": 4,
+        "prompt_hash": "ec13442c549521bd",
+        "prompt_preview": "Create a short troubleshooting checklist for a Wi-Fi connection that keeps dropping. Format it as numbered steps."
+      },
+      {
+        "tokenization_ms": 1.0,
+        "generation_ms": 874.28,
+        "total_ms": 875.28,
+        "steps": 4,
+        "prompt_hash": "412926e4679b6ca9",
+        "prompt_preview": "Give step-by-step instructions for boiling an egg to medium-boiled. Number each step."
+      }
+    ],
+    "previous_avg_generation_ms": 1412.0483333333334
+  },
+  {
+    "round_number": 6,
+    "student_name": "student_steps_2",
+    "teacher_name": "teacher_steps_4",
+    "student_steps": 2,
+    "teacher_steps": 4,
+    "promptfoo_percent": 50.0,
+    "perplexity": 161.9322,
+    "passed": true,
+    "timestamp": "2026-06-09T13:59:48.460066",
+    "cache_dir": "C:\\Users\\Gotri\\Documents\\tfg\\LLaDA\\workspace\\LLaDA_outputs\\nested_distillation\\runs\\run_20260609_105305\\round_006_steps_2\\cache",
+    "checkpoint_dir": "C:\\Users\\Gotri\\Documents\\tfg\\LLaDA\\workspace\\LLaDA_outputs\\nested_distillation\\runs\\run_20260609_105305\\round_006_steps_2\\checkpoint",
+    "eval_dir": "C:\\Users\\Gotri\\Documents\\tfg\\LLaDA\\workspace\\LLaDA_outputs\\nested_distillation\\runs\\run_20260609_105305\\round_006_steps_2\\evaluation",
+    "latency_seconds": 0.0,
+    "previous_latency": 0.0,
+    "stage_timings": {
+      "cache_s": 404.64,
+      "train_s": 86.33,
+      "eval_s": 1048.28,
+      "total_pipeline_s": 1539.24,
+      "avg_generation_ms": 562.29,
+      "median_generation_ms": 596.36,
+      "p95_generation_ms": 684.64,
+      "min_generation_ms": 278.51,
+      "max_generation_ms": 738.49,
+      "num_prompts": 12
+    },
+    "per_prompt_latencies": [
+      {
+        "tokenization_ms": 5.28,
+        "generation_ms": 738.49,
+        "total_ms": 745.33,
+        "steps": 2,
+        "prompt_hash": "6dd85f1ac5b9b0ff",
+        "prompt_preview": "You are a football coach. Your team is losing 2-0 at halftime. Write a short motivational speech for your players."
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 604.17,
+        "total_ms": 606.17,
+        "steps": 2,
+        "prompt_hash": "6255119c0b9e22c1",
+        "prompt_preview": "Explain the theory of relativity to a 5-year-old. Use simple words and a short analogy."
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 473.62,
+        "total_ms": 475.62,
+        "steps": 2,
+        "prompt_hash": "a6ff3e002dd61015",
+        "prompt_preview": "Write a Python script that reads a CSV file and calculates the average of a column named 'Price'. Handle missing file er"
+      },
+      {
+        "tokenization_ms": 1.01,
+        "generation_ms": 278.51,
+        "total_ms": 279.51,
+        "steps": 2,
+        "prompt_hash": "1e8296b29a635141",
+        "prompt_preview": "Summarize the following meeting note in exactly 3 bullet points: We discussed the Q3 roadmap, agreed to move feature X t"
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 556.84,
+        "total_ms": 558.84,
+        "steps": 2,
+        "prompt_hash": "b865be8a0aefd8cf",
+        "prompt_preview": "Summarize the plot of the movie 'The Matrix' (1999) in exactly 3 sentences."
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 594.51,
+        "total_ms": 596.51,
+        "steps": 2,
+        "prompt_hash": "e6975066b40b91bf",
+        "prompt_preview": "Create a 3-day workout plan for a beginner using only bodyweight exercises. Include sets and reps for each exercise."
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 539.79,
+        "total_ms": 541.79,
+        "steps": 2,
+        "prompt_hash": "10044634bbb2e473",
+        "prompt_preview": "Explain why the sky is blue. Keep it under 100 words."
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 598.21,
+        "total_ms": 600.21,
+        "steps": 2,
+        "prompt_hash": "e916ee960eb06f5a",
+        "prompt_preview": "Write a short professional email declining a job offer. The reason is that the salary is too low."
+      },
+      {
+        "tokenization_ms": 1.97,
+        "generation_ms": 611.21,
+        "total_ms": 613.18,
+        "steps": 2,
+        "prompt_hash": "442e82743ee6fecb",
+        "prompt_preview": "List exactly 5 ingredients for a traditional Margherita pizza. Use a numbered list."
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 484.63,
+        "total_ms": 486.63,
+        "steps": 2,
+        "prompt_hash": "1b75ac9742bd7a0e",
+        "prompt_preview": "Compare and contrast Batman and Superman in two short paragraphs."
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 626.95,
+        "total_ms": 628.95,
+        "steps": 2,
+        "prompt_hash": "ec13442c549521bd",
+        "prompt_preview": "Create a short troubleshooting checklist for a Wi-Fi connection that keeps dropping. Format it as numbered steps."
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 640.58,
+        "total_ms": 642.58,
+        "steps": 2,
+        "prompt_hash": "412926e4679b6ca9",
+        "prompt_preview": "Give step-by-step instructions for boiling an egg to medium-boiled. Number each step."
+      }
+    ],
+    "previous_avg_generation_ms": 855.0175
+  },
+  {
+    "round_number": 7,
+    "student_name": "student_steps_1",
+    "teacher_name": "teacher_steps_2",
+    "student_steps": 1,
+    "teacher_steps": 2,
+    "promptfoo_percent": 46.3,
+    "perplexity": 353.2586,
+    "passed": true,
+    "timestamp": "2026-06-09T14:26:21.579064",
+    "cache_dir": "C:\\Users\\Gotri\\Documents\\tfg\\LLaDA\\workspace\\LLaDA_outputs\\nested_distillation\\runs\\run_20260609_105305\\round_007_steps_1\\cache",
+    "checkpoint_dir": "C:\\Users\\Gotri\\Documents\\tfg\\LLaDA\\workspace\\LLaDA_outputs\\nested_distillation\\runs\\run_20260609_105305\\round_007_steps_1\\checkpoint",
+    "eval_dir": "C:\\Users\\Gotri\\Documents\\tfg\\LLaDA\\workspace\\LLaDA_outputs\\nested_distillation\\runs\\run_20260609_105305\\round_007_steps_1\\evaluation",
+    "latency_seconds": 0.0,
+    "previous_latency": 0.0,
+    "stage_timings": {
+      "cache_s": 399.12,
+      "train_s": 90.42,
+      "eval_s": 1102.99,
+      "total_pipeline_s": 1592.53,
+      "avg_generation_ms": 467.88,
+      "median_generation_ms": 475.77,
+      "p95_generation_ms": 558.08,
+      "min_generation_ms": 327.63,
+      "max_generation_ms": 633.02,
+      "num_prompts": 12
+    },
+    "per_prompt_latencies": [
+      {
+        "tokenization_ms": 5.01,
+        "generation_ms": 633.02,
+        "total_ms": 640.07,
+        "steps": 1,
+        "prompt_hash": "6dd85f1ac5b9b0ff",
+        "prompt_preview": "You are a football coach. Your team is losing 2-0 at halftime. Write a short motivational speech for your players."
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 476.97,
+        "total_ms": 478.97,
+        "steps": 1,
+        "prompt_hash": "6255119c0b9e22c1",
+        "prompt_preview": "Explain the theory of relativity to a 5-year-old. Use simple words and a short analogy."
+      },
+      {
+        "tokenization_ms": 1.97,
+        "generation_ms": 477.09,
+        "total_ms": 479.06,
+        "steps": 1,
+        "prompt_hash": "a6ff3e002dd61015",
+        "prompt_preview": "Write a Python script that reads a CSV file and calculates the average of a column named 'Price'. Handle missing file er"
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 414.27,
+        "total_ms": 416.26,
+        "steps": 1,
+        "prompt_hash": "1e8296b29a635141",
+        "prompt_preview": "Summarize the following meeting note in exactly 3 bullet points: We discussed the Q3 roadmap, agreed to move feature X t"
+      },
+      {
+        "tokenization_ms": 2.02,
+        "generation_ms": 473.02,
+        "total_ms": 475.05,
+        "steps": 1,
+        "prompt_hash": "b865be8a0aefd8cf",
+        "prompt_preview": "Summarize the plot of the movie 'The Matrix' (1999) in exactly 3 sentences."
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 468.01,
+        "total_ms": 470.01,
+        "steps": 1,
+        "prompt_hash": "e6975066b40b91bf",
+        "prompt_preview": "Create a 3-day workout plan for a beginner using only bodyweight exercises. Include sets and reps for each exercise."
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 400.36,
+        "total_ms": 402.36,
+        "steps": 1,
+        "prompt_hash": "10044634bbb2e473",
+        "prompt_preview": "Explain why the sky is blue. Keep it under 100 words."
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 482.41,
+        "total_ms": 484.41,
+        "steps": 1,
+        "prompt_hash": "e916ee960eb06f5a",
+        "prompt_preview": "Write a short professional email declining a job offer. The reason is that the salary is too low."
+      },
+      {
+        "tokenization_ms": 1.0,
+        "generation_ms": 474.57,
+        "total_ms": 476.57,
+        "steps": 1,
+        "prompt_hash": "442e82743ee6fecb",
+        "prompt_preview": "List exactly 5 ingredients for a traditional Margherita pizza. Use a numbered list."
+      },
+      {
+        "tokenization_ms": 1.02,
+        "generation_ms": 490.43,
+        "total_ms": 491.45,
+        "steps": 1,
+        "prompt_hash": "1b75ac9742bd7a0e",
+        "prompt_preview": "Compare and contrast Batman and Superman in two short paragraphs."
+      },
+      {
+        "tokenization_ms": 2.0,
+        "generation_ms": 327.63,
+        "total_ms": 329.63,
+        "steps": 1,
+        "prompt_hash": "ec13442c549521bd",
+        "prompt_preview": "Create a short troubleshooting checklist for a Wi-Fi connection that keeps dropping. Format it as numbered steps."
+      },
+      {
+        "tokenization_ms": 1.97,
+        "generation_ms": 496.76,
+        "total_ms": 498.73,
+        "steps": 1,
+        "prompt_hash": "412926e4679b6ca9",
+        "prompt_preview": "Give step-by-step instructions for boiling an egg to medium-boiled. Number each step."
+      }
+    ],
+    "previous_avg_generation_ms": 562.2925
+  }
+]

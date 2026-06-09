@@ -137,6 +137,8 @@ def create_server_script(
     device: str = "cuda",
     cuda_memory_fraction: float = 0.85,
     hf_home: Optional[str] = None,
+    gen_length: int = 128,
+    block_length: int = 32,
 ) -> str:
     """
     Create a temporary server script for the specific checkpoint.
@@ -146,6 +148,8 @@ def create_server_script(
         output_path: Path to write the server script
         port: Port to serve on
         steps: Number of generation steps
+        gen_length: Number of tokens to generate
+        block_length: Block size for semi-autoregressive generation
 
     Returns:
         Path to the created script
@@ -192,6 +196,9 @@ CHECKPOINT_DIR = r"{checkpoint_dir}"
 CHECKPOINT_DIR_POSIX = r"{checkpoint_dir_posix}"
 PORT = {port}
 STEPS = {steps}
+GEN_LENGTH = {gen_length}
+BLOCK_LENGTH = {block_length}
+
 BASE_MODEL_FALLBACK = "GSAI-ML/LLaDA-8B-Instruct"
 
 
@@ -270,30 +277,60 @@ def health():
 
 @app.route('/generate', methods=['POST'])
 def generate_endpoint():
+    import time, hashlib
+
+    t0_total = time.time()
     data = request.json
     prompt = data.get('prompt', '')
 
     conversation = [{{"role": "user", "content": prompt}}]
+    t0_tok = time.time()
     input_ids = tokenizer.apply_chat_template(
         conversation,
         add_generation_prompt=True,
         return_tensors="pt"
     ).to(DEVICE)
+    tok_ms = (time.time() - t0_tok) * 1000
 
-    with torch.no_grad():
-        output = generate(
-            model,
-            input_ids,
-            steps=STEPS,
-            gen_length=128,
-            block_length=32,
-            temperature=0.0,
-            cfg_scale=0.0,
-            remasking="low_confidence",
-        )
+    try:
+        with torch.no_grad():
+            t0_gen = time.time()
+            output = generate(
+                model,
+                input_ids,
+                steps=STEPS,
+                gen_length=GEN_LENGTH,
+                block_length=BLOCK_LENGTH,
+                temperature=0.0,
+                cfg_scale=0.0,
+                remasking="low_confidence",
+            )
+            gen_ms = (time.time() - t0_gen) * 1000
 
-    response = tokenizer.decode(output[0][input_ids.shape[1]:], skip_special_tokens=True)
-    return jsonify({{"response": response}})
+        response = tokenizer.decode(output[0][input_ids.shape[1]:], skip_special_tokens=True)
+        total_ms = (time.time() - t0_total) * 1000
+
+        timing = {{
+            "tokenization_ms": round(tok_ms, 2),
+            "generation_ms": round(gen_ms, 2),
+            "total_ms": round(total_ms, 2),
+            "steps": STEPS,
+            "prompt_hash": hashlib.sha256(prompt.encode()).hexdigest()[:16],
+            "prompt_preview": prompt[:120],
+        }}
+
+        timing_log = os.environ.get("LLADA_TIMING_LOG")
+        if timing_log:
+            try:
+                with open(timing_log, "a", encoding="utf-8") as f:
+                    f.write(json.dumps(timing) + "\\n")
+            except Exception as e:
+                print(f"[timing_log] ERROR writing to {{timing_log}}: {{e}}")
+
+        return jsonify({{"response": response, "timing": timing}})
+    except Exception as e:
+        print(f"[generate_endpoint] ERROR: {{e}}")
+        return jsonify({{"error": str(e)}}), 500
 
 if __name__ == '__main__':
     # Suppress Flask startup messages
@@ -323,6 +360,9 @@ class ServerManager:
         cuda_memory_fraction: float = 0.85,
         eval_dir: Optional[str] = None,
         hf_home: Optional[str] = None,
+        timing_log_path: Optional[str] = None,
+        gen_length: int = 128,
+        block_length: int = 32,
     ):
         self.checkpoint_dir = checkpoint_dir
         self.steps = steps
@@ -331,6 +371,9 @@ class ServerManager:
         self.cuda_memory_fraction = cuda_memory_fraction
         self.eval_dir = eval_dir
         self.hf_home = hf_home
+        self.timing_log_path = timing_log_path
+        self.gen_length = gen_length
+        self.block_length = block_length
         self.process: Optional[subprocess.Popen] = None
         self.script_path: Optional[str] = None
         self.log_file: Optional[str] = None
@@ -359,6 +402,8 @@ class ServerManager:
             self.device,
             self.cuda_memory_fraction,
             hf_home=self.hf_home,
+            gen_length=self.gen_length,
+            block_length=self.block_length,
         )
 
         print(f"Starting LLaDA server on port {self.port}...")
@@ -374,13 +419,19 @@ class ServerManager:
             # Use CREATE_NEW_PROCESS_GROUP on Windows for proper termination
             creationflags = getattr(subprocess, 'CREATE_NEW_PROCESS_GROUP', 0)
 
+            env = os.environ.copy()
+            if self.timing_log_path:
+                env["LLADA_TIMING_LOG"] = self.timing_log_path
+                print(f"  Timing log: {self.timing_log_path}")
+
             with open(self.log_file, 'w') as log:
                 self.process = subprocess.Popen(
                     [sys.executable, self.script_path],
                     stdout=log,
                     stderr=subprocess.STDOUT,
                     text=True,
-                    creationflags=creationflags
+                    creationflags=creationflags,
+                    env=env,
                 )
 
             # Wait for server to be ready
@@ -459,6 +510,9 @@ def managed_server(
     cuda_memory_fraction: float = 0.85,
     eval_dir: Optional[str] = None,
     hf_home: Optional[str] = None,
+    timing_log_path: Optional[str] = None,
+    gen_length: int = 128,
+    block_length: int = 32,
 ):
     """
     Context manager for running the LLaDA server.
@@ -476,6 +530,9 @@ def managed_server(
         cuda_memory_fraction=cuda_memory_fraction,
         eval_dir=eval_dir,
         hf_home=hf_home,
+        timing_log_path=timing_log_path,
+        gen_length=gen_length,
+        block_length=block_length,
     )
     try:
         if not manager.start(timeout=timeout):

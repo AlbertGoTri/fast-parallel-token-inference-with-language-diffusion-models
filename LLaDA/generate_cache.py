@@ -22,8 +22,8 @@ def get_num_transfer_tokens(mask_index, steps):
 @torch.no_grad()
 def generate_and_cache_trajectory(model, prompt, attention_mask=None, steps=128, gen_length=128, block_length=128, target_step=0, mask_id=126336):
     """
-    Versión modificada que interrumpe la generación en el 'target_step' 
-    y devuelve el estado de entrada (x) y los logits del Teacher.
+    Modified version that stops generation at 'target_step' and returns
+    the input state (x) and the teacher logits.
     """
     x = torch.full((prompt.shape[0], prompt.shape[1] + gen_length), mask_id, dtype=torch.long).to(model.device)
     x[:, :prompt.shape[1]] = prompt.clone()
@@ -43,15 +43,15 @@ def generate_and_cache_trajectory(model, prompt, attention_mask=None, steps=128,
             mask_index = (x == mask_id)
             logits = model(x, attention_mask=attention_mask).logits
 
-            # --- LA MODIFICACIÓN DE CACHÉ ---
+            # --- CACHE MODIFICATION ---
             if i == target_step:
-                # Devolvemos:
-                # 1. 'x': El input con las máscaras actuales
-                # 2. 'logits': El target (Soft-labels) del Teacher. Lo pasamos a float16 para ahorrar disco.
+                # We return:
+                # 1. 'x': The input with current masks
+                # 2. 'logits': Teacher soft-labels, cast to float16 to save disk
                 return x.clone(), logits.clone().to(torch.float16), attention_mask.clone() if attention_mask is not None else None
             # --------------------------------
 
-            # Lógica normal de desenmascarado de LLaDA si target_step > i
+            # Standard LLaDA unmasking logic when target_step > i
             logits_with_noise = add_gumbel_noise(logits, temperature=0.0)
             x0 = torch.argmax(logits_with_noise, dim=-1)
             

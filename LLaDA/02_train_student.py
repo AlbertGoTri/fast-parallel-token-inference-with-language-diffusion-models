@@ -6,8 +6,15 @@ import psutil
 from transformers import AutoModel, BitsAndBytesConfig
 from peft import get_peft_model, LoraConfig
 
-BASE_DIR = os.path.expanduser("~/groups/hpai-collaborators/albert-gomez-triunfante/tfg")
-HF_HOME = os.path.join(BASE_DIR, ".cache")
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
+BASE_DIR = os.environ.get("LLADA_BASE_DIR", PROJECT_ROOT)
+
+WORKSPACE_DIR = os.path.join(BASE_DIR, "workspace")
+os.makedirs(WORKSPACE_DIR, exist_ok=True)
+# Prefer explicit HF_HOME env var or config override, fallback to workspace/.cache
+HF_HOME = os.environ.get("HF_HOME") or os.path.join(WORKSPACE_DIR, ".cache")
+os.makedirs(HF_HOME, exist_ok=True)
 os.environ["HF_HOME"] = HF_HOME
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 os.environ["SAFETENSORS_FAST_GPU"] = "0"
@@ -15,8 +22,8 @@ os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:128"
 
 torch.cuda.set_per_process_memory_fraction(0.90)
 
-CACHE_DIR = os.path.join(HF_HOME, "trayectorias_llada")
-SAVE_DIR = os.path.join(HF_HOME, "llada_student_lora")
+CACHE_DIR = os.path.join(WORKSPACE_DIR, "llada_trajectories")
+SAVE_DIR = os.path.join(WORKSPACE_DIR, "llada_student_lora")
 TEMPERATURE = 2.0
 
 quantization_config = BitsAndBytesConfig(
@@ -28,9 +35,9 @@ quantization_config = BitsAndBytesConfig(
 model_id = "GSAI-ML/LLaDA-8B-Instruct"
 
 ram_gb = int(psutil.virtual_memory().available / 1024**3) - 3
-print(f"RAM disponible para carga: {ram_gb} GB")
+print(f"Available RAM for loading: {ram_gb} GB")
 
-print("Cargando Student Model (Base)...")
+print("Loading Student Model (Base)...")
 student_base = AutoModel.from_pretrained(
     model_id,
     quantization_config=quantization_config,
@@ -39,21 +46,21 @@ student_base = AutoModel.from_pretrained(
     trust_remote_code=True,
     low_cpu_mem_usage=True,
 )
-print(f"Modelo base cargado. VRAM: {torch.cuda.memory_allocated(0)/1024**3:.2f} GB")
+print(f"Base model loaded. VRAM: {torch.cuda.memory_allocated(0)/1024**3:.2f} GB")
 
-# Activar gradient checkpointing si el modelo lo soporta
+# Enable gradient checkpointing if the model supports it
 if hasattr(student_base, "gradient_checkpointing_enable"):
     try:
         student_base.gradient_checkpointing_enable()
     except Exception as e:
-        print(f"WARNING: Gradient checkpointing no soportado: {e}")
+        print(f"WARNING: Gradient checkpointing not supported: {e}")
 
-# Asegurarse de que solo los parametros LoRA (que se añadiran) requieren gradiente
-# Los parametros 4-bit del base model no necesitan grad
+# Ensure only LoRA parameters (added later) require gradients
+# 4-bit base model parameters should remain frozen
 for param in student_base.parameters():
     param.requires_grad = False
 
-print("Inyectando adaptadores LoRA al Student...")
+print("Injecting LoRA adapters into the student...")
 lora_config = LoraConfig(
     r=8,
     lora_alpha=16,
@@ -65,35 +72,36 @@ lora_config = LoraConfig(
 student_model = get_peft_model(student_base, lora_config)
 student_model.print_trainable_parameters()
 
-# Los adaptadores LoRA se inicializan en float32 por defecto
-# Los casteamos a float16 para ahorrar VRAM
+# LoRA adapters are initialized in float32 by default
+# Cast them to float16 to save VRAM
 for name, param in student_model.named_parameters():
     if param.requires_grad:
         param.data = param.data.to(torch.float16)
 
 student_model.train()
-print(f"VRAM tras LoRA: {torch.cuda.memory_allocated(0)/1024**3:.2f} GB")
+print(f"VRAM after LoRA: {torch.cuda.memory_allocated(0)/1024**3:.2f} GB")
 
-# AdamW 8-bit para reducir memoria de estados del optimizador
+# AdamW 8-bit to reduce optimizer state memory
 try:
     import bitsandbytes as bnb
     optimizer = bnb.optim.AdamW8bit(
         [p for p in student_model.parameters() if p.requires_grad],
         lr=1e-4
     )
-    print("Usando AdamW 8-bit")
+    print("Using AdamW 8-bit")
 except Exception:
     optimizer = torch.optim.AdamW(
         [p for p in student_model.parameters() if p.requires_grad],
         lr=1e-4
     )
-    print("Usando AdamW estandar")
+    print("Using standard AdamW")
 
 from torch.profiler import profile, record_function, ProfilerActivity, schedule
-archivos_cache = glob.glob(os.path.join(CACHE_DIR, "*.pt"))
-print(f"Encontradas {len(archivos_cache)} trayectorias. Iniciando destilacion...\n")
+cache_files = glob.glob(os.path.join(CACHE_DIR, "*.pt"))
+print(f"Found {len(cache_files)} trajectories. Starting distillation...\n")
 
-os.makedirs("profiling", exist_ok=True)
+profiling_dir = os.path.join(WORKSPACE_DIR, "profiling")
+os.makedirs(profiling_dir, exist_ok=True)
 
 with profile(
     activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
@@ -101,22 +109,22 @@ with profile(
     record_shapes=False
 ) as prof:
     for epoch in range(1):
-        for i, archivo in enumerate(archivos_cache):
+        for i, cache_file in enumerate(cache_files):
             torch.cuda.empty_cache()
 
-            trayectoria = torch.load(archivo, weights_only=True)
+            trajectory = torch.load(cache_file, weights_only=True)
 
-            input_x = trayectoria['input_x'].to("cuda")
-            target_logits = trayectoria['target_logits'].to("cuda").to(torch.float16)
-            attn_mask = trayectoria['attn_mask'].to("cuda") if trayectoria['attn_mask'] is not None else None
-            prompt_len = trayectoria.get('prompt_len', 0)
+            input_x = trajectory['input_x'].to("cuda")
+            target_logits = trajectory['target_logits'].to("cuda").to(torch.float16)
+            attn_mask = trajectory['attn_mask'].to("cuda") if trajectory['attn_mask'] is not None else None
+            prompt_len = trajectory.get('prompt_len', 0)
 
             optimizer.zero_grad()
 
             with record_function(f"train_step_epoch_{epoch}_batch_{i}"):
                 with torch.autocast(device_type="cuda", dtype=torch.float16):
-                    student_salida = student_model(input_x, attention_mask=attn_mask)
-                    student_logits = student_salida.logits
+                    student_output = student_model(input_x, attention_mask=attn_mask)
+                    student_logits = student_output.logits
 
                     student_logits_gen = student_logits[:, prompt_len:, :]
                     target_logits_gen = target_logits[:, prompt_len:, :]
@@ -137,7 +145,7 @@ with profile(
                 optimizer.step()
 
             vram = torch.cuda.memory_allocated(0) / 1024**3
-            print(f"Epoca {epoch+1} | Lote {i+1}/{len(archivos_cache)} | Loss KL: {loss.item():.4f} | VRAM: {vram:.2f} GB")
+            print(f"Epoch {epoch+1} | Batch {i+1}/{len(cache_files)} | KL Loss: {loss.item():.4f} | VRAM: {vram:.2f} GB")
 
             del input_x, target_logits, student_logits, loss
             if attn_mask is not None:
@@ -145,12 +153,12 @@ with profile(
             torch.cuda.empty_cache()
             prof.step()
 
-# Exportar resultados del profiling
-prof.export_chrome_trace("profiling/02_train_student_trace.json")
-with open("profiling/02_train_student_summary.txt", "w") as f:
+# Export profiling results
+prof.export_chrome_trace(os.path.join(profiling_dir, "02_train_student_trace.json"))
+with open(os.path.join(profiling_dir, "02_train_student_summary.txt"), "w") as f:
     f.write(prof.key_averages().table(sort_by="cuda_time_total", row_limit=20))
-print("Resultados de profiling guardados en la carpeta 'profiling/'")
+print(f"Profiling results saved under '{profiling_dir}'")
 
 os.makedirs(SAVE_DIR, exist_ok=True)
 student_model.save_pretrained(SAVE_DIR)
-print(f"\nEntrenamiento completado! Student guardado en {SAVE_DIR}")
+print(f"\nTraining complete! Student saved to {SAVE_DIR}")

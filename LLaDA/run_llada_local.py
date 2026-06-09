@@ -5,8 +5,15 @@ import psutil
 from transformers import AutoTokenizer, AutoModel, BitsAndBytesConfig
 from peft import PeftModel
 
-BASE_DIR = os.path.expanduser("~/groups/hpai-collaborators/albert-gomez-triunfante/tfg")
-HF_HOME = os.path.join(BASE_DIR, ".cache")
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
+BASE_DIR = os.environ.get("LLADA_BASE_DIR", PROJECT_ROOT)
+
+WORKSPACE_DIR = os.path.join(BASE_DIR, "workspace")
+os.makedirs(WORKSPACE_DIR, exist_ok=True)
+# Prefer explicit HF_HOME env var or config override, fallback to workspace/.cache
+HF_HOME = os.environ.get("HF_HOME") or os.path.join(WORKSPACE_DIR, ".cache")
+os.makedirs(HF_HOME, exist_ok=True)
 os.environ["HF_HOME"] = HF_HOME
 os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
@@ -14,10 +21,10 @@ os.environ["SAFETENSORS_FAST_GPU"] = "0"
 
 torch.cuda.set_per_process_memory_fraction(0.85)
 
-# --- CONFIGURACIÓN ---
-# Cambiar a False para usar el modelo base sin LoRA (útil para comparar)
+# --- CONFIGURATION ---
+# Set to False to use the base model without LoRA (useful for comparison)
 USE_LORA = True
-LORA_DIR = os.path.join(HF_HOME, "llada_student_lora")
+LORA_DIR = os.path.join(WORKSPACE_DIR, "llada_student_lora")
 
 print(f"CUDA available: {torch.cuda.is_available()}")
 print(f"CUDA device: {torch.cuda.get_device_name(0)}")
@@ -32,7 +39,7 @@ quantization_config = BitsAndBytesConfig(
 
 model_id = "GSAI-ML/LLaDA-8B-Instruct"
 ram_gb = int(psutil.virtual_memory().available / 1024**3) - 3
-print(f"RAM disponible: {ram_gb} GB")
+print(f"Available RAM: {ram_gb} GB")
 
 print("Loading tokenizer...")
 tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
@@ -55,7 +62,7 @@ except Exception as e:
     traceback.print_exc()
     sys.exit(1)
 
-# --- CARGA DE ADAPTADORES LORA ---
+# --- LOAD LORA ADAPTERS ---
 if USE_LORA:
     if not os.path.exists(LORA_DIR):
         print(f"ERROR: LoRA weights not found at {LORA_DIR}")
@@ -87,7 +94,8 @@ print("Running generation...")
 
 from generate import generate
 
-os.makedirs("profiling", exist_ok=True)
+profiling_dir = os.path.join(WORKSPACE_DIR, "profiling")
+os.makedirs(profiling_dir, exist_ok=True)
 
 with torch.no_grad():
     with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], record_shapes=False) as prof:
@@ -106,8 +114,8 @@ with torch.no_grad():
 response = tokenizer.decode(output[0][input_ids.shape[1]:], skip_special_tokens=True)
 print(f"\n--- Output ({model_label}) ---\n{response}")
 
-# Exportar resultados del profiling
-prof.export_chrome_trace("profiling/run_llada_local_trace.json")
-with open("profiling/run_llada_local_summary.txt", "w") as f:
+# Export profiling results
+prof.export_chrome_trace(os.path.join(profiling_dir, "run_llada_local_trace.json"))
+with open(os.path.join(profiling_dir, "run_llada_local_summary.txt"), "w") as f:
     f.write(prof.key_averages().table(sort_by="cuda_time_total", row_limit=20))
-print("\nResultados de profiling guardados en la carpeta 'profiling/'")
+print(f"\nProfiling results saved under '{profiling_dir}'")

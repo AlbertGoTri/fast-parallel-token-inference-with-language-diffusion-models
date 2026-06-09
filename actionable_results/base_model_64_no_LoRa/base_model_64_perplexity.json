@@ -1,0 +1,80 @@
+{
+  "average_perplexity": 17.3849,
+  "num_samples": 12,
+  "samples": [
+    {
+      "prompt_id": 1,
+      "prompt": "You are a football coach. Your team is losing 2-0 at halftime. Write a short motivational speech for...",
+      "output_preview": "Alright,, let's regroup and focusocus on We've't lost the game, we've lost the momentum. We's going to come back, and we're going to win it.",
+      "perplexity": 30.9877
+    },
+    {
+      "prompt_id": 2,
+      "prompt": "Explain the theory of relativity to a 5-year-old. Use simple words and a short analogy.",
+      "output_preview": "Imagine you're playing on a playground swing. When you're swinging fast, time seems to move slower for you compared to someone friend who is standing....",
+      "perplexity": 22.7333
+    },
+    {
+      "prompt_id": 3,
+      "prompt": "Write a Python script that reads a CSV file and calculates the average of a column named 'Price'. Ha...",
+      "output_preview": "import pandas as pd\n\ndef main():   \n    try:\n        # = Read the CSV file\n        df = pd.read_csv('data.csv')\n        \n        # = Calculate the ave...",
+      "perplexity": 9.8417
+    },
+    {
+      "prompt_id": 4,
+      "prompt": "Summarize the following meeting note in exactly 3 bullet points: We discussed the Q3 roadmap, agreed...",
+      "output_preview": "- Q3 roadmap discussed\n- Feature X moved to October\n- Alice assigned to draft spec by Friday",
+      "perplexity": 968.5634
+    },
+    {
+      "prompt_id": 5,
+      "prompt": "Summarize the plot of the movie 'The Matrix' (1999) in exactly 3 sentences.",
+      "output_preview": "In the 1999 film 'The Matrix', Neo, a computer hacker, discovers that the reality he knows is actually a simulated reality created by a group of machi...",
+      "perplexity": 20.141
+    },
+    {
+      "prompt_id": 6,
+      "prompt": "Create a 3-day workout plan for a beginner using only bodyweight exercises. Include sets and reps fo...",
+      "output_preview": "Day 1: Upper Body\nPush-ups - 3 sets of 10 reps\nPull-ups - 3 sets of 10 reps\nDip rows - 3 sets of 10 reps\n\nDay 2: Lower Body\nSquats - 3 sets of 10 reps...",
+      "perplexity": 11.9543
+    },
+    {
+      "prompt_id": 7,
+      "prompt": "Explain why the sky is blue. Keep it under 100 words.",
+      "output_preview": "The sky appears blue due to Rayleigh scattering, where occurs when sunlight interacts with molecules molecules in the atmosphere. Blue light has short...",
+      "perplexity": 34.585
+    },
+    {
+      "prompt_id": 8,
+      "prompt": "Write a short professional email declining a job offer. The reason is that the salary is too low.",
+      "output_preview": "Subject: Re: Acceptance of Job Offer\n\nDear [Manager's Name],\n\nThank you for extending the job offer to me. I am writing to respectfully inform that I ...",
+      "perplexity": 15.4937
+    },
+    {
+      "prompt_id": 9,
+      "prompt": "List exactly 5 ingredients for a traditional Margherita pizza. Use a numbered list.",
+      "output_preview": "1. Tomato sauce\n2. Mozzarella\n3. D mozzarella\n4. Olive oil\n5. Fresh basil leaves",
+      "perplexity": 15.2515
+    },
+    {
+      "prompt_id": 10,
+      "prompt": "Compare and contrast Batman and Superman in two short paragraphs.",
+      "output_preview": "Batman and Superman are two of the most iconic characters in the. Both are superheroes, who fight crime, and have incredible powers sets. However, the...",
+      "perplexity": 18.1512
+    },
+    {
+      "prompt_id": 11,
+      "prompt": "Create a short troubleshooting checklist for a Wi-Fi connection that keeps dropping. Format it as nu...",
+      "output_preview": "1. Check if the router is properly connected to a power source.\n2. Restart the router and router modem.\n3. Check the router's firmware for updates.\n4....",
+      "perplexity": 7.5463
+    },
+    {
+      "prompt_id": 12,
+      "prompt": "Give step-by-step instructions for boiling an egg to medium-boiled. Number each step.",
+      "output_preview": "1. Fill a pot with water.\n2. Bring the water to a boil.\n3. Reduce the heat to the lowest.\n4. Add the egg to the water.\n5. Cover the pot with a lid.\n6....",
+      "perplexity": 4.5484
+    }
+  ],
+  "excluded_max_perplexity": 968.5634,
+  "trimmed_sample_count": 11
+}

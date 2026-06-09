@@ -1,0 +1,22 @@
+C:\Users\Gotri\Documents\tfg\workspace\llada_env\Lib\site-packages\huggingface_hub\file_download.py:143: UserWarning: `huggingface_hub` cache-system uses symlinks by default to efficiently store duplicated files but your machine does not support them in D:\.cache\hub\models--GSAI-ML--LLaDA-8B-Instruct. Caching files will still work but in a degraded version that might require more space on your disk. This warning can be disabled by setting the `HF_HUB_DISABLE_SYMLINKS_WARNING` environment variable. For more details, see https://huggingface.co/docs/huggingface_hub/how-to-cache#limitations.
+To support symlinks on Windows, you either need to activate Developer Mode or to run Python as an administrator. In order to activate developer mode, see this article: https://docs.microsoft.com/en-us/windows/apps/get-started/enable-your-device-for-development
+  warnings.warn(message)
+A new version of the following files was downloaded from https://huggingface.co/GSAI-ML/LLaDA-8B-Instruct:
+- configuration_llada.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+A new version of the following files was downloaded from https://huggingface.co/GSAI-ML/LLaDA-8B-Instruct:
+- modeling_llada.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+Loading tokenizer from GSAI-ML/LLaDA-8B-Instruct...
+Loading base model...
+Downloading shards:   0%|          | 0/6 [00:00<?, ?it/s]Downloading shards:  17%|#6        | 1/6 [00:42<03:33, 42.63s/it]Downloading shards:  33%|###3      | 2/6 [01:37<03:18, 49.62s/it]Downloading shards:  50%|#####     | 3/6 [02:34<02:38, 53.00s/it]Downloading shards:  67%|######6   | 4/6 [03:30<01:48, 54.18s/it]Downloading shards:  83%|########3 | 5/6 [04:47<01:02, 62.69s/it]Downloading shards: 100%|##########| 6/6 [05:48<00:00, 62.10s/it]Downloading shards: 100%|##########| 6/6 [05:48<00:00, 58.15s/it]
+The model weights are not tied. Please use the `tie_weights` method before using the `infer_auto_device` function.
+Loading checkpoint shards:   0%|          | 0/6 [00:00<?, ?it/s]C:\Users\Gotri\Documents\tfg\workspace\llada_env\Lib\site-packages\bitsandbytes\nn\modules.py:299: UserWarning: expandable_segments not supported on this platform (Triggered internally at C:\actions-runner\_work\pytorch\pytorch\builder\windows\pytorch\c10/cuda/CUDAAllocatorConfig.h:28.)
+  w = self.data.contiguous().to(device)
+Loading checkpoint shards:  17%|#6        | 1/6 [00:01<00:07,  1.44s/it]Loading checkpoint shards:  33%|###3      | 2/6 [00:02<00:05,  1.38s/it]Loading checkpoint shards:  50%|#####     | 3/6 [00:04<00:04,  1.43s/it]Loading checkpoint shards:  67%|######6   | 4/6 [00:05<00:02,  1.44s/it]Loading checkpoint shards:  83%|########3 | 5/6 [00:07<00:01,  1.44s/it]Loading checkpoint shards: 100%|##########| 6/6 [00:08<00:00,  1.32s/it]Loading checkpoint shards: 100%|##########| 6/6 [00:08<00:00,  1.37s/it]
+ * Tip: There are .env files present. Install python-dotenv to use them.
+No LoRA adapter found; using base model only.
+Model loaded and ready to serve.
+Starting server on port 5000...
+ * Serving Flask app 'serve_eval'
+ * Debug mode: off
