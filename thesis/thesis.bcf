@@ -2378,25 +2378,24 @@
     <bcf:citekey order="2" intorder="1">salimans2022progressive</bcf:citekey>
     <bcf:citekey order="3" intorder="1">song2023consistency</bcf:citekey>
     <bcf:citekey order="4" intorder="1">survey2025diffusion</bcf:citekey>
-    <bcf:citekey order="5" intorder="1">ho2020ddpm</bcf:citekey>
-    <bcf:citekey order="6" intorder="1">song2020ddim</bcf:citekey>
-    <bcf:citekey order="7" intorder="1">sahoo2024mdlm</bcf:citekey>
-    <bcf:citekey order="7" intorder="2">nie2025llada</bcf:citekey>
-    <bcf:citekey order="8" intorder="1">nie2025llada</bcf:citekey>
-    <bcf:citekey order="9" intorder="1">sahoo2024mdlm</bcf:citekey>
-    <bcf:citekey order="10" intorder="1">vaswani2017attention</bcf:citekey>
-    <bcf:citekey order="11" intorder="1">su2024rope</bcf:citekey>
-    <bcf:citekey order="12" intorder="1">ho2020ddpm</bcf:citekey>
-    <bcf:citekey order="13" intorder="1">hinton2015distilling</bcf:citekey>
-    <bcf:citekey order="14" intorder="1">salimans2022progressive</bcf:citekey>
-    <bcf:citekey order="15" intorder="1">bengio2013ste</bcf:citekey>
-    <bcf:citekey order="16" intorder="1">jang2017gumbel</bcf:citekey>
-    <bcf:citekey order="17" intorder="1">hu2022lora</bcf:citekey>
-    <bcf:citekey order="18" intorder="1">bengio2013ste</bcf:citekey>
-    <bcf:citekey order="19" intorder="1">salimans2022progressive</bcf:citekey>
-    <bcf:citekey order="20" intorder="1">song2023consistency</bcf:citekey>
-    <bcf:citekey order="21" intorder="1">salimans2022progressive</bcf:citekey>
-    <bcf:citekey order="22" intorder="1">strubell2019energy</bcf:citekey>
+    <bcf:citekey order="5" intorder="1">li2024accelerating</bcf:citekey>
+    <bcf:citekey order="6" intorder="1">ho2020ddpm</bcf:citekey>
+    <bcf:citekey order="7" intorder="1">song2020ddim</bcf:citekey>
+    <bcf:citekey order="8" intorder="1">sahoo2024mdlm</bcf:citekey>
+    <bcf:citekey order="8" intorder="2">nie2025llada</bcf:citekey>
+    <bcf:citekey order="9" intorder="1">nie2025llada</bcf:citekey>
+    <bcf:citekey order="10" intorder="1">sahoo2024mdlm</bcf:citekey>
+    <bcf:citekey order="11" intorder="1">vaswani2017attention</bcf:citekey>
+    <bcf:citekey order="12" intorder="1">su2024rope</bcf:citekey>
+    <bcf:citekey order="13" intorder="1">ho2020ddpm</bcf:citekey>
+    <bcf:citekey order="14" intorder="1">hinton2015distilling</bcf:citekey>
+    <bcf:citekey order="15" intorder="1">salimans2022progressive</bcf:citekey>
+    <bcf:citekey order="16" intorder="1">hu2022lora</bcf:citekey>
+    <bcf:citekey order="17" intorder="1">salimans2022progressive</bcf:citekey>
+    <bcf:citekey order="18" intorder="1">promptfoo2024</bcf:citekey>
+    <bcf:citekey order="19" intorder="1">song2023consistency</bcf:citekey>
+    <bcf:citekey order="20" intorder="1">salimans2022progressive</bcf:citekey>
+    <bcf:citekey order="21" intorder="1">strubell2019energy</bcf:citekey>
   </bcf:section>
   <!-- SORTING TEMPLATES -->
   <bcf:sortingtemplate name="none">

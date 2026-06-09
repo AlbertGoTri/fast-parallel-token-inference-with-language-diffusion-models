@@ -140,6 +140,37 @@
       \field{title}{A Comprehensive Survey on Diffusion Language Models: 2024-2026}
       \field{year}{2026}
     \endentry
+    \entry{li2024accelerating}{article}{}{}
+      \true{moreauthor}
+      \true{morelabelname}
+      \name{author}{2}{}{%
+        {{hash=29518fd61a56458b9a5c274ce9621132}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={Xiangcheng},
+           giveni={X\bibinitperiod}}}%
+        {{hash=471e61c37bc3e62dbe8655e02a002343}{%
+           family={Wang},
+           familyi={W\bibinitperiod},
+           given={Yue},
+           giveni={Y\bibinitperiod}}}%
+      }
+      \strng{namehash}{0f5f5d9163c3f4995d8651074c25c4a0}
+      \strng{fullhash}{0f5f5d9163c3f4995d8651074c25c4a0}
+      \strng{fullhashraw}{0f5f5d9163c3f4995d8651074c25c4a0}
+      \strng{bibnamehash}{0f5f5d9163c3f4995d8651074c25c4a0}
+      \strng{authorbibnamehash}{0f5f5d9163c3f4995d8651074c25c4a0}
+      \strng{authornamehash}{0f5f5d9163c3f4995d8651074c25c4a0}
+      \strng{authorfullhash}{0f5f5d9163c3f4995d8651074c25c4a0}
+      \strng{authorfullhashraw}{0f5f5d9163c3f4995d8651074c25c4a0}
+      \field{sortinit}{5}
+      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{arXiv preprint arXiv:2406.10998}
+      \field{title}{Accelerating Diffusion Language Models: A Survey on Sampling and Post-Training Methods}
+      \field{year}{2024}
+    \endentry
     \entry{ho2020ddpm}{article}{}{}
       \name{author}{3}{}{%
         {{hash=2ac2ca10b22e4d13af1767e87495412f}{%
@@ -166,8 +197,8 @@
       \strng{authornamehash}{d9c72e0919aac578c7e983d804becd3d}
       \strng{authorfullhash}{1ef17e0fed8d834b029ebb1c6adf76b4}
       \strng{authorfullhashraw}{1ef17e0fed8d834b029ebb1c6adf76b4}
-      \field{sortinit}{5}
-      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
+      \field{sortinit}{6}
+      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{journaltitle}{Advances in Neural Information Processing Systems}
@@ -203,8 +234,8 @@
       \strng{authornamehash}{48b91413191c8335a53fdbd2568bafd4}
       \strng{authorfullhash}{ebc7e264c58ec8ac9b0159b127245547}
       \strng{authorfullhashraw}{ebc7e264c58ec8ac9b0159b127245547}
-      \field{sortinit}{6}
-      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
+      \field{sortinit}{7}
+      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{journaltitle}{ICLR}
@@ -229,8 +260,8 @@
       \strng{authornamehash}{517eabd40919379a41b39c3c67193087}
       \strng{authorfullhash}{517eabd40919379a41b39c3c67193087}
       \strng{authorfullhashraw}{517eabd40919379a41b39c3c67193087}
-      \field{sortinit}{7}
-      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
+      \field{sortinit}{8}
+      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{booktitle}{NeurIPS}
@@ -325,74 +356,6 @@
       \field{title}{Distilling the Knowledge in a Neural Network}
       \field{year}{2015}
     \endentry
-    \entry{bengio2013ste}{inproceedings}{}{}
-      \name{author}{3}{}{%
-        {{hash=40a8e4774982146adc2688546f54efb2}{%
-           family={Bengio},
-           familyi={B\bibinitperiod},
-           given={Yoshua},
-           giveni={Y\bibinitperiod}}}%
-        {{hash=db4067da5f1d8e231e32151651e87e2a}{%
-           family={Léonard},
-           familyi={L\bibinitperiod},
-           given={Nicholas},
-           giveni={N\bibinitperiod}}}%
-        {{hash=ccec1ccd2e1aa86960eb2e872c6b7020}{%
-           family={Courville},
-           familyi={C\bibinitperiod},
-           given={Aaron},
-           giveni={A\bibinitperiod}}}%
-      }
-      \strng{namehash}{058f6aa7282521dda725a309bd2d3fea}
-      \strng{fullhash}{dd42453cf8059cadadbb99021fd17990}
-      \strng{fullhashraw}{dd42453cf8059cadadbb99021fd17990}
-      \strng{bibnamehash}{dd42453cf8059cadadbb99021fd17990}
-      \strng{authorbibnamehash}{dd42453cf8059cadadbb99021fd17990}
-      \strng{authornamehash}{058f6aa7282521dda725a309bd2d3fea}
-      \strng{authorfullhash}{dd42453cf8059cadadbb99021fd17990}
-      \strng{authorfullhashraw}{dd42453cf8059cadadbb99021fd17990}
-      \field{sortinit}{1}
-      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{booktitle}{arXiv preprint arXiv:1308.3432}
-      \field{title}{Estimating or Propagating Gradients Through Stochastic Neurons for Conditional Computation}
-      \field{year}{2013}
-    \endentry
-    \entry{jang2017gumbel}{inproceedings}{}{}
-      \name{author}{3}{}{%
-        {{hash=3b21b8aef58f6e35446f2dbc679e5e6e}{%
-           family={Jang},
-           familyi={J\bibinitperiod},
-           given={Eric},
-           giveni={E\bibinitperiod}}}%
-        {{hash=0072cdac4f418553b46ec3ddc61cebad}{%
-           family={Gu},
-           familyi={G\bibinitperiod},
-           given={Shixiang},
-           giveni={S\bibinitperiod}}}%
-        {{hash=e528fda20644135dfae4f481a342148f}{%
-           family={Poole},
-           familyi={P\bibinitperiod},
-           given={Ben},
-           giveni={B\bibinitperiod}}}%
-      }
-      \strng{namehash}{aeabf30b39f8f0e737a9646de136a8a6}
-      \strng{fullhash}{56a47665bbe4612de2bb387bea75ea33}
-      \strng{fullhashraw}{56a47665bbe4612de2bb387bea75ea33}
-      \strng{bibnamehash}{56a47665bbe4612de2bb387bea75ea33}
-      \strng{authorbibnamehash}{56a47665bbe4612de2bb387bea75ea33}
-      \strng{authornamehash}{aeabf30b39f8f0e737a9646de136a8a6}
-      \strng{authorfullhash}{56a47665bbe4612de2bb387bea75ea33}
-      \strng{authorfullhashraw}{56a47665bbe4612de2bb387bea75ea33}
-      \field{sortinit}{1}
-      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{booktitle}{ICLR}
-      \field{title}{Categorical Reparameterization with Gumbel-Softmax}
-      \field{year}{2017}
-    \endentry
     \entry{hu2022lora}{article}{}{}
       \true{moreauthor}
       \true{morelabelname}
@@ -418,6 +381,28 @@
       \field{journaltitle}{ICLR}
       \field{title}{{LoRA}: Low-Rank Adaptation of Large Language Models}
       \field{year}{2022}
+    \endentry
+    \entry{promptfoo2024}{misc}{}{}
+      \name{author}{1}{}{%
+        {{hash=6e8df9cc56c98960e81b27d608533ef4}{%
+           family={{Promptfoo}},
+           familyi={P\bibinitperiod}}}%
+      }
+      \strng{namehash}{6e8df9cc56c98960e81b27d608533ef4}
+      \strng{fullhash}{6e8df9cc56c98960e81b27d608533ef4}
+      \strng{fullhashraw}{6e8df9cc56c98960e81b27d608533ef4}
+      \strng{bibnamehash}{6e8df9cc56c98960e81b27d608533ef4}
+      \strng{authorbibnamehash}{6e8df9cc56c98960e81b27d608533ef4}
+      \strng{authornamehash}{6e8df9cc56c98960e81b27d608533ef4}
+      \strng{authorfullhash}{6e8df9cc56c98960e81b27d608533ef4}
+      \strng{authorfullhashraw}{6e8df9cc56c98960e81b27d608533ef4}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://www.promptfoo.dev}}
+      \field{title}{{Promptfoo}: Open-source LLM Testing and Evaluation}
+      \field{year}{2024}
     \endentry
     \entry{strubell2019energy}{report}{}{}
       \name{author}{3}{}{%

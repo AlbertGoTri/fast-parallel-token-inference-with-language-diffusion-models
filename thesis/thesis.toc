@@ -1,0 +1,60 @@
+\babel@toc {english}{}\relax 
+\contentsline {section}{\numberline {1}Introduction and contextualization}{4}{}%
+\contentsline {subsection}{\numberline {1.1}The Auto-Regressive vs. Diffusion Paradigm}{4}{}%
+\contentsline {subsection}{\numberline {1.2}Current Limitations and Challenges in Discrete Diffusion}{5}{}%
+\contentsline {subsection}{\numberline {1.3}Stakeholders}{5}{}%
+\contentsline {section}{\numberline {2}Background}{6}{}%
+\contentsline {subsection}{\numberline {2.1}Continuous Diffusion Models}{6}{}%
+\contentsline {subsection}{\numberline {2.2}Discrete Diffusion Models for Text}{6}{}%
+\contentsline {subsubsection}{\numberline {2.2.1}Masked Diffusion}{6}{}%
+\contentsline {subsubsection}{\numberline {2.2.2}LLaDA}{7}{}%
+\contentsline {subsubsection}{\numberline {2.2.3}MDLM}{7}{}%
+\contentsline {subsection}{\numberline {2.3}The Transformer Architecture}{7}{}%
+\contentsline {subsection}{\numberline {2.4}Knowledge Distillation}{7}{}%
+\contentsline {subsubsection}{\numberline {2.4.1}Progressive Distillation for Diffusion Models}{8}{}%
+\contentsline {subsection}{\numberline {2.5}Parameter-Efficient Fine-Tuning: LoRA}{8}{}%
+\contentsline {section}{\numberline {3}Methodology}{8}{}%
+\contentsline {subsection}{\numberline {3.1}Pipeline overview}{9}{}%
+\contentsline {subsection}{\numberline {3.2}Distillation loss and gradient flow}{9}{}%
+\contentsline {subsection}{\numberline {3.3}Step compression strategy}{10}{}%
+\contentsline {subsubsection}{\numberline {3.3.1}The Progressive Halving Schedule}{10}{}%
+\contentsline {paragraph}{Why halving, not quartering?}{10}{}%
+\contentsline {subsubsection}{\numberline {3.3.2}Trajectory Construction for Discrete Tokens}{10}{}%
+\contentsline {paragraph}{Handling fully unmasked positions.}{11}{}%
+\contentsline {subsubsection}{\numberline {3.3.3}Multi-Round Chaining and Teacher Promotion}{11}{}%
+\contentsline {subsubsection}{\numberline {3.3.4}Convergence Criterion and Early Stopping}{11}{}%
+\contentsline {subsubsection}{\numberline {3.3.5}Error Accumulation Across Rounds}{12}{}%
+\contentsline {paragraph}{Mitigation via temperature calibration.}{12}{}%
+\contentsline {subsection}{\numberline {3.4}LoRA integration and hyperparameters}{12}{}%
+\contentsline {subsection}{\numberline {3.5}Training protocol and implementation details}{13}{}%
+\contentsline {subsection}{\numberline {3.6}Evaluation protocol}{13}{}%
+\contentsline {section}{\numberline {4}Justification of the chosen resolution alternative}{13}{}%
+\contentsline {subsection}{\numberline {4.1}Methodological Choice: Progressive Distillation vs. Alternatives}{13}{}%
+\contentsline {subsection}{\numberline {4.2}Scientific Innovation}{14}{}%
+\contentsline {subsection}{\numberline {4.3}Efficiency and Green AI}{14}{}%
+\contentsline {subsection}{\numberline {4.4}Commercial Viability}{14}{}%
+\contentsline {subsection}{\numberline {4.5}Economic Impact}{14}{}%
+\contentsline {section}{\numberline {5}Scope of the project}{14}{}%
+\contentsline {subsection}{\numberline {5.1}General and Specific Objectives (SMART)}{14}{}%
+\contentsline {subsection}{\numberline {5.2}In-Scope vs. Out-of-Scope}{15}{}%
+\contentsline {subsection}{\numberline {5.3}Functional and Non-Functional Requirements}{15}{}%
+\contentsline {subsubsection}{\numberline {5.3.1}Functional Requirements}{15}{}%
+\contentsline {subsubsection}{\numberline {5.3.2}Non-Functional Requirements}{15}{}%
+\contentsline {subsection}{\numberline {5.4}Validation Strategy and Metrics}{16}{}%
+\contentsline {section}{\numberline {6}Time planning}{16}{}%
+\contentsline {subsection}{\numberline {6.1}Global Project Parameters and Methodology}{16}{}%
+\contentsline {subsection}{\numberline {6.2}Work Breakdown Structure (WBS)}{16}{}%
+\contentsline {subsection}{\numberline {6.3}Task Summary and Resources Table}{18}{}%
+\contentsline {subsection}{\numberline {6.4}Agile Gantt Chart}{19}{}%
+\contentsline {subsection}{\numberline {6.5}Risk Management \& Alternative Plans}{19}{}%
+\contentsline {section}{\numberline {7}Budget}{20}{}%
+\contentsline {subsection}{\numberline {7.1}Identification of Costs and Staff Estimates}{20}{}%
+\contentsline {subsection}{\numberline {7.2}General Costs and Amortization}{20}{}%
+\contentsline {subsection}{\numberline {7.3}Contingencies and Incidentals}{21}{}%
+\contentsline {subsection}{\numberline {7.4}Total Budget Summary}{21}{}%
+\contentsline {subsection}{\numberline {7.5}Management Control}{21}{}%
+\contentsline {section}{\numberline {8}Sustainability and social commitment}{22}{}%
+\contentsline {subsection}{\numberline {8.1}Self-Assessment Summary}{22}{}%
+\contentsline {subsection}{\numberline {8.2}Economic Dimension}{22}{}%
+\contentsline {subsection}{\numberline {8.3}Environmental Dimension}{22}{}%
+\contentsline {subsection}{\numberline {8.4}Social Dimension}{22}{}%
