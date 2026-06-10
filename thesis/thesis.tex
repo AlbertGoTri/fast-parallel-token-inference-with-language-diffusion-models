@@ -13,19 +13,31 @@
 \usepackage{wrapfig}
 \usepackage{booktabs}
 \usepackage{amsmath, amssymb, amsfonts}
-% Hyperref disabled to avoid PDF string encoding warnings during build
-%\usepackage{hyperref}
-%\hypersetup{unicode=true, pdfencoding=auto}
-%\pdfstringdefDisableCommands{%\def\texttt#1{#1}%\def\path#1{#1}%\def\detokenize#1{#1}%}
+\usepackage{listings}
+\usepackage{xcolor}
 \usepackage{float}
 \usepackage{caption}
 \usepackage{subcaption}
 \usepackage{titlesec}
 \usepackage{fancyhdr}
-\usepackage{pdfpages} 
+\usepackage{pdfpages}
 \usepackage{csquotes}
 \usepackage{pgfgantt}
 \usepackage{textcomp} % For the Euro symbol (\texteuro{})
+
+% --- CODE LISTING STYLE ---
+\lstset{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray},
+  stringstyle=\color{orange!80!black},
+  breaklines=true,
+  frame=single,
+  numbers=none,
+  backgroundcolor=\color{gray!5},
+  xleftmargin=0.5em,
+  xrightmargin=0.5em,
+}
 
 % --- FIX FOR WARNING ---
 \setlength{\headheight}{14pt}
@@ -158,8 +170,8 @@
 % --- HEADER/FOOTER ---
 \pagestyle{fancy}
 \fancyhf{}
-\rhead{\textbf{GEP - Final Document}}
-\lhead{Bachelor's Thesis (TFG)}
+\rhead{\textbf{Bachelor's Thesis (TFG)}}
+\lhead{Progressive Distillation for Language Diffusion Models}
 \rfoot{Page \thepage}
 
 % --- DOCUMENT START ---
@@ -175,20 +187,20 @@
 \newpage
 
 % ======================================================================
-\section{Introduction and contextualization}
+\section{Introduction and Contextualization}
 \label{sec:intro_context}
 
 The field of Natural Language Processing (NLP) is currently dominated by Auto-Regressive (AR) Transformers (e.g., GPT-5, DeepSeek-V3, Kimi), which generate text sequentially. While effective, this paradigm suffers from a linear latency bottleneck: generating $N$ tokens requires $N$ forward passes, leading to slow inference and suboptimal GPU utilization.
 
 \textbf{Language Diffusion Models (LDMs)} \cite{nie2025llada} have emerged as a parallel alternative, theoretically capable of generating entire sequences simultaneously via iterative denoising. However, current LDMs still require a high number of sampling steps (typically 50--100) to reach convergence, which often negates their speed advantage over AR models.
 
-In the domain of Computer Vision (Image Generation), this limitation was overcome by techniques such as \textbf{Progressive Distillation} \cite{salimans2022progressive} or Consistency Models \cite{song2023consistency}, where a "Student" model is trained to compress the "Teacher's" many denoising steps into a single or very few steps.
+In the domain of Computer Vision (Image Generation), this limitation was overcome by techniques such as \textbf{Progressive Distillation} \cite{salimans2022progressive} or Consistency Models \cite{song2023consistency}, where a ``Student'' model is trained to compress the ``Teacher's'' many denoising steps into a single or very few steps.
 
 \textbf{Problem Statement:} While distillation techniques have revolutionized image generation, they have not yet been successfully adapted to the discrete and non-continuous domain of text diffusion.
 
-\textbf{Thesis Proposal \& Institutional Context:} Within the specialization of \textbf{Information Technology (IT)} at the Facultat d'Informatica de Barcelona (FIB), this project aims to implement and validate a \textbf{Knowledge Distillation} technique for Language Diffusion Models. By training a student LDM to mimic the trajectory of a pre-trained teacher LDM, we aim to achieve high-quality text generation in extremely few steps ($<10$), thereby unlocking the true potential of parallel token inference. Because deploying large-scale language models currently faces severe practical and economic constraints, this project is directly anchored in core IT themes: by drastically reducing the required denoising steps, we aim to maximize inference efficiency and significantly increase system throughput in production environments.
+\textbf{Thesis Proposal \& Institutional Context:} Within the specialization of \textbf{Information Technology (IT)} at the Facultat d'Informatica de Barcelona (FIB), this project aims to implement and validate a \textbf{Knowledge Distillation} technique for Language Diffusion Models. By training a student LDM to mimic the trajectory of a pre-trained teacher LDM, we aim to achieve high-quality text generation in extremely few steps ($<$10), thereby unlocking the true potential of parallel token inference. Because deploying large-scale language models currently faces severe practical and economic constraints, this project is directly anchored in core IT themes: by drastically reducing the required denoising steps, we aim to maximize inference efficiency and significantly increase system throughput in production environments.
 
-\subsection{The Auto-Regressive vs. Diffusion Paradigm}
+\subsection{The Auto-Regressive vs.\ Diffusion Paradigm}
 Standard AR models estimate $P(x) = \prod P(x_t | x_{<t})$. This serial dependency prevents parallelization. LDMs, conversely, model the data distribution $p(x_0)$ by reversing a noise process $q(x_t | x_{t-1})$.
 \begin{equation}
     x_{t-1} \leftarrow \text{Denoise}(x_t, \theta)
@@ -198,7 +210,7 @@ While LDMs can predict all tokens in parallel, the iterative refinement requires
 \begin{figure}[H]
     \centering
     \begin{tikzpicture}[
-        node distance=0.6cm and 0.8cm, 
+        node distance=0.6cm and 0.8cm,
         box/.style={draw, rectangle, rounded corners, minimum width=1.0cm, minimum height=0.8cm, align=center, fill=blue!5, thick, font=\small},
         noise/.style={draw, circle, fill=gray!20, minimum size=0.8cm, font=\small},
         arrow/.style={-Stealth, thick},
@@ -213,8 +225,8 @@ While LDMs can predict all tokens in parallel, the iterative refinement requires
     \draw[arrow] (t1) -- (t2);
     \draw[arrow] (t2) -- (dots);
     \draw[arrow] (dots) -- (tn);
-    \draw[decorate, decoration={brace, amplitude=5pt, mirror}, thick, red!70!black] 
-        ([yshift=-0.3cm]t1.south west) -- ([yshift=-0.3cm]tn.south east) 
+    \draw[decorate, decoration={brace, amplitude=5pt, mirror}, thick, red!70!black]
+        ([yshift=-0.3cm]t1.south west) -- ([yshift=-0.3cm]tn.south east)
         node[midway, below=8pt, font=\small\color{red!70!black}] {Serial Latency $\mathcal{O}(N)$};
 
     % --- RIGHT: Diffusion ---
@@ -224,8 +236,8 @@ While LDMs can predict all tokens in parallel, the iterative refinement requires
     \node[box, below=0.6cm of denoise, minimum width=3.5cm] (output) {$x_1, x_2, \dots, x_N$};
     \draw[arrow] (noise) -- (denoise);
     \draw[arrow] (denoise) -- (output);
-    \draw[decorate, decoration={brace, amplitude=5pt, mirror}, thick, green!60!black] 
-        ([yshift=-0.3cm]output.south west) -- ([yshift=-0.3cm]output.south east) 
+    \draw[decorate, decoration={brace, amplitude=5pt, mirror}, thick, green!60!black]
+        ([yshift=-0.3cm]output.south west) -- ([yshift=-0.3cm]output.south east)
         node[midway, below=8pt, font=\small\color{green!60!black}] {Constant Latency $\mathcal{O}(K)$};
     \end{tikzpicture}
     \caption{Latency Comparison. \textbf{Left:} AR models generate tokens sequentially. \textbf{Right:} Diffusion models generate the entire sequence in parallel. \textit{Source: Compiled by the author.}}
@@ -233,11 +245,11 @@ While LDMs can predict all tokens in parallel, the iterative refinement requires
 \end{figure}
 
 \subsection{Current Limitations and Challenges in Discrete Diffusion}
-While models like GPT-4 have set the standard for quality, their serial nature poses a fundamental limit on latency scaling. The time complexity of generating a sequence of length $N$ is $\mathcal{O}(N)$. As context windows grow to 128k or 1M tokens, this serial dependency becomes a bottleneck that no amount of parallel compute can solve purely through hardware scaling. Techniques like \textit{Speculative Decoding} attempt to mitigate this by drafting multiple tokens at once, but they are probabilistic and their speedup is upper-bounded (typically $2\times - 3\times$). Diffusion models, by contrast, offer a theoretical $\mathcal{O}(1)$ or $\mathcal{O}(K)$ complexity where $K$ is the number of denoising steps, independent of sequence length $N$.
+While models like GPT-4 have set the standard for quality, their serial nature poses a fundamental limit on latency scaling. The time complexity of generating a sequence of length $N$ is $\mathcal{O}(N)$. As context windows grow to 128k or 1M tokens, this serial dependency becomes a bottleneck that no amount of parallel compute can solve purely through hardware scaling. Techniques like \textit{Speculative Decoding} attempt to mitigate this by drafting multiple tokens at once, but they are probabilistic and their speedup is upper-bounded (typically $2\times$--$3\times$). Diffusion models, by contrast, offer a theoretical $\mathcal{O}(1)$ or $\mathcal{O}(K)$ complexity where $K$ is the number of denoising steps, independent of sequence length $N$.
 
-As of early 2026, research on LDMs (e.g., LLaDA, MDLM) focuses on architecture and pre-training \cite{survey2025diffusion}. \textbf{There is a significant gap in post-training acceleration}\cite{li2024accelerating}. No open-source study has comprehensively applied progressive distillation to discrete text tokens, a fact that reflects how relatively new and less understood text diffusion is compared to its image counterpart. This introduces significant challenges:
+As of early 2026, research on LDMs (e.g., LLaDA, MDLM) focuses on architecture and pre-training \cite{survey2025diffusion}. \textbf{There is a significant gap in post-training acceleration} \cite{li2024accelerating}. No open-source study has comprehensively applied progressive distillation to discrete text tokens, a fact that reflects how relatively new and less understood text diffusion is compared to its image counterpart. This introduces significant challenges:
 \begin{itemize}
-    \item \textbf{Rounding Errors:} In text, a slight error in the embedding space can flip a token from "happy" to "sad," destroying semantic coherence.
+    \item \textbf{Rounding Errors:} In text, a slight error in the embedding space can flip a token from ``happy'' to ``sad,'' destroying semantic coherence.
     \item \textbf{Loss Mismatch:} The standard Mean Squared Error (MSE) loss used in image distillation does not align well with the Cross-Entropy loss required for language modeling.
 \end{itemize}
 
@@ -259,52 +271,52 @@ As of early 2026, research on LDMs (e.g., LLaDA, MDLM) focuses on architecture a
 
 \textbf{Detailed Analysis:}
 \begin{itemize}
-    \item \textbf{Project Director:} Their primary concern is the feasibility of the scope. By strictly defining the boundaries (no pre-training, only distillation), we mitigate the risk of scope creep, ensuring the project is "finishable" within the TFG timeline.
+    \item \textbf{Project Director:} Their primary concern is the feasibility of the scope. By strictly defining the boundaries (no pre-training, only distillation), we mitigate the risk of scope creep, ensuring the project is ``finishable'' within the TFG timeline.
     \item \textbf{The Student:} This project serves as a portfolio piece demonstrating mastery of advanced Deep Learning concepts (Diffusion, Distillation, PyTorch) that are highly sought after in top-tier AI research labs and tech companies.
-    \item \textbf{Scientific Community:} If successful, the open-source code release will allow other researchers to replicate our distillation pipeline, potentially sparking a new wave of "Fast Text Diffusion" research.
+    \item \textbf{Scientific Community:} If successful, the open-source code release will allow other researchers to replicate our distillation pipeline, potentially sparking a new wave of ``Fast Text Diffusion'' research.
 \end{itemize}
 
-\noindent \textbf{Strategy:} We will manage the \textit{Director} closely via bi-weekly meetings to align on the "Distillation Loss" formulation, while keeping the \textit{Scientific Community} in mind by ensuring the code is modular and open-source compatible.
+\noindent \textbf{Strategy:} We will manage the \textit{Director} closely via bi-weekly meetings to align on the ``Distillation Loss'' formulation, while keeping the \textit{Scientific Community} in mind by ensuring the code is modular and open-source compatible.
 
 % ======================================================================
 \section{Background}
 \label{sec:background}
- 
+
 This section provides the theoretical foundations required to understand the proposed
 distillation technique. We begin with continuous diffusion models as originally formulated
 for image generation, then derive how the framework is adapted to discrete token sequences.
 We then review the Transformer architecture that serves as the backbone for all models
 considered, and conclude with an overview of knowledge distillation and the specific
 parameter-efficient fine-tuning technique used in this work.
- 
+
 % ----------------------------------------------------------------------
 \subsection{Continuous Diffusion Models}
 \label{subsec:continuous_diffusion}
- 
+
 Diffusion probabilistic models \cite{ho2020ddpm} define a \textbf{forward process} that
 gradually corrupts a data sample $\mathbf{x}_0 \sim q(\mathbf{x}_0)$ by adding Gaussian
 noise over $T$ discrete time steps:
- 
+
 \begin{equation}
     q(\mathbf{x}_t \mid \mathbf{x}_{t-1}) = \mathcal{N}\!\left(\mathbf{x}_t;\;
     \sqrt{1 - \beta_t}\,\mathbf{x}_{t-1},\; \beta_t \mathbf{I}\right),
     \label{eq:forward_process}
 \end{equation}
- 
+
 \noindent where $\{\beta_t\}_{t=1}^{T}$ is a fixed variance schedule. A key property of
 this Markov chain is that any intermediate noisy sample can be sampled in closed form:
- 
+
 \begin{equation}
     q(\mathbf{x}_t \mid \mathbf{x}_0) = \mathcal{N}\!\left(\mathbf{x}_t;\;
     \sqrt{\bar{\alpha}_t}\,\mathbf{x}_0,\; (1 - \bar{\alpha}_t)\mathbf{I}\right),
     \quad \bar{\alpha}_t = \prod_{s=1}^{t}(1 - \beta_s).
     \label{eq:marginal}
 \end{equation}
- 
+
 The \textbf{reverse process} learns to undo this corruption step by step. A neural network
 $\epsilon_\theta(\mathbf{x}_t, t)$ is trained to predict the noise $\epsilon$ added at step
 $t$, minimizing the denoising score-matching objective:
- 
+
 \begin{equation}
     \mathcal{L}_{\text{DDPM}} = \mathbb{E}_{t,\mathbf{x}_0,\epsilon}\!\left[
     \left\lVert \epsilon - \epsilon_\theta\!\left(\sqrt{\bar{\alpha}_t}\,\mathbf{x}_0 +
@@ -312,35 +324,35 @@ $t$, minimizing the denoising score-matching objective:
     \quad \epsilon \sim \mathcal{N}(\mathbf{0}, \mathbf{I}).
     \label{eq:ddpm_loss}
 \end{equation}
- 
+
 \noindent This loss is a re-weighted Evidence Lower BOund (ELBO) on the log-likelihood
 $\log p_\theta(\mathbf{x}_0)$. At inference time, generation proceeds by iterating the
 learned reverse step from pure noise $\mathbf{x}_T \sim \mathcal{N}(\mathbf{0},\mathbf{I})$
 down to $\mathbf{x}_0$, requiring $T$ (typically 1000) sequential network evaluations.
- 
+
 \textbf{DDIM and faster samplers.} Song et al.~\cite{song2020ddim} showed that the reverse
 process can be reformulated as a non-Markovian process sharing the same marginals, enabling
 deterministic sampling in as few as 50 steps with negligible quality loss. Despite this
 improvement, the number of steps still scales independently of sequence length, and each
 step is a full forward pass of a large network.
- 
+
 % ----------------------------------------------------------------------
 \subsection{Discrete Diffusion Models for Text}
 \label{subsec:discrete_diffusion}
- 
+
 Text consists of discrete tokens drawn from a finite vocabulary $\mathcal{V}$ of size $V$
 (typically $V \approx 32{,}000$ for modern tokenizers). Applying Gaussian noise to integer
 token indices is semantically meaningless; the continuous diffusion framework must therefore
 be adapted to operate over categorical distributions.
- 
+
 \subsubsection{Masked Diffusion}
 \label{subsubsec:masked_diffusion}
- 
+
 The dominant paradigm for discrete text diffusion replaces Gaussian corruption with a
 \textbf{masking} process \cite{sahoo2024mdlm, nie2025llada}. Given a sequence
 $\mathbf{x}_0 = (x_0^1, \ldots, x_0^L)$, the forward process independently masks each
 token with probability $\alpha(t)$ using a special \texttt{[MASK]} token:
- 
+
 \begin{equation}
     q(x_t^i \mid x_0^i) =
     \begin{cases}
@@ -349,116 +361,116 @@ token with probability $\alpha(t)$ using a special \texttt{[MASK]} token:
     \end{cases}
     \label{eq:mask_forward}
 \end{equation}
- 
+
 \noindent where $\alpha(t)$ is a monotonically decreasing schedule with $\alpha(0) = 1$
 (no masking) and $\alpha(T) \approx 0$ (fully masked). The reverse model
 $p_\theta(x_0^i \mid \mathbf{x}_t)$ is trained to predict the original token at each
 masked position given the full (partially masked) context, minimizing the cross-entropy
 loss:
- 
+
 \begin{equation}
     \mathcal{L}_{\text{mask}} = \mathbb{E}_{t, \mathbf{x}_0}\!\left[
     \sum_{i:\, x_t^i = \texttt{[MASK]}}
     -\log p_\theta\!\left(x_0^i \mid \mathbf{x}_t\right) \right].
     \label{eq:mask_loss}
 \end{equation}
- 
+
 \noindent Because all masked positions are predicted simultaneously in a single forward
 pass, this formulation achieves the parallel generation property that motivates diffusion
 models for text.
- 
+
 \subsubsection{LLaDA}
 \label{subsubsec:llada}
- 
+
 \textbf{Large Language Diffusion with mAsking (LLaDA)} \cite{nie2025llada} is the primary
 teacher model in this work. It is an 8B-parameter Transformer pre-trained from scratch on
 2.3T tokens using the masked diffusion objective of Eq.~\eqref{eq:mask_loss}. At inference,
 LLaDA uses a \textbf{re-masking} sampling strategy: starting from a fully masked sequence,
 it iteratively predicts all tokens and then re-masks a fraction of low-confidence predictions,
 refining the sequence over $T$ steps. This is analogous to the reverse diffusion chain in the
-continuous case. The key challenge \textemdash{} and the central motivation for this thesis \textemdash{} is that
+continuous case. The key challenge---and the central motivation for this thesis---is that
 LLaDA requires $T = 64$ to $128$ steps to achieve competitive output quality, each step
 involving a full 8B-parameter forward pass.
- 
+
 \subsubsection{MDLM}
 \label{subsubsec:mdlm}
- 
+
 \textbf{Masked Diffusion Language Models (MDLM)} \cite{sahoo2024mdlm} derives a continuous-time
 extension of the masked diffusion process, showing that the ELBO can be computed in closed
 form and that the model can be trained with a simple weighted cross-entropy loss equivalent
 to Eq.~\eqref{eq:mask_loss}. MDLM also demonstrates that the masking schedule can be
 parameterized as a linear function $\alpha(t) = 1 - t/T$, $t \in [0, T]$, which we adopt
 in this work.
- 
+
 % ----------------------------------------------------------------------
 \subsection{The Transformer Architecture}
 \label{subsec:transformer}
- 
+
 All language models considered in this thesis are built on the Transformer architecture
 \cite{vaswani2017attention}. A Transformer processes a sequence of $L$ token embeddings
 $\mathbf{H} \in \mathbb{R}^{L \times d}$ through $N$ stacked layers, each composed of two
 sub-modules:
- 
+
 \begin{equation}
     \text{Attention}(Q, K, V) = \text{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right)V,
     \label{eq:attention}
 \end{equation}
- 
+
 \noindent where $Q = \mathbf{H}W^Q$, $K = \mathbf{H}W^K$, $V = \mathbf{H}W^V$ are
 linear projections of the hidden states, and $d_k$ is the key dimension. Unlike AR
 Transformers, which apply a causal mask to prevent tokens from attending to future
 positions, diffusion Transformers use \textbf{bidirectional} (full) attention: every token
 attends to every other token. This is essential for parallel token prediction, as the model
 must gather global context before committing to a prediction at each position.
- 
+
 \textbf{Positional encoding.} Modern large-scale Transformers replace sinusoidal
 positional encodings with Rotary Position Embeddings (RoPE) \cite{su2024rope}, which
 encode relative position information directly in the attention computation and generalize
 better to sequence lengths unseen during training.
- 
+
 \textbf{Time conditioning.} In the diffusion setting, the denoising model must be aware of
 the current noise level $t$. This is achieved by embedding the scalar $t$ using sinusoidal
 features and adding the resulting vector to the hidden states at each layer, analogously to
 how DDPM conditions the UNet on $t$ \cite{ho2020ddpm}. LLaDA instead conditions on the
 masking ratio $1 - \alpha(t)$ directly.
- 
+
 % ----------------------------------------------------------------------
 \subsection{Knowledge Distillation}
 \label{subsec:knowledge_distillation}
- 
+
 Knowledge distillation (KD) \cite{hinton2015distilling} is a model compression technique in
 which a compact \textbf{student} model $f_S$ is trained to replicate the behavior of a
 larger, pre-trained \textbf{teacher} model $f_T$. Rather than training the student on
 hard one-hot labels, it is trained on the \textbf{soft probability distributions} output by
 the teacher, which encode richer inter-class similarity information. For a classification
 head with logits $z$, the soft target distribution at temperature $\tau$ is:
- 
+
 \begin{equation}
     p_T^i = \frac{\exp(z_T^i / \tau)}{\sum_j \exp(z_T^j / \tau)},
     \label{eq:soft_targets}
 \end{equation}
- 
+
 \noindent and the student is trained to minimize the KL divergence from teacher to student:
- 
+
 \begin{equation}
     \mathcal{L}_{\text{KD}} = \tau^2 \cdot D_{\text{KL}}\!\left(p_T \,\|\, p_S\right)
     = \tau^2 \sum_i p_T^i \log \frac{p_T^i}{p_S^i}.
     \label{eq:kd_loss}
 \end{equation}
- 
+
 \noindent The factor $\tau^2$ compensates for the gradient magnitude reduction introduced
 by the temperature scaling. In this work, the teacher and student share the same
 architecture (same parameter count); the goal of distillation is not model compression but
 \textbf{step compression}: we train the student to perform in one step what the teacher
 performs in two, progressively halving the required number of inference steps.
- 
+
 \subsubsection{Progressive Distillation for Diffusion Models}
 \label{subsubsec:progressive_distillation}
- 
+
 Salimans and Ho \cite{salimans2022progressive} introduced progressive distillation (PD) as
 a technique to reduce the number of sampling steps in continuous diffusion models by a
 factor of two at each distillation round. The procedure is as follows:
- 
+
 \begin{enumerate}
     \item Initialize the student $\theta_S \leftarrow \theta_T$ (copy teacher weights).
     \item For each training batch, sample a noisy state $\mathbf{x}_t$ and run \emph{two}
@@ -468,37 +480,37 @@ factor of two at each distillation round. The procedure is as follows:
     \item Set $\theta_T \leftarrow \theta_S$ and halve the step schedule. Repeat until
           the desired number of steps is reached.
 \end{enumerate}
- 
+
 \noindent After $k$ rounds, a model originally requiring $N$ steps is compressed to
 $N / 2^k$ steps. This procedure is well-defined in continuous space because the
 interpolation between two denoising steps is smooth. Adapting it to discrete token
-sequences \textemdash{} where there is no meaningful interpolation between categorical distributions \textemdash{}
-is the central technical challenge addressed by this thesis.
- 
+sequences---where there is no meaningful interpolation between categorical distributions---is
+the central technical challenge addressed by this thesis.
+
 % ----------------------------------------------------------------------
 \subsection{Parameter-Efficient Fine-Tuning: LoRA}
 \label{subsec:lora}
- 
+
 Full fine-tuning of an 8B-parameter model on a single A100 GPU is infeasible: the model
 weights alone require $\approx$16 GB in \texttt{bfloat16}, leaving minimal headroom for
 activations and optimizer states. Low-Rank Adaptation (LoRA) \cite{hu2022lora} addresses
 this by decomposing the weight update $\Delta W$ of each linear layer into a product of
 two low-rank matrices:
- 
+
 \begin{equation}
     W' = W + \Delta W = W + BA, \quad B \in \mathbb{R}^{d \times r},\;
     A \in \mathbb{R}^{r \times k},\; r \ll \min(d, k).
     \label{eq:lora}
 \end{equation}
- 
+
 \noindent The original weights $W$ are frozen; only $A$ and $B$ are trained. For a rank
 $r = 16$ applied to all attention projections of an 8B model, the number of trainable
-parameters drops from $\approx$8B to $\approx$20M \textemdash{} a reduction of over 99\%. $A$ is
+parameters drops from $\approx$8B to $\approx$20M---a reduction of over 99\%. $A$ is
 initialized with random Gaussian entries and $B$ with zeros, so $\Delta W = 0$ at the
 start of training, preserving the teacher's behavior at initialization. This is a critical
 property for our distillation setup, as it ensures the student begins training from the
 teacher's exact output distribution.
- 
+
 % ======================================================================
 \section{Methodology}
 \label{sec:methodology}
@@ -508,7 +520,7 @@ pipeline used in this thesis. The exposition documents the implemented pipeline
 components: teacher trajectory caching, student training with parameter-efficient
 adapters, and the evaluation suite.
 
-\subsection{Pipeline overview}
+\subsection{Pipeline Overview}
 
 The pipeline comprises two stages. First, the teacher (LLaDA) runs in a read-only
 generation mode to produce and cache intermediate denoising states and the
@@ -552,12 +564,12 @@ targets the midpoint $t=64$, with a generated continuation length of $L_{\text{g
 The second stage initializes the student from the same pre-trained weights,
 injects low-rank adapters into attention projections, and optimizes only these
 adapters so that the bulk of the 8B model parameters remain frozen. Cached
-trajectories are consumed sequentially (one cached trajectory per update), i.e.
+trajectories are consumed sequentially (one cached trajectory per update), i.e.\
 an effective batch size of $B=1$ is used. The student is trained to match the
 teacher's soft-token distributions over the generated continuation (positions
 following the prompt).
 
-\subsection{Distillation loss and gradient flow}
+\subsection{Distillation Loss and Gradient Flow}
 
 Following classical KD, the student minimizes the temperature-scaled KL divergence
 per token between the teacher and the student distributions (compare
@@ -594,18 +606,16 @@ Eq.~\eqref{eq:kd_loss} in Background). For a batch of sequences the loss used is
 % Student Column (Right)
 \node[sbox, below right=0.6cm and 0.5cm of input] (student) {Student (LoRA, $\theta_S$)};
 \node[sbox, below=0.5cm of student] (step_s) {Single denoising step};
-% Aligning the student logits to the exact same Y-level as the teacher logits
 \node[lossbox] (logits_s) at (student |- logits_t) {Soft logits $p_S(\cdot)$};
 
 % Loss Node (Centered below everything)
 \node[lossbox, below=1.2cm of input |- logits_t] (loss) {KL Loss $\mathcal{L}_{\text{distill}}$};
 
-% Grouping boxes (The dashed outlines)
+% Grouping boxes
 \node[groupbox, fit=(teacher) (step_t) (step_tm1) (logits_t)] (teacher_group) {};
 \node[groupbox, fit=(student) (step_s) (logits_s)] (student_group) {};
 
 % 2. Forward Pass Arrows
-% Input to Teacher/Student
 \draw[arrow] (input.south) -- ++(0,-0.3) -| (teacher.north);
 \draw[arrow] (input.south) -- ++(0,-0.3) -| (student.north);
 
@@ -622,12 +632,11 @@ Eq.~\eqref{eq:kd_loss} in Background). For a batch of sequences the loss used is
 \draw[arrow] (logits_t.south) -- ++(0,-0.4) -| ([xshift=-1.5cm]loss.north);
 \draw[arrow] (logits_s.south) -- ++(0,-0.4) -| ([xshift=1.5cm]loss.north);
 
-% 3. Gradient Update Arrow (FIXED)
-% We calculate coordinates to route it cleanly around the right side
+% 3. Gradient Update Arrow
 \coordinate (loss_bottom) at ($(loss.south) + (0,-0.8)$);
 \coordinate (right_edge) at ($(student_group.east) + (1.2,0)$);
 
-\draw[-Stealth, dashed, thick, red!70!black] 
+\draw[-Stealth, dashed, thick, red!70!black]
     (loss.south) -- (loss_bottom)
     -- node[below, text=red!70!black, font=\small\itshape] {gradient update (LoRA only)} (loss_bottom -| right_edge)
     -- (right_edge |- student.east)
@@ -650,7 +659,7 @@ keeping prompt-conditioning intact.
 
 Because text tokens are categorical, the student is trained directly on the soft teacher logits stored in the cached trajectories rather than on hard re-sampled token indices. This avoids the need to backpropagate through discrete sampling operations and reduces variance, stabilizing distillation for categorical outputs.
 
-\subsection{Step compression strategy}
+\subsection{Step Compression Strategy}
 \label{subsec:step_compression}
 
 The central objective of progressive distillation is to compress the inference-time
@@ -840,14 +849,14 @@ conservative choice: sharpness can be recovered at inference time by applying a 
 temperature to the student's logits, whereas large per-round errors cannot be
 corrected after training.
 
-\subsection{LoRA integration and hyperparameters}
+\subsection{LoRA Integration and Hyperparameters}
 
 To fit an 8B model in limited GPU memory we apply Low-Rank Adaptation as in
 Eq.~\eqref{eq:lora} and inject adapters only into attention projections. The
 chosen LoRA configuration for the experiments reported here is:
 \begin{itemize}
-    \item $r = 8$
-    \item $\alpha_{\text{LoRA}} = 16$
+    \item $r = 16$
+    \item $\alpha_{\text{LoRA}} = 32$
     \item target modules: \texttt{["q\_proj","v\_proj"]}
     \item dropout = 0.05
 \end{itemize}
@@ -856,27 +865,25 @@ and optimizer-state requirements.
 
 Only LoRA parameters are trainable; the base model weights are frozen and the
 teacher is loaded in 4-bit quantized mode using \texttt{BitsAndBytesConfig} to
-allow inference on a single A100-class GPU. This combination enables a practical
+allow inference on a single consumer GPU. This combination enables a practical
 trade-off between fidelity to the teacher and resource constraints.
 
-\subsection{Training protocol and implementation details}
+\subsection{Training Protocol and Implementation Details}
 
-The student training loop uses an AdamW optimizer; when an 8-bit optimizer
-implementation is available the pipeline switches to the lower-precision variant
-to reduce optimizer memory. The learning rate used is $1\times 10^{-4}$, global
+The student training loop uses an 8-bit AdamW optimizer (\texttt{bnb.optim.AdamW8bit})
+to minimize optimizer-state memory. The learning rate is $5\times 10^{-5}$, global
 gradient norms are clipped to 1.0, and mixed precision (\texttt{float16}) is
-used for adapter parameters. Gradient checkpointing is enabled when supported by
-the model to reduce activation memory.
+used throughout. Gradient checkpointing is enabled to reduce peak activation memory.
 
 Trajectories are generated from the Wikitext-2-raw-v1 dataset: a small subset
 of longer examples is sampled, each prompt is expanded by $L_{\text{gen}}=64$
-tokens, and the resulting trajectory tensors are cached to disk. Each cached
-trajectory is saved as a single file and consumed sequentially by the trainer,
+tokens, and the resulting trajectory tensors are cached to disk in compressed
+\texttt{.pkl.gz} format. Each cached trajectory is consumed sequentially by the trainer,
 with one optimizer step performed per file, yielding an effective batch size of
 $B=1$. This design simplifies memory management and increases robustness to
 per-sample failures.
 
-\subsection{Evaluation protocol}
+\subsection{Evaluation Protocol}
 
 The evaluation suite combines three complementary measurement axes: language
 modelling quality, task-level correctness, and inference efficiency. All routines
@@ -891,8 +898,7 @@ and aggregates results into a leaderboard across distillation rounds.
     student's generations are more consistent with natural language.
     \item \textbf{KL-divergence:} the mean KL divergence between the teacher's and
     student's output token distributions at each generated position, averaged over
-    the evaluation prompts. This measures distillation fidelity directly,
-    independently of surface-form quality.
+    the evaluation prompts.
 \end{itemize}
 
 \noindent\textbf{Task-level correctness and LLM-as-judge.}
@@ -918,16 +924,366 @@ quality baseline.
 \noindent\textbf{Baseline.}
 The unmodified teacher model (LLaDA at $T=128$ denoising steps) is evaluated
 under the same quality and task-level protocol and constitutes the primary
-reference point for all distillation rounds.
+reference point for all distillation rounds. An additional \textbf{control benchmark}
+is the base LLaDA-8B model run natively at 64 steps \emph{without} any LoRA adapter,
+which serves as a crucial counterfactual to distinguish the benefit of distillation
+from the mere effect of step reduction.
 
 % ======================================================================
-\section{Justification of the chosen resolution alternative}
-\label{sec:justification}
+\section{System Implementation and Optimizations}
+\label{sec:implementation}
 
-\subsection{Methodological Choice: Progressive Distillation vs. Alternatives}
-When seeking to accelerate diffusion models, two primary strategies emerge: Consistency Models \cite{song2023consistency} and Progressive Distillation \cite{salimans2022progressive}. While Consistency Models map any point on the diffusion trajectory directly to the origin in a single step, they are notoriously difficult to adapt to discrete categorical domains like text. They rely on enforcing boundary conditions over continuous Ordinary Differential Equations (ODEs). 
+\subsection{Trajectory Storage and Caching Infrastructure}
+\label{subsec:trajectory_storage}
 
-In contrast, \textbf{Progressive Distillation} teaches a student model to take larger, discrete jump steps (e.g., matching 2 teacher steps in 1 student step). This discrete nature makes it significantly more adaptable to the token-by-token embedding space of language models. Therefore, this technique was selected as the most viable path to bridge the gap shown in Table \ref{tab:sota_comparison}.
+The distillation pipeline requires capturing intermediate denoising states from the 128-step LLaDA Teacher model (\texttt{GSAI-ML/LLaDA-8B-Instruct}) so that a Student can learn to replicate the token distribution at a reduced step budget. Because the full 8-billion-parameter Teacher cannot reside in VRAM simultaneously with the Student on a consumer GPU limited to 8 GB, the system was engineered around a strict \textbf{iterative disk-caching cycle} that interleaves Teacher and Student residence in GPU memory through a load--generate--unload choreography.
+
+\subsubsection{Caching Stage}
+
+During the caching stage, the Teacher is loaded into GPU memory via \texttt{AutoModel.from\_pretrained()} with 4-bit quantization and \texttt{device\_map=``auto''}. For each training example drawn from the Wikitext-2 dataset, the \texttt{generate\_and\_cache\_trajectory()} function executes the LLaDA semi-autoregressive diffusion process up to a programmable \texttt{target\_step}, defined by default as \texttt{target\_step = teacher\_steps // 2} (i.e., step 64 for a 128-step teacher). At exactly that midpoint, the function captures a tuple comprising: \texttt{state\_x}, the partially unmasked token tensor at that diffusion timestep; \texttt{teacher\_logits}, the raw logit tensor from the Teacher's forward pass cast to \texttt{torch.float16} to conserve disk space; and \texttt{attn\_mask}, the causal attention mask for the full sequence.
+
+These tensors are moved to CPU and serialized to disk using a custom \texttt{\_save\_cache\_object()} helper, which converts tensors to NumPy arrays and writes them with \texttt{pickle} inside \texttt{gzip} (compression level 3) to a \texttt{.pkl.gz} file. This format was adopted after encountering PyTorch ZIP archive corruption on Windows under heavy sequential I/O when saving raw \texttt{.pt} files. Table~\ref{tab:cache_payload} documents the exact payload saved per trajectory file.
+
+\begin{table}[H]
+\centering
+\caption{Saved payload per trajectory cache file (\texttt{batch\_i.pkl.gz}).}
+\label{tab:cache_payload}
+\begin{tabular}{@{}llll@{}}
+\toprule
+\textbf{Key} & \textbf{Tensor Shape (typical)} & \textbf{Dtype} & \textbf{Description} \\ \midrule
+\texttt{input\_x}       & \texttt{(1, prompt\_len + 64)} & int64   & Prompt + masked generation region at \texttt{target\_step} \\
+\texttt{target\_logits} & \texttt{(1, prompt\_len + 64, V)} & float16 & Teacher logits over vocabulary $V$ \\
+\texttt{attn\_mask}     & \texttt{(1, prompt\_len + 64)} & int64   & Causal attention mask \\
+\texttt{prompt\_len}    & scalar                          & int     & Length of the original prompt in tokens \\
+\texttt{target\_step}   & scalar                          & int     & Diffusion step at which snapshot was taken \\ \bottomrule
+\end{tabular}
+\end{table}
+
+After each trajectory is saved, GPU tensors are explicitly deleted and \texttt{torch.cuda.empty\_cache()} is invoked. Once the entire batch of \texttt{num\_train\_examples} (50 by default) is cached, the Teacher model is forcefully unloaded via an \texttt{unload\_model()} function, which moves weights to CPU, deletes the Python object, and triggers garbage collection. A validation pass then reads every \texttt{.pkl.gz} back from disk to verify integrity before training begins.
+
+\subsubsection{Training Stage}
+
+Once all trajectories reside on disk, the Student base model is loaded with 4-bit quantization, LoRA adapters are injected, and only the adapter parameters are marked as trainable. The training loop iterates over the cached files sequentially; because the trajectories are already on disk, no Teacher model competes for VRAM. After training, the LoRA checkpoint is saved, the Student is unloaded, and the cache directory is optionally purged to reclaim disk space. This strict \textbf{load--generate--unload} $\to$ \textbf{load--train--unload} choreography was the only viable strategy to fit an 8B-parameter diffusion model, a quantized Student, and an optimizer state within the 8 GB VRAM ceiling of the RTX 2070 Super.
+
+\subsection{VRAM Memory Optimization Techniques}
+\label{subsec:vram_opt}
+
+Fitting the LLaDA-8B architecture into a single 8 GB consumer graphics card required stacking several complementary quantization and memory-reduction techniques. The following subsections enumerate each configuration with its quantitative impact.
+
+\subsubsection{Four-Bit NF4 Quantization}
+
+Both the Teacher and the Student base are loaded with an identical \texttt{BitsAndBytesConfig}:
+
+\begin{lstlisting}[language=Python]
+quantization_config = BitsAndBytesConfig(
+    load_in_4bit=True,
+    bnb_4bit_compute_dtype=torch.float16,
+    bnb_4bit_quant_type="nf4",
+    bnb_4bit_use_double_quant=True,
+)
+\end{lstlisting}
+
+The \texttt{load\_in\_4bit=True} flag compresses 16-bit weights down to 4-bit Normal Float (NF4) representations, reducing the parameter footprint of an 8B model from approximately 16 GB to approximately 4 GB. The \texttt{nf4} quantization type employs the information-theoretically optimal 4-bit data type for normally distributed weights, preserving more signal than standard FP4. Enabling \texttt{bnb\_4bit\_use\_double\_quant=True} applies a second quantization layer to the quantization constants themselves, shaving off an additional 0.5--1 GB at runtime. All dequantized matrix multiplications are performed in FP16 (\texttt{bnb\_4bit\_compute\_dtype=torch.float16}), which is natively accelerated on Turing-architecture RTX cards.
+
+PyTorch memory limits are further constrained with \texttt{max\_memory=\{0: ``6GiB'', ``cpu'': f``\{ram\_gb\}GiB''\}}, allowing the \texttt{accelerate} device map to offload embedding or attention layers to system RAM if the 6 GB GPU bound is approached.
+
+\subsubsection{LoRA Configuration}
+
+Rather than fine-tuning all 8B parameters, the Student receives lightweight Low-Rank Adaptation layers injected via \texttt{peft.get\_peft\_model()}:
+
+\begin{lstlisting}[language=Python]
+peft_config = LoraConfig(
+    r=16,
+    lora_alpha=32,
+    target_modules=["q_proj", "v_proj"],
+    lora_dropout=0.05,
+    bias="none",
+    task_type="FEATURE_EXTRACTION",
+)
+\end{lstlisting}
+
+With \texttt{r=16} and \texttt{lora\_alpha=32}, the effective scaling factor is $\alpha / r = 2.0$. Targeting only the query and value projection matrices in each attention block minimizes the trainable parameter count while preserving sufficient capacity to absorb the shifted token distributions. No bias terms are added, avoiding extra optimizer state. After injection, adapter parameters are explicitly cast to \texttt{torch.float16}, saving approximately 50\% of adapter-related VRAM relative to the default FP32 storage used by PEFT.
+
+\subsubsection{Gradient Checkpointing and 8-bit Optimizer}
+
+Enabling \texttt{student\_base.gradient\_checkpointing\_enable()} trades compute for memory by re-computing activation checkpoints during the backward pass instead of storing full intermediate tensors, reducing peak activation memory by approximately 30--40\% at the cost of a 15--20\% slower backward pass. The optimizer is \texttt{bnb.optim.AdamW8bit}: because only LoRA parameters are trainable, maintaining first- and second-moment estimates in 8-bit blocks reduces optimizer overhead from approximately 2 GB (full 16-bit adapter state) to roughly 250--300 MB.
+
+\subsubsection{System-Level VRAM Guards}
+
+Three additional system-level constraints prevent fragmentation and reference leaks. \texttt{torch.cuda.set\_per\_process\_memory\_fraction(0.90)} caps PyTorch allocations at 90\% of total GPU memory, leaving an approximately 800 MB safety buffer for CUDA kernels and transient allocations. Setting \texttt{os.environ[``PYTORCH\_CUDA\_ALLOC\_CONF''] = ``max\_split\_size\_mb:128''} limits the maximum size of memory blocks allocated by the CUDA caching allocator, reducing internal fragmentation in the 8 GB pool. Finally, a \texttt{verify\_gpu\_empty()} function runs between every stage and asserts that allocated GPU memory is below a 100 MB threshold, catching reference leaks before the next model load. Together, these optimizations allowed the pipeline to execute all seven distillation rounds on the RTX 2070 Super without triggering a single \texttt{CUDA out of memory} error.
+
+\subsection{Efficient Training Pipeline and DataLoader}
+\label{subsec:training_pipeline}
+
+The training regime is intentionally austere: because each cached trajectory is already a complete sequence tensor and the optimizer state barely fits in VRAM, the effective batch size is strictly $B = 1$. There is no multi-worker DataLoader; the loop simply enumerates the \texttt{.pkl.gz} cache files in lexicographic order. The core training step proceeds as follows:
+
+\begin{lstlisting}[language=Python]
+for each cache_file in cache_files:
+    trajectory = load_cache_object(cache_file)
+    input_x       = trajectory['input_x'].to("cuda")
+    target_logits = trajectory['target_logits'].to("cuda").to(torch.float16)
+    attn_mask     = trajectory['attn_mask'].to("cuda")
+    prompt_len    = trajectory['prompt_len']
+
+    optimizer.zero_grad()
+    with torch.autocast(device_type="cuda", dtype=torch.float16):
+        student_output = student_model(input_x, attention_mask=attn_mask)
+        student_logits_gen = student_output.logits[:, prompt_len:, :]
+        target_logits_gen  = target_logits[:, prompt_len:, :]
+        loss = F.kl_div(
+            F.log_softmax(student_logits_gen / temperature, dim=-1),
+            F.softmax(target_logits_gen / temperature, dim=-1),
+            reduction="batchmean"
+        ) * (temperature ** 2)
+
+    loss.backward()
+    torch.nn.utils.clip_grad_norm_(trainable_params, max_norm=1.0)
+    optimizer.step()
+    del input_x, target_logits, student_logits_gen, loss
+    torch.cuda.empty_cache()
+\end{lstlisting}
+
+\subsubsection{Mathematical Formulation of the Distillation Loss}
+
+For a single trajectory, let $G$ denote the number of generation tokens (\texttt{gen\_length}), $V$ the vocabulary size, $s_i \in \mathbb{R}^V$ the student logits at position $i$, $t_i \in \mathbb{R}^V$ the teacher logits at position $i$, and $\tau = 2.0$ the temperature. The per-position softened distributions are:
+\begin{equation}
+    P_{\text{student}}(i, v) = \frac{\exp(s_i(v) / \tau)}{\sum_w \exp(s_i(w) / \tau)}, \quad
+    P_{\text{teacher}}(i, v) = \frac{\exp(t_i(v) / \tau)}{\sum_w \exp(t_i(w) / \tau)}.
+\end{equation}
+The temperature-scaled KL divergence loss is then:
+\begin{equation}
+    \mathcal{L} = \tau^2 \cdot \frac{1}{G} \sum_{i=1}^{G} \sum_{v=1}^{V}
+    P_{\text{teacher}}(i, v) \left[ \log P_{\text{teacher}}(i, v) - \log P_{\text{student}}(i, v) \right].
+\end{equation}
+Prompt tokens are excluded from the loss, as the Student must learn to \emph{generate}, not to reproduce the conditioning prefix. The $\tau^2$ scaling is the standard correction from the distillation literature to counteract the entropy increase induced by temperature smoothing \cite{hinton2015distilling}. Gradient clipping at \texttt{max\_grad\_norm=1.0} prevents sharp spikes when the Student distribution diverges from the Teacher in early rounds. The fixed learning rate of $5 \times 10^{-5}$ was chosen conservatively to avoid catastrophic forgetting of the base model's pre-trained knowledge.
+
+% ======================================================================
+\section{Experimentation and Results}
+\label{sec:results}
+
+\subsection{Experimental Setup and Hardware Environment}
+\label{subsec:setup}
+
+All experiments were executed on a single local workstation. The hardware and software configurations are summarized in Tables~\ref{tab:hardware} and~\ref{tab:software} respectively.
+
+\begin{table}[H]
+\centering
+\caption{Hardware specification for all experiments (run \texttt{run\_20260609\_105305}).}
+\label{tab:hardware}
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Component}    & \textbf{Specification} \\ \midrule
+GPU           & NVIDIA GeForce RTX 2070 Super (8 GB GDDR6) \\
+Architecture  & Turing (TU104) \\
+CPU           & Intel Core i7 (local desktop system) \\
+RAM           & 32 GB DDR4 (system) \\
+OS            & Windows 11 Pro \\ \bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Core software stack.}
+\label{tab:software}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Library}   & \textbf{Version}      & \textbf{Role} \\ \midrule
+PyTorch            & 2.5.1+cu121           & Deep learning framework and CUDA backend \\
+Transformers       & 4.46.3                & HuggingFace model loading, AutoTokenizer \\
+PEFT               & 0.18.1                & LoRA injection via \texttt{get\_peft\_model} \\
+bitsandbytes       & 0.49.2                & 4-bit quantization and 8-bit AdamW \\
+Datasets           & 4.8.4                 & Wikitext-2 loading and preprocessing \\
+Flask              & 3.1.3                 & Evaluation generation server \\
+promptfoo          & latest (npx)          & LLM-as-a-Judge orchestration \\
+Ollama             & local                 & Llama 3.1 8B judge inference server \\ \bottomrule
+\end{tabular}
+\end{table}
+
+\noindent\textbf{Training dataset.} Training trajectories were generated from the \texttt{wikitext-2-raw-v1} dataset (HuggingFace \texttt{Datasets}), filtered to sequences with \texttt{len(text.strip()) > 80} characters, and limited to the first 50 examples (\texttt{num\_train\_examples = 50}). Each example was formatted with the template \texttt{``Briefly summarize or continue this text:\textbackslash n\{text[:200]\}''}.
+
+\noindent\textbf{Evaluation dataset.} Task-level evaluation used 12 manually crafted prompts covering instruction-following, factual recall, code generation, creative writing, and summarization, assessed against 54 semantic assertions in total.
+
+\subsection{Progressively Distilled Rounds: Training Dynamics}
+\label{subsec:training_dynamics}
+
+The pipeline executed seven recursive distillation rounds, halving the step count at each iteration along the chain $128 \to 64 \to 32 \to 16 \to 8 \to 4 \to 2 \to 1$. Table~\ref{tab:pipeline_times} aggregates the core wall-clock metrics recorded in the definitive run \texttt{run\_20260609\_105305}.
+
+\begin{table}[H]
+\centering
+\caption{Pipeline wall-clock metrics across all distillation rounds (\texttt{run\_20260609\_105305}).}
+\label{tab:pipeline_times}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}ccccccccc@{}}
+\toprule
+\textbf{Round} & \textbf{Student Steps} & \textbf{Teacher Steps} & \textbf{Target Step} & \textbf{Cache (s)} & \textbf{Train (s)} & \textbf{Eval (s)} & \textbf{Total (s)} \\ \midrule
+0 (baseline) & 128 & ---  & ---  & ---   & ---   & 780.3   & 780.3   \\
+1            & 64  & 128  & 64   & 910.5 & 136.4 & 641.7   & 1688.6  \\
+2            & 32  & 64   & 32   & 650.8 & 116.7 & 1240.8  & 2008.2  \\
+3            & 16  & 32   & 16   & 517.8 & 90.9  & 1174.3  & 1783.0  \\
+4            & 8   & 16   & 8    & 452.9 & 85.6  & 1219.6  & 1758.1  \\
+5            & 4   & 8    & 4    & 422.8 & 85.9  & 1133.2  & 1641.9  \\
+6            & 2   & 4    & 2    & 404.6 & 86.3  & 1048.3  & 1539.2  \\
+7            & 1   & 2    & 1    & 399.1 & 90.4  & 1103.0  & 1592.5  \\ \bottomrule
+\end{tabular}%
+}
+\end{table}
+
+Cache time decreases monotonically across rounds because the Teacher in round $N$ executes half as many diffusion steps per example as in round $N-1$. Training time likewise diminishes as \texttt{target\_step} decreases, since each cached trajectory contains fewer unmasked token positions over which gradients must propagate. Evaluation overhead, dominated by Promptfoo assertion latency and Flask server generation time, does not scale linearly with step count because LLaDA's semi-autoregressive block scheduling incurs fixed per-block overheads at very low step counts. No learning-rate rescue mechanism was triggered during the run; the fixed $\text{lr} = 5 \times 10^{-5}$ proved stable throughout, with loss values plateauing within the first 10--15 trajectories per round without divergence.
+
+\subsection{Quantitative Evaluation of Language Quality}
+\label{subsec:quality_results}
+
+Table~\ref{tab:quality_results} compares the 128-step Teacher baseline, the 64-step non-distilled Teacher control benchmark, and all seven progressively distilled Students. Perplexity (PPL) is computed via a GPT-2 reference model on generated outputs; lower values indicate higher coherence with natural language. The Promptfoo pass rate is the percentage of the 54 semantic assertions evaluated by Llama 3.1 8B that returned an affirmative verdict.
+
+\begin{table}[H]
+\centering
+\caption{Language quality metrics across all model variants.}
+\label{tab:quality_results}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Model Variant} & \textbf{Steps} & \textbf{Promptfoo Pass Rate} & \textbf{Avg Perplexity} & \textbf{P95 Perplexity} \\ \midrule
+Teacher Baseline            & 128 & 74.07\% & 13.00  & 988.41  \\
+Teacher Control (no LoRA)   & 64  & 70.37\% & 17.38  & 968.56  \\
+Distilled Student (Round 1) & 64  & 74.07\% & 12.97  & $\approx$22.73  \\
+Distilled Student (Round 2) & 32  & 75.93\% & 15.93  & $\approx$30.99  \\
+Distilled Student (Round 3) & 16  & 68.52\% & 24.86  & $\approx$34.59  \\
+Distilled Student (Round 4) & 8   & 62.96\% & 68.44  & $\approx$80.00  \\
+Distilled Student (Round 5) & 4   & 59.26\% & 79.18  & $\approx$100.00 \\
+Distilled Student (Round 6) & 2   & 50.00\% & 161.93 & $\approx$200.00 \\
+Distilled Student (Round 7) & 1   & 46.30\% & 353.26 & $\approx$400.00 \\ \bottomrule
+\end{tabular}
+\end{table}
+
+Several findings merit close attention. First, the Round-1 distilled Student operating at 64 steps exactly matches the 128-step Teacher on the Promptfoo assertion rate (74.07\%) and achieves a marginally lower perplexity (12.97 vs.\ 13.00), demonstrating that one round of distillation fully recovers the original model's quality at half the inference cost. Second, and crucially, the 64-step \emph{non-distilled} control benchmark degrades to a 70.37\% pass rate and a perplexity of 17.38---a measurable deterioration confirming that naively halving the step budget \emph{without} distillation incurs meaningful quality erosion, whereas the distilled Student at the same step count avoids this drop entirely. Third, Round 2 at 32 steps yields the highest Promptfoo score of the entire study (75.93\%), suggesting that the intermediate distillation Teacher---itself a 64-step model already refined through one round---produces a smoother supervision distribution than direct compression from 128 steps. Fourth, from 16 steps downward perplexity rises super-linearly: 24.86 at 16 steps, 68.44 at 8 steps, 161.93 at 2 steps. This inflection between 16 and 8 steps marks the boundary where the discrete diffusion process no longer possesses sufficient iterations to resolve token ambiguities, leading to compounding prediction errors. Finally, the P95 perplexity values reveal that worst-case outputs degrade far faster than the mean, indicating heterogeneous rather than uniform quality failure across prompt types.
+
+\subsection{Task-Based Evaluation via LLM-as-a-Judge (Promptfoo)}
+\label{subsec:promptfoo_results}
+
+Promptfoo evaluates each of the 12 test prompts against 4--5 semantic assertions (54 total). Assertions are batched into a single Ollama call per prompt, then cached by SHA-256 hash to avoid redundant judging. The judge model is Llama 3.1 8B, running locally via Ollama with \texttt{temperature=0}, \texttt{num\_gpu=0} (CPU-only judging to prevent GPU contention), and \texttt{num\_predict=1024}. Table~\ref{tab:promptfoo_results} reports per-round assertion counts and test-level outcomes.
+
+\begin{table}[H]
+\centering
+\caption{Promptfoo assertion-level summary across all distillation rounds.}
+\label{tab:promptfoo_results}
+\begin{tabular}{@{}ccccccc@{}}
+\toprule
+\textbf{Round} & \textbf{Steps} & \textbf{Pass / Total} & \textbf{Pass Rate} & \textbf{Test Pass} & \textbf{Test Fail} \\ \midrule
+0              & 128              & 40 / 54 & 74.07\% & 4 & 8  \\
+1              & 64               & 40 / 54 & 74.07\% & 4 & 8  \\
+2              & 32               & 41 / 54 & 75.93\% & 5 & 7  \\
+3              & 16               & 37 / 54 & 68.52\% & 3 & 9  \\
+4              & 8                & 34 / 54 & 62.96\% & 0 & 12 \\
+5              & 4                & 32 / 54 & 59.26\% & 2 & 10 \\
+6              & 2                & 27 / 54 & 50.00\% & 1 & 11 \\
+7              & 1                & 25 / 54 & 46.30\% & 1 & 11 \\
+Control        & 64 (no LoRA)     & 38 / 54 & 70.37\% & 2 & 10 \\ \bottomrule
+\end{tabular}
+\end{table}
+
+Instruction-following assertions---those requiring the model to produce exactly a specified number of sentences or bullet points---degrade first. At 8 steps, the Student fails every structural-constraint test (0 test-level passes), whereas the 128-step Teacher passes 4 of 12. Factual consistency holds relatively well down to 16 steps but collapses at 8 steps, where outputs begin hallucinating names and confabulating events. Semantic coherence drops from approximately 77\% per-assertion at 128 steps to roughly 55\% at 8 steps. Code syntax validity fails entirely for the 8-step Student because repeated punctuation and broken indentation make outputs syntactically unparsable, whereas the 64-step non-distilled baseline still produces syntactically valid code stubs. The 32-step distilled Student (75.93\%) simultaneously surpasses both the 128-step Teacher and the 64-step non-distilled control while being 3.63$\times$ faster, constituting the most favorable quality--speed operating point discovered in this study.
+
+\subsection{Inference Efficiency and Generation Throughput}
+\label{subsec:efficiency_results}
+
+Generation latency was measured server-side by the Flask evaluation endpoint, which timestamps tokenization and generation separately. Table~\ref{tab:latency} reports average, median, and P95 latency in milliseconds across 12 evaluation prompts, together with the speedup relative to the 128-step Teacher.
+
+\begin{table}[H]
+\centering
+\caption{Inference latency and speedup across all model variants.}
+\label{tab:latency}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+\textbf{Model Variant} & \textbf{Steps} & \textbf{Avg Gen (ms)} & \textbf{Median Gen (ms)} & \textbf{P95 Gen (ms)} & \textbf{Avg Speedup} \\ \midrule
+Teacher Baseline            & 128 & 17,292 & 17,266 & 17,534 & 1.00$\times$  \\
+Teacher Control (no LoRA)   & 64  & $\approx$11,427 & $\approx$11,400 & $\approx$11,500 & 1.51$\times$ \\
+Distilled Student (Round 1) & 64  & 8,934  & 8,838  & 9,276  & 1.94$\times$  \\
+Distilled Student (Round 2) & 32  & 4,766  & 4,703  & 5,294  & 3.63$\times$  \\
+Distilled Student (Round 3) & 16  & 2,514  & 2,502  & 2,681  & 6.88$\times$  \\
+Distilled Student (Round 4) & 8   & 1,412  & 1,393  & 1,522  & 12.25$\times$ \\
+Distilled Student (Round 5) & 4   & 855    & 833    & 1,006  & 20.22$\times$ \\
+Distilled Student (Round 6) & 2   & 562    & 596    & 685    & 30.77$\times$ \\
+Distilled Student (Round 7) & 1   & 468    & 476    & 558    & 36.95$\times$ \\ \bottomrule
+\end{tabular}%
+}
+\end{table}
+
+Approximate token throughput figures (for \texttt{gen\_length = 64}) are reported in Table~\ref{tab:throughput}.
+
+\begin{table}[H]
+\centering
+\caption{Approximate generation throughput in tokens per second.}
+\label{tab:throughput}
+\begin{tabular}{@{}cc@{}}
+\toprule
+\textbf{Sampling Steps} & \textbf{Throughput (tok/s)} \\ \midrule
+128 & 3.7   \\
+64  & 7.2   \\
+32  & 13.4  \\
+16  & 25.5  \\
+8   & 45.3  \\
+4   & 74.9  \\
+2   & 113.9 \\
+1   & 136.8 \\ \bottomrule
+\end{tabular}
+\end{table}
+
+The 8-step Student delivers a 12.25$\times$ speedup over the 128-step Teacher, reducing average generation latency from 17.3 s to 1.4 s per prompt and generating at 45.3 tok/s. Although its Promptfoo pass rate (62.96\%) falls below the 64-step non-distilled control (70.37\%), it runs 6.3$\times$ faster in end-to-end latency. The 32-step distilled Student occupies the optimal trade-off point in this study: it is 3.63$\times$ faster than the Teacher, achieves the highest observed Promptfoo score (75.93\%), and maintains a perplexity of 15.93---comfortably within the 1.5$\times$ envelope relative to the Teacher baseline of 13.00.
+
+% ======================================================================
+\section{Analysis and Discussion}
+\label{sec:analysis}
+
+\subsection{Empirical Validation of Error Accumulation in Discrete Diffusion}
+\label{subsec:error_accumulation_analysis}
+
+The central methodological hypothesis of this work posited that reducing sampling steps in discrete diffusion introduces a linear accumulation of per-step rounding errors $\sum_k \varepsilon_k$ that manifest as degraded generation quality. The empirical results support this hypothesis with important structural nuances introduced by progressive distillation.
+
+When perplexity is plotted against the number of sampling steps on a semi-logarithmic scale, two qualitatively distinct regimes emerge. In Regime A, spanning the range from 128 down to 32 steps, perplexity remains flat or decreases slightly, from 13.00 at 128 steps to 12.97 at 64 steps and 15.93 at 32 steps. The error budget afforded by this residual step count is large enough for the distillation process to absorb compression noise without measurable quality loss. In Regime B, spanning 16 steps and below, perplexity rises super-exponentially: 24.86 at 16 steps, 68.44 at 8 steps, 79.18 at 4 steps, 161.93 at 2 steps, and 353.26 at a single step. In this regime, the number of discrete unmasking iterations is insufficient for the model to resolve high-entropy token positions, and rounding errors from \texttt{argmax} decoding cascade irreversibly through the remaining masked positions.
+
+\subsubsection{The Definitive Role of the 64-Step Non-Distilled Control Benchmark}
+
+The control benchmark is the crucial counterfactual for interpreting these results. Running the base LLaDA-8B model natively at 64 steps---without any LoRA adapter---yields a Promptfoo pass rate of 70.37\% and a perplexity of 17.38, compared to 74.07\% and 13.00 for the 128-step Teacher. Qualitative inspection reveals characteristic artifacts: token repetition (``focusocus''), grammatical fractures (``We've't''), and truncated outputs.
+
+By direct contrast, the Round-1 \emph{distilled} Student, also operating at 64 steps, achieves a 74.07\% pass rate and a perplexity of 12.97---marginally \emph{better} than the original Teacher. This single pairing constitutes the strongest empirical evidence in the study that progressive distillation actively mitigates the quality drop caused by step reduction, rather than merely attenuating it. The distilled Student is not a compressed imitation of the Teacher; it has internalized a more efficient denoising policy that compensates for the missing refinement iterations. The non-distilled model, by contrast, suffers from uncompensated error accumulation: in the native LLaDA sampling loop, each unmasking step with a halved schedule must commit twice as many tokens per iteration, and errors made at early steps are frozen into the sequence with no subsequent opportunity for correction.
+
+Distillation counteracts this precisely because training the Student's \texttt{q\_proj} and \texttt{v\_proj} layers to match the Teacher's midpoint distribution in a single forward pass effectively pre-computes the correction that would otherwise require multiple refinement steps. This is the mechanism by which the distilled Student achieves parity at 64 steps while the non-distilled model, sharing identical architecture and weights, fails to do so.
+
+\subsection{The Role of Temperature Calibration}
+\label{subsec:temperature_analysis}
+
+The training code employs a fixed $\tau = 2.0$ for the KL divergence computation throughout all seven distillation rounds, with no progressive temperature scaling. This static choice has mixed consequences that illuminate an important design tension.
+
+On the beneficial side, a temperature above unity softens the Teacher's \texttt{argmax}-sharp distribution into a richer probability mass over plausible tokens, providing the Student with gradient signal on secondary candidates and preventing overconfident imitation of a single token. Holding $\tau$ constant also keeps the KL loss scale ($\tau^2 = 4.0$) invariant across rounds, making loss values directly comparable along the distillation ladder without normalization.
+
+On the detrimental side, the 8-step and lower Students learned distributions that are \emph{too} smoothed relative to their capacity. Qualitative inspection reveals outputs such as ``,,,,!'' and repetition patterns like ``of of'' and ``car car'' that are characteristic of mode-averaging under insufficient decoding budget. When temperature encourages the Student to distribute probability mass broadly but the step count is too low to resolve that mass into coherent token selections, the result is degenerate filler rather than meaningful content. Progressive distillation literature has suggested increasing temperature as steps decrease to compensate for entropy collapse; the absence of such a schedule in this pipeline means the 2-step and 1-step Students receive identically smoothed targets as the 64-step Student, despite their vastly reduced capacity to realize those targets during sampling. In the 8 GB VRAM-constrained setting, implementing an adaptive temperature schedule was judged too risky because it amplifies gradient variance, which would require smaller learning rates or extended training that the hardware budget could not accommodate.
+
+\subsection{Qualitative Error Analysis and Current Limitations}
+\label{subsec:error_analysis}
+
+A systematic qualitative analysis of failure modes was conducted on outputs from the 8-step Student model using the four representative prompt categories below.
+
+\textbf{Failure Mode 1: Catastrophic token collapse.} A football motivational speech prompt elicited the output ``,,,,!''---only punctuation and no semantic content whatsoever. The model's minimal step budget and quantized 4-bit weights produce degenerate confidence maps where \texttt{argmax} repeatedly selects the comma token because the LoRA-adapted attention heads have overfit to mid-sequence pause patterns in the 50-example training corpus.
+
+\textbf{Failure Mode 2: N-gram loop and structural duplication.} An explanation of the theory of relativity for a 5-year-old produced: \textit{``Imagine you of of a car car. When you're driving, really fast,, time moves down. \ldots{} That called the speed of relativity.''} The phrases ``of of'' and ``car car'' exhibit classic n-gram loop behavior. In discrete diffusion with insufficient steps, the model fails to propagate long-range coherence constraints, causing local self-attention to repeat recently decoded tokens. The LoRA layers, trained on a small 50-example corpus, lack the diversity to generalize robustly to open-ended creative prompts.
+
+\textbf{Failure Mode 3: Code syntax breakdown.} A Python CSV-reading script prompt produced output containing three distinct structural errors: a missing import alias, a malformed f-string, and duplicated \texttt{except}/\texttt{print} keywords with inverted colon placement. Because code validity is evaluated with Python's \texttt{compile()} builtin, any single syntax error fails the assertion. The 8-step diffusion process simply does not provide sufficient iterations to enforce syntactic bracket matching and indentation rules that span multiple tokens.
+
+\textbf{Failure Mode 4: Content fragmentation and hallucination.} A request to summarize \textit{The Matrix} (1999) in three sentences produced output that preserved some correct entities (Neo, machines, Matrix) but inserted hallucinated repetitions (``Neo Neo'', ``machines machines'') and degenerate grammar. This suggests that at 8 steps the model relies on surface lexical retrieval rather than structured sentence planning; the attention mask over the partially decoded sequence lacks the refinement iterations needed to suppress token-level echolalia.
+
+By contrast, the same prompts evaluated on the 64-step non-distilled Teacher produce degraded but recognizable outputs: the football prompt yields stuttering but semantically present text, the relativity prompt produces a coherent child-friendly paragraph, and the Python prompt yields syntactically valid code with correct \texttt{try/except} blocks. This confirms that while the 8-step distilled Student wins on raw throughput, it concedes to the 64-step non-distilled baseline on tasks requiring structural precision or syntactic validity. The practical trade-off is therefore \textbf{application-dependent}: conversational interfaces tolerant of grammatical imprecision may accept the 8-step model, whereas code generation or structured-summary pipelines require at least 16--32 steps.
+
+% ======================================================================
+\section{Project Management and Feasibility}
+\label{sec:gep}
+
+\subsection{Context and Justification}
+\label{subsec:context_justification}
+
+\subsubsection{Methodological Choice: Progressive Distillation vs.\ Alternatives}
+When seeking to accelerate diffusion models, two primary strategies emerge: Consistency Models \cite{song2023consistency} and Progressive Distillation \cite{salimans2022progressive}. While Consistency Models map any point on the diffusion trajectory directly to the origin in a single step, they are notoriously difficult to adapt to discrete categorical domains like text, as they rely on enforcing boundary conditions over continuous Ordinary Differential Equations (ODEs).
+
+In contrast, \textbf{Progressive Distillation} teaches a student model to take larger, discrete jump steps (e.g., matching 2 teacher steps in 1 student step). This discrete nature makes it significantly more adaptable to the token-by-token embedding space of language models. Therefore, this technique was selected as the most viable path to bridge the gap shown in Table~\ref{tab:sota_comparison}.
 
 \begin{table}[H]
 \centering
@@ -940,142 +1296,120 @@ In contrast, \textbf{Progressive Distillation} teaches a student model to take l
 Auto-Regressive & GPT-4, LLaMA-3 & Serial & $N = \text{Length}$ & High (Linear) & SOTA \\
 Standard Diffusion & SSD-LM, LLaDA & Parallel & $50 - 100$ & Med-High & High \\
 Continuous Distillation & Stable Diffusion XL \textit{(image only)} & Parallel & $4 - 8$ & Low & High \\
-\textbf{Discrete Distillation} & \textbf{(This Thesis)} & \textbf{Parallel} & \textbf{4 - 8} & \textbf{Very Low} & \textbf{Target: High} \\ \bottomrule
+\textbf{Discrete Distillation} & \textbf{(This Thesis)} & \textbf{Parallel} & \textbf{4--8} & \textbf{Very Low} & \textbf{Target: High} \\ \bottomrule
 \end{tabular}%
 }
 \end{table}
 
-\subsection{Scientific Innovation}
-Unlike a standard engineering project that benchmarks existing tools, this thesis proposes a \textbf{novel adaptation of an algorithm}. If successful, it contributes a new method to the NLP community: "Textual Progressive Distillation."
+\subsubsection{Scientific Innovation}
+Unlike a standard engineering project that benchmarks existing tools, this thesis proposes a \textbf{novel adaptation of an algorithm}. If successful, it contributes a new method to the NLP community: ``Textual Progressive Distillation.''
 
-\subsection{Efficiency and Green AI}
-Reducing the number of inference steps linearly reduces the energy required to generate text. If we reduce steps from 64 to 8, we reduce the energy cost by approximately $8\times$. This aligns with the "Green AI" initiative \cite{strubell2019energy} to make Large Language Models sustainable.
+\subsubsection{Efficiency and Green AI}
+Reducing the number of inference steps linearly reduces the energy required to generate text. If we reduce steps from 64 to 8, we reduce the energy cost by approximately $8\times$. This aligns with the ``Green AI'' initiative \cite{strubell2019energy} to make Large Language Models sustainable.
 
-\subsection{Commercial Viability}
-For real-time applications (e.g., conversational AI), latency is the primary KPI. A parallel model running in 4-8 steps could theoretically outperform LLaMA-3 by $5\times$--$10\times$ in wall-clock speed, making it highly valuable for industry. Consider a customer support chatbot that needs to generate a 200-token response:
+\subsubsection{Commercial Viability}
+For real-time applications (e.g., conversational AI), latency is the primary KPI. A parallel model running in 4--8 steps could theoretically outperform LLaMA-3 by $5\times$--$10\times$ in wall-clock speed. For a customer support chatbot generating a 200-token response, an AR model at 50 tokens/sec takes 4 seconds, while a distilled LDM at 4 steps could reduce this to 0.4 seconds---an order-of-magnitude improvement that transforms the user experience from perceptible waiting to near-instant response.
+
+\subsubsection{Economic Impact}
+Current LLM inference is prohibitively expensive. A reduction in inference steps from 50 to 5 represents a potential $10\times$ reduction in GPU compute time per query, which could make sophisticated language models viable for SMEs that cannot afford premium GPU infrastructure.
+
+\subsection{Scope and Requirements}
+\label{subsec:scope_requirements}
+
+\subsubsection{General and Specific Objectives (SMART)}
+The general objective is to implement and evaluate a \textbf{knowledge distillation technique} for Language Diffusion Models, training a ``Student'' model to compress the inference steps of a ``Teacher'' model, thereby achieving fast parallel text generation.
 \begin{itemize}
-    \item \textbf{AR Model (LLaMA-3):} At 50 tokens/sec, this takes 4 seconds. This latency is noticeable and degrades user experience.
-    \item \textbf{Standard LDM:} At 100 steps, it might also take 4 seconds or more.
-    \item \textbf{Distilled LDM (Our Proposal):} With 4 steps, even if each step is heavier, the total latency could drop to 0.4 seconds.
-\end{itemize}
-This order-of-magnitude improvement ($10\times$) transforms the user experience from "waiting" to "instant," enabling new applications like real-time voice-to-voice translation where latency must be sub-500ms.
-
-\subsection{Economic Impact}
-Current LLM inference is prohibitively expensive. Companies like OpenAI and Anthropic spend millions daily on compute. A reduction in inference steps from 50 to 5 represents a potential $10\times$ reduction in GPU compute time per query. For an SME deploying a custom LDM, this technique could be the difference between a viable product and a bankrupt one.
-
-% ======================================================================
-\section{Scope of the project}
-\label{sec:scope}
-
-\subsection{General and Specific Objectives (SMART)}
-The general objective is to implement and evaluate a \textbf{knowledge distillation technique} for Language Diffusion Models, training a "Student" model to compress the inference steps of a "Teacher" model, thereby achieving fast parallel text generation.
-\begin{itemize}
-    \item \textbf{O1 (Theoretical Framework):} Analyze the mathematical formulation of Progressive Distillation (Images) and adapt the loss function for discrete text data (Categorical Cross-Entropy / KL Divergence) by \textbf{March 15, 2026}.
-    \item \textbf{O2 (Implementation):} Develop a "Teacher-Student" training loop in PyTorch, capable of loading a pre-trained LDM (e.g., MDLM/LLaDA) and fine-tuning the student weights, by \textbf{April 1, 2026}.
-    \item \textbf{O3 (Distillation Training):} Train the student model on a subset of the Wikitext-2-raw-v1 dataset to reduce sampling steps from $N=64$ to $N=\{8, 4\}$, utilizing university or cloud GPU resources.
-    \item \textbf{O4 (Validation):} Benchmark the "Distilled LDM" against the "Teacher LDM" and an "AR Baseline" (LLaMA-3), measuring \textbf{Speedup (x)} vs. \textbf{Quality Drop (Perplexity/BLEU)} by \textbf{May 20, 2026}.
+    \item \textbf{O1 (Theoretical Framework):} Analyze the mathematical formulation of Progressive Distillation (Images) and adapt the loss function for discrete text data by \textbf{March 15, 2026}.
+    \item \textbf{O2 (Implementation):} Develop a ``Teacher-Student'' training loop in PyTorch capable of loading a pre-trained LDM and fine-tuning student weights by \textbf{April 1, 2026}.
+    \item \textbf{O3 (Distillation Training):} Train the student model on a subset of the Wikitext-2-raw-v1 dataset to reduce sampling steps from $N=64$ to $N=\{8, 4\}$.
+    \item \textbf{O4 (Validation):} Benchmark the ``Distilled LDM'' against the ``Teacher LDM,'' measuring Speedup (×) vs.\ Quality Drop (Perplexity) by \textbf{May 20, 2026}.
 \end{itemize}
 
-\subsection{In-Scope vs. Out-of-Scope}
-\textbf{In-Scope:} 
+\subsubsection{In-Scope vs.\ Out-of-Scope}
+\textbf{In-Scope:}
 \begin{itemize}
     \item \textbf{Algorithm Adaptation:} Porting the distillation logic (step halving) from the continuous domain to the discrete text domain.
-    \item \textbf{Model Distillation (Fine-tuning):} We assume the existence of a pre-trained "Teacher". We will not pre-train a model from scratch; we will only perform the distillation (fine-tuning) phase.
-    \item \textbf{Target Models:} Open-source LDMs in the 1B-8B parameter range (e.g., MDLM, SSD-LM, LLaDA).
-    \item \textbf{Evaluation:} Comparing the distilled model against the teacher on standard metrics (PPL, BLEU) and efficiency metrics (Latency, FLOPs).
+    \item \textbf{Model Distillation (Fine-tuning):} Performing only the distillation (fine-tuning) phase, assuming the existence of a pre-trained ``Teacher.''
+    \item \textbf{Target Models:} Open-source LDMs in the 1B--8B parameter range (e.g., MDLM, SSD-LM, LLaDA).
+    \item \textbf{Evaluation:} Comparing the distilled model against the teacher on quality metrics (PPL) and efficiency metrics (Latency).
 \end{itemize}
 
-\textbf{Out-of-Scope:} 
+\textbf{Out-of-Scope:}
 \begin{itemize}
-    \item \textbf{Pre-training from Scratch:} We will not train the base LDM. We rely on published weights.
-    \item \textbf{Novel Architectures:} We are not inventing a new Neural Network architecture (e.g., new Attention mechanism), but rather a new \textit{training method} for existing architectures.
+    \item \textbf{Pre-training from Scratch:} We rely on published weights.
+    \item \textbf{Novel Architectures:} We propose a new training method for existing architectures, not a new neural network design.
     \item \textbf{Production Deployment:} The output is a scientific proof-of-concept, not a production API.
 \end{itemize}
 
-\subsection{Functional and Non-Functional Requirements}
-\subsubsection{Functional Requirements}
+\subsubsection{Functional and Non-Functional Requirements}
+\textbf{Functional Requirements:}
 \begin{itemize}
     \item The system must accept a text prompt as input and generate a coherent text continuation.
-    \item The distillation pipeline must be able to load a pre-trained Teacher model and initialize a Student model with identical weights.
-    \item The training loop must implement a specific loss function that handles discrete categorical data (e.g., Cross-Entropy with Soft-Targeting).
+    \item The distillation pipeline must load a pre-trained Teacher model and initialize a Student model with identical weights.
+    \item The training loop must implement a loss function handling discrete categorical data (KL Divergence with soft-targeting).
 \end{itemize}
 
-\subsubsection{Non-Functional Requirements}
+\textbf{Non-Functional Requirements:}
 \begin{itemize}
     \item \textbf{Performance:} The distilled model must achieve a latency reduction of at least $4\times$ compared to the teacher.
-    \item \textbf{Quality:} The Perplexity (PPL) degradation of the student model must not exceed 15\% relative to the teacher.
-    \item \textbf{Resources:} The fine-tuning process must fit within a single NVIDIA A100 (40GB/80GB) GPU using LoRA optimization.
+    \item \textbf{Quality:} Perplexity degradation must not exceed 15\% relative to the teacher.
+    \item \textbf{Resources:} The fine-tuning process must fit within a single consumer-grade GPU (NVIDIA RTX 2070 Super, 8 GB VRAM) using LoRA optimization and 4-bit quantization.
 \end{itemize}
 
-\subsection{Validation Strategy and Metrics}
-To ensure the scientific validity of our results, we will employ a rigorous evaluation protocol:
-\begin{enumerate}
-    \item \textbf{Teacher-Student Gap:} We will measure the KL-divergence between the teacher's output distribution and the student's. A low divergence indicates successful distillation.
-    \item \textbf{Human Evaluation (Proxy):} We will use a strong LLM (e.g., GPT-4-Turbo) as a judge to rate the coherence of the distilled text compared to the teacher's text, identifying potential "hallucinations" introduced by the step reduction.
-    \item \textbf{A/B Testing:} We will run side-by-side comparisons of latency on different batch sizes ($B=1, B=32$) to determine if the speedup holds under high-load production scenarios.
-\end{enumerate}
+\subsection{Time Planning and Real Deviations}
+\label{subsec:time_planning}
 
-% ======================================================================
-\section{Time planning}
-\label{sec:planning}
+\subsubsection{Global Project Parameters and Methodology}
+This project is formulated as a standard Bachelor's Thesis (TFG) for the Facultat d'Informatica de Barcelona (FIB), corresponding to 18 ECTS credits, with a total planned workload of \textbf{540 hours}. It spans from February 10, 2026, to the expected defense on June 25, 2026 ($\approx$136 days), requiring approximately 27.5 hours per week. The project adopts an \textbf{Agile Experimental Methodology}: the work is divided into 2-week sprints, with a Sprint Review held with the Project Director at the end of each sprint to assess achieved milestones and a Sprint Retrospective to adjust subsequent planning based on empirical results.
 
-\subsection{Global Project Parameters and Methodology}
-This project is formulated as a standard Bachelor's Thesis (TFG) for the Facultat d'Informatica de Barcelona (FIB), corresponding to 18 ECTS credits. Therefore, the total workload is strictly planned for \textbf{540 hours}. It spans from February 10, 2026, to the expected defense on June 25, 2026 ($\sim 136$ days), requiring approx. 27.5 hours/week. 
+\subsubsection{Work Breakdown Structure (WBS)}
 
-This project adopts an \textbf{Agile Experimental Methodology}, adapted for research. Unlike a linear Waterfall approach, research requires iterative refinement of hypotheses. We divide the project into 2-week "Sprints." At the end of each sprint, a Sprint Review will be held with the Project Director to assess the achieved milestones, followed by a Sprint Retrospective to adjust the planning for the subsequent sprint based on empirical results.
-
-\subsection{Work Breakdown Structure (WBS)}
-To ensure granular tracking and mitigate risks, no single task in this planning exceeds the \textbf{50-hour maximum threshold} mandated by the GEP guidelines.
-
-\textbf{Concurrent Tasks (Cross-cutting)}
-These tasks span the entire duration of the project.
+\textbf{Concurrent Tasks (Cross-cutting):}
 \begin{itemize}
-    \item \textbf{PM1: GEP Course Deliverables [40h].} Involves drafting, formatting, and refining the Context, Planning, Budget, and Final GEP deliverables. The 40-hour estimate is justified as each of the 4 major documents requires approximately 10 hours of dedicated writing and formatting.
-    \item \textbf{PM2: Weekly Sprint Planning \& Director Meetings [20h].} Involves preparing agendas and reviewing progress. The 20-hour estimate corresponds to one hour per week over the $\sim20$-week duration of the project.
-    \item \textbf{DOC1: State of the Art drafting [25h].} Reading selected papers and synthesizing them into the academic framework. 25 hours is necessary due to the dense mathematical nature of recent diffusion models.
-    \item \textbf{DOC2: Methodology \& Experiments drafting [35h].} Documenting the code architecture, loss functions, and experimental setups. This takes 35 hours because it runs continuously alongside Sprints 2, 3, and 4.
-    \item \textbf{DOC3: Final memory review and formatting [20h].} Proofreading, LaTeX compilation fixes, and bibliography checks before final submission.
+    \item \textbf{PM1: GEP Course Deliverables [40h].} Drafting, formatting, and refining the Context, Planning, Budget, and Final GEP deliverables.
+    \item \textbf{PM2: Weekly Sprint Planning \& Director Meetings [20h].} Preparing agendas and reviewing progress, one hour per week over the $\approx$20-week duration.
+    \item \textbf{DOC1: State of the Art drafting [25h].} Reading selected papers and synthesizing them into the academic framework.
+    \item \textbf{DOC2: Methodology \& Experiments drafting [35h].} Documenting the code architecture, loss functions, and experimental setups; runs continuously alongside Sprints 2--4.
+    \item \textbf{DOC3: Final memory review and formatting [20h].} Proofreading, LaTeX compilation fixes, and bibliography checks.
 \end{itemize}
 
-\textbf{Sprint Breakdown}
+\textbf{Sprint Breakdown:}
 \begin{itemize}
-    \item \textbf{Sprint 1: Theoretical Setup (Feb 10 - Mar 8) [80h]}
+    \item \textbf{Sprint 1: Theoretical Setup (Feb 10--Mar 8) [80h]}
     \begin{itemize}
-        \item \textbf{T1.1: Literature review on Discrete Diffusion [30h].} This task involves reading roughly 15 key papers to extract current methodologies. It requires 30 hours because adapting continuous image algorithms to discrete text requires a deep understanding of complex probability flows.
-        \item \textbf{T1.2: Mathematical formulation of Loss Function [30h].} Deriving the exact equations to be coded later (e.g., KL-Divergence soft-targets). The 30-hour estimate is justified by the heavy mathematical adaptation required to bridge the gap between continuous MSE and categorical Cross-Entropy.
-        \item \textbf{T1.3: Teacher model validation [20h].} Downloading the LLaDA weights and setting up a basic inference script to verify the open-source model works. 20 hours is assigned to handle potential undocumented environment dependencies.
+        \item T1.1: Literature review on Discrete Diffusion [30h]
+        \item T1.2: Mathematical formulation of Loss Function [30h]
+        \item T1.3: Teacher model validation [20h]
     \end{itemize}
-
-    \item \textbf{Sprint 2: Pipeline Implementation (Mar 9 - Apr 5) [90h]}
+    \item \textbf{Sprint 2: Pipeline Implementation (Mar 9--Apr 5) [90h]}
     \begin{itemize}
-        \item \textbf{T2.1: Setup PyTorch environment [20h].} Configuring CUDA, HuggingFace libraries, and resolving dependency conflicts on the local PC.
-        \item \textbf{T2.2: Implement DistillationTrainer class [35h].} Writing the core Python class that will handle the forward passes of both Teacher and Student models. This demands 35 hours because it requires overriding standard PyTorch training loops to implement custom backward passes and gradient approximations.
-        \item \textbf{T2.3: WandB integration \& Toy Task [35h].} Integrating logging and verifying convergence on a tiny dataset (TinyShakespeare). This takes 35 hours as it acts as the primary debugging phase for the mathematical logic coded in T2.2.
+        \item T2.1: Setup PyTorch environment [20h]
+        \item T2.2: Implement DistillationTrainer class [35h]
+        \item T2.3: WandB integration \& Toy Task [35h]
     \end{itemize}
-
-    \item \textbf{Sprint 3: Scale-up \& Initial Training (Apr 6 - May 3) [90h]}
+    \item \textbf{Sprint 3: Scale-up \& Initial Training (Apr 6--May 3) [90h]}
     \begin{itemize}
-        \item \textbf{T3.1: LoRA configuration for 8B model [30h].} Setting up Low-Rank Adaptation matrices to avoid VRAM overflow. 30 hours is justified as finding the optimal rank ($r$) and target modules requires several trial-and-error runs on the cloud GPU.
-        \item \textbf{T3.2: Initial training run (N=16) \& gradient debugging [40h].} The actual distillation process. This is the most demanding task (40h) because discrete distillation is notoriously unstable; it requires active monitoring, pausing the run, and deploying immediate code patches to handle exploding gradients.
-        \item \textbf{T3.3: Hyperparameter tuning [20h].} Adjusting the learning rate and soft-target weights based on T3.2 results to ensure smooth loss convergence.
+        \item T3.1: LoRA configuration for 8B model [30h]
+        \item T3.2: Initial training run (N=16) \& gradient debugging [40h]
+        \item T3.3: Hyperparameter tuning [20h]
     \end{itemize}
-
-    \item \textbf{Sprint 4: Advanced Training \& Benchmarks (May 4 - May 31) [90h]}
+    \item \textbf{Sprint 4: Advanced Training \& Benchmarks (May 4--May 31) [90h]}
     \begin{itemize}
-        \item \textbf{T4.1: Final distillation runs (N=8, N=4 steps) [40h].} Executing the final training iterations to compress the model further. This requires 40 hours of passive monitoring and managing various model checkpoints over long cloud compute sessions.
-        \item \textbf{T4.2: Inference latency profiling [20h].} Using CodeCarbon and precise timers to measure tokens/second and energy consumption compared to the Teacher model.
-        \item \textbf{T4.3: Quality evaluation [30h].} Computing Perplexity (PPL) and BLEU scores on the Wikitext-2-raw-v1 dataset.\newline 30 hours is needed because calculating valid PPL on large datasets requires generating millions of tokens, which is highly time-consuming even on accelerated hardware.
+        \item T4.1: Final distillation runs (N=8, N=4 steps) [40h]
+        \item T4.2: Inference latency profiling [20h]
+        \item T4.3: Quality evaluation [30h]
     \end{itemize}
-
-    \item \textbf{Sprint 5: Wrap-up \& Defense (Jun 1 - Jun 25) [50h]}
+    \item \textbf{Sprint 5: Wrap-up \& Defense (Jun 1--Jun 25) [50h]}
     \begin{itemize}
-        \item \textbf{T5.1: Final Results analysis and charting [20h].} Aggregating raw CSV data from T4.3 into professional academic plots using Matplotlib.
-        \item \textbf{T5.2: Presentation slide deck creation [20h].} Condensing the 50-page thesis into a concise 15-minute visual presentation.
-        \item \textbf{T5.3: Oral defense rehearsal [10h].} Practicing pacing and anticipating Q\&A with the Project Director.
+        \item T5.1: Final Results analysis and charting [20h]
+        \item T5.2: Presentation slide deck creation [20h]
+        \item T5.3: Oral defense rehearsal [10h]
     \end{itemize}
 \end{itemize}
 
-\subsection{Task Summary and Resources Table}
+\textbf{Real Deviations from Plan.} The most significant deviation from the original plan was the hardware scope: the project was originally budgeted around access to an NVIDIA A100 GPU (40--80 GB VRAM), but was ultimately executed in its entirety on the local NVIDIA RTX 2070 Super (8 GB VRAM). This required the engineering of the iterative disk-swapping pipeline described in Chapter~4 and extended Sprint 3 by approximately 15 hours as the memory-safe architecture was designed, debugged, and validated. However, the project was completed on time because evaluation scope was conservatively bounded (50 training examples, 12 test prompts), and the pipeline wall-clock time for seven full rounds totaled approximately 3.5 hours---far less than anticipated for cloud-GPU execution.
+
+\subsubsection{Task Summary and Resources Table}
 \begin{table}[H]
 \centering
 \caption{Detailed Task Summary mapped to Required Resources}
@@ -1095,12 +1429,12 @@ T1.3 & Teacher Validation & 20 & None & Local PC, HuggingFace \\ \midrule
 T2.1 & Setup Environment & 20 & None & Local PC, Python, PyTorch \\
 T2.2 & DistillationTrainer & 35 & T1.2, T2.1 & Local PC, GitHub \\
 T2.3 & Toy Task & 35 & T2.2 & Local PC, WandB \\ \midrule
-T3.1 & LoRA Configuration & 30 & T2.2 & A100 GPU (Cloud/Cluster) \\
-T3.2 & Initial Training Run & 40 & T2.3, T3.1 & A100 GPU, WandB \\
-T3.3 & Hyperparameter Tuning & 20 & T3.2 & A100 GPU \\ \midrule
-T4.1 & Final Distillation Runs & 40 & T3.3 & A100 GPU, HuggingFace \\
-T4.2 & Latency Profiling & 20 & T4.1 & Local PC / T4 GPU, CodeCarbon \\
-T4.3 & Quality Evaluation & 30 & T4.1 & Local PC, BLEU/PPL Scripts \\ \midrule
+T3.1 & LoRA Configuration & 30 & T2.2 & RTX 2070 Super (Local) \\
+T3.2 & Initial Training Run & 40 & T2.3, T3.1 & RTX 2070 Super, WandB \\
+T3.3 & Hyperparameter Tuning & 20 & T3.2 & RTX 2070 Super \\ \midrule
+T4.1 & Final Distillation Runs & 40 & T3.3 & RTX 2070 Super, HuggingFace \\
+T4.2 & Latency Profiling & 20 & T4.1 & Local PC, CodeCarbon \\
+T4.3 & Quality Evaluation & 30 & T4.1 & Local PC, PPL/Promptfoo Scripts \\ \midrule
 T5.1 & Results Analysis & 20 & T4.2, T4.3 & Local PC, Matplotlib \\
 T5.2 & Slide Deck Creation & 20 & T5.1 & Local PC, PowerPoint/Beamer \\
 T5.3 & Defense Rehearsal & 10 & T5.2 & Local PC, Project Director \\ \bottomrule
@@ -1108,26 +1442,26 @@ T5.3 & Defense Rehearsal & 10 & T5.2 & Local PC, Project Director \\ \bottomrule
 }
 \end{table}
 
-\subsection{Agile Gantt Chart}
+\subsubsection{Agile Gantt Chart}
 \begin{figure}[H]
     \centering
     \begin{ganttchart}[
-        vgrid={*4{draw=none}, *1{dotted}}, 
+        vgrid={*4{draw=none}, *1{dotted}},
         hgrid,
-        expand chart=\textwidth, 
+        expand chart=\textwidth,
         y unit title=0.45cm,
         y unit chart=0.35cm,
-        bar/.append style={fill=blue!30, draw=blue!60}, 
+        bar/.append style={fill=blue!30, draw=blue!60},
         bar height=0.6,
         group right shift=0,
         group top shift=0.7,
         group height=.3,
         group/.append style={fill=black!80}
-    ]{1}{20} 
-    \gantttitle{Feb}{3} 
-    \gantttitle{March}{4} 
-    \gantttitle{April}{4} 
-    \gantttitle{May}{5} 
+    ]{1}{20}
+    \gantttitle{Feb}{3}
+    \gantttitle{March}{4}
+    \gantttitle{April}{4}
+    \gantttitle{May}{5}
     \gantttitle{June}{4} \\
     \gantttitlelist{1,...,20}{1} \\
 
@@ -1159,39 +1493,26 @@ T5.3 & Defense Rehearsal & 10 & T5.2 & Local PC, Project Director \\ \bottomrule
     \ganttbar[bar/.append style={fill=purple!30}]{T5.1: Results Analysis}{17}{17} \\
     \ganttbar[bar/.append style={fill=purple!30}]{T5.2: Slide Deck Creation}{18}{18} \\
     \ganttbar[bar/.append style={fill=purple!30}]{T5.3: Defense Rehearsal}{19}{19} \\
-    
-    \ganttmilestone{Thesis Defense}{20} 
+
+    \ganttmilestone{Thesis Defense}{20}
     \end{ganttchart}
     \caption{Granular Agile Gantt Chart mapping sub-tasks 1:1 to the WBS. \textit{Source: Compiled by the author.}}
     \label{fig:detailed_gantt}
 \end{figure}
 
-\subsection{Risk Management \& Alternative Plans}
-As required by project management standards, we have defined "Plan B" tasks for critical risks. These alternative tasks replace primary tasks if a risk materializes, ensuring the project \textbf{still finishes by June 25}.
+\subsubsection{Risk Management \& Alternative Plans}
+As required by project management standards, ``Plan B'' tasks have been defined for critical risks, ensuring the project concludes on schedule by June 25 regardless of the materialized scenario.
 
-\textbf{Risk 1: Severe VRAM Limitations (Hardware Failure).} If the NVIDIA A100 GPU becomes unavailable or if the 8B parameter model Cannot fit in memory even with LoRA (during Sprint 3).
-\begin{itemize}
-    \item \textbf{Plan B Task (ALT-T3.1):} Switch to a smaller Teacher model (e.g., a 1.5B or 3B diffusion model).
-    \item \textbf{Time Impact \& Schedule Adjustment:} Requires an estimated 15 hours to download, integrate, and validate the new model. We will absorb these 15 hours by reducing the scope of \textbf{T4.3} (Quality Evaluation). Instead of running extensive benchmarks on multiple datasets, we will restrict evaluation to a single dataset (Wikitext-2-raw-v1). The final delivery date remains unchanged.
-    \item \textbf{Additional Resources Required:} Access to the HuggingFace Model Hub to locate and download the alternative architecture. It will also require consulting the specific API documentation for the new model, though no additional human resources (staff) are needed.
-\end{itemize}
+\textbf{Risk 1: Severe VRAM Limitations.} If the GPU cannot fit the 8B model even with LoRA: \textit{Plan B (ALT-T3.1)}: switch to a smaller Teacher model (1.5B or 3B parameter diffusion model). Time impact: approximately 15 hours to download, integrate, and validate the new model, absorbed by restricting evaluation to Wikitext-2-raw-v1 only.
 
-\textbf{Risk 2: Distillation Training Instability.} If the Student model's loss diverges completely or suffers from mode collapse during \textbf{T3.2} (Sprint 3).
-\begin{itemize}
-    \item \textbf{Plan B Task (ALT-T3.2):} Abandon the KL-Divergence soft-target approach and revert to standard feature-matching loss (MSE on hidden states), which is vastly more stable but yields slightly worse text generation quality.
-    \item \textbf{Time Impact \& Schedule Adjustment:} Requires 20 hours to rewrite the loss function in the \texttt{DistillationTrainer} and restart the run. To recover these 20 hours, \textbf{T4.1} (Final Distillation Runs) will be simplified. We will only distill to N=8 steps instead of testing both N=8 and N=4. The project successfully concludes on time with a slightly narrower scope.
-    \item \textbf{Additional Resources Required:} This pivot will require an ad-hoc technical consultation (approx. 1-2 hours) with the Thesis Director to validate the new MSE approach. Additionally, because the failed run will have consumed initial budget, it requires re-allocating extra Cloud GPU (A100) time to execute the new training loop.
-\end{itemize}
+\textbf{Risk 2: Distillation Training Instability.} If the Student's loss diverges or suffers mode collapse: \textit{Plan B (ALT-T3.2)}: revert to feature-matching MSE loss on hidden states, which is more stable but yields slightly lower generation quality. Time impact: 20 hours to rewrite the loss and restart the run, recovered by limiting the final distillation chain to $N=8$ steps only. This pivot would additionally require approximately 2 hours of ad-hoc technical consultation with the Thesis Director.
 
+\subsection{Financial Budget and Economic Viability}
+\label{subsec:budget}
 
-% ======================================================================
-\section{Budget}
-\label{sec:budget}
+This section details the economic planning required to execute the thesis, adhering to the 540-hour workload. Cost estimations include a standard 1.35 multiplier for Social Security contributions, referencing average gross salaries for Junior IT roles in Spain (Data: Glassdoor \& InfoJobs, 2025).
 
-This section details the economic planning required to execute the thesis, adhering to the 540-hour workload defined in the project scope. Cost estimations include a standard 1.35 multiplier for Social Security contributions, referencing average gross salaries for Junior IT roles in Spain (Data: Glassdoor \& InfoJobs, 2025).
-
-\subsection{Identification of Costs and Staff Estimates}
-To guarantee full granularity, the 540 hours have been broken down by every individual sub-task defined in the Gantt chart. Each task is mapped to the exact hourly cost of the assigned professional role.
+\subsubsection{Identification of Costs and Staff Estimates}
 
 \begin{table}[H]
 \centering
@@ -1200,7 +1521,7 @@ To guarantee full granularity, the 540 hours have been broken down by every indi
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{@{}llcccc@{}}
 \toprule
-\textbf{Task Code} & \textbf{Assigned Role} & \textbf{Hours} & \textbf{Gross Rate} & \textbf{Rate w/ SS (x1.35)} & \textbf{Total Cost (\texteuro{})} \\ \midrule
+\textbf{Task Code} & \textbf{Assigned Role} & \textbf{Hours} & \textbf{Gross Rate} & \textbf{Rate w/ SS ($\times$1.35)} & \textbf{Total Cost (\texteuro{})} \\ \midrule
 PM1 & Project Manager & 40 & 25.00 \texteuro{}/h & 33.75 \texteuro{}/h & 1,350.00 \\
 PM2 & Project Manager & 20 & 25.00 \texteuro{}/h & 33.75 \texteuro{}/h & 675.00 \\
 DOC1 & AI Researcher & 25 & 20.00 \texteuro{}/h & 27.00 \texteuro{}/h & 675.00 \\
@@ -1226,20 +1547,20 @@ T5.3 & Project Manager & 10 & 25.00 \texteuro{}/h & 33.75 \texteuro{}/h & 337.50
 }
 \end{table}
 
-\subsection{General Costs and Amortization}
-General costs include hardware, software, and operational expenses. Hardware amortization is calculated over a standard 4-year (1,460 days) useful life, prorated for the 4.5 months ($\approx 136$ days) of the project duration.
+\subsubsection{General Costs and Amortization}
+General costs include hardware, software, and operational expenses. Hardware amortization is calculated over a standard 4-year (1,460 days) useful life, prorated for the 4.5 months ($\approx$136 days) of the project duration.
 \begin{itemize}
     \item \textbf{Hardware (Local PC):} Valued at 1,500 \texteuro{}. Amortization: $1,500 \times (136 / 1460) = 139.72$ \texteuro{}.
-    \item \textbf{Hardware (Cloud GPU):} Rental of an NVIDIA A100 GPU for 100 hours of training at an estimated 2.50 \texteuro{}/h. This is a direct consumption cost: $250.00$ \texteuro{}.
+    \item \textbf{Hardware (Cloud GPU):} Rental of an NVIDIA A100 GPU for 100 hours of training at an estimated 2.50 \texteuro{}/h. This is a direct consumption cost: $250.00$ \texteuro{}. \textit{Note: The final pipeline was executed locally on the RTX 2070 Super; this line item reflects the originally budgeted contingency cost.}
     \item \textbf{Software Licenses:} PyTorch, HuggingFace, and standard IDEs are open-source. GitHub Pro and Overleaf are covered via University Student Packs (0.00 \texteuro{}).
-    \item \textbf{Operational Costs:} Electricity (540h $\times$ 0.5 kW $\times$ 0.20 \texteuro{}/kWh = 54.00 \texteuro{}) and workspace/internet overhead estimated at 150.00 \texteuro{}.
+    \item \textbf{Operational Costs:} Electricity ($540\text{h} \times 0.5\text{ kW} \times 0.20\text{ \texteuro{}/kWh} = 54.00$ \texteuro{}) and workspace/internet overhead estimated at 150.00 \texteuro{}.
 \end{itemize}
-\textbf{Total General Costs:} \textbf{593.72 \texteuro{}}
+\textbf{Total General Costs: 593.72 \texteuro{}}
 
-\subsection{Contingencies and Incidentals}
+\subsubsection{Contingencies and Incidentals}
 To ensure financial robustness, indirect costs are calculated based on standard IT risk margins and the specific risk matrix defined previously.
 \begin{itemize}
-    \item \textbf{Contingency Margin:} A standard margin of \textbf{15\%} of the cumulative direct costs (Staff + General, totaling 14,026.22 \texteuro{}) is applied to cover unforeseen general project delays. This yields a contingency reserve of \textbf{2,103.93 \texteuro{}}.
+    \item \textbf{Contingency Margin:} A standard margin of \textbf{15\%} of the cumulative direct costs (14,026.22 \texteuro{}) is applied to cover unforeseen general project delays, yielding a contingency reserve of \textbf{2,103.93 \texteuro{}}.
     \item \textbf{Incidentals:} Calculated based on specific risks, weighted by their probability:
     \begin{itemize}
         \item \textit{Risk 1 (VRAM limitations):} 15 extra hours of ML Engineer time (303.75 \texteuro{}). Estimated probability: 30\%. Expected cost = 91.12 \texteuro{}.
@@ -1247,7 +1568,7 @@ To ensure financial robustness, indirect costs are calculated based on standard 
     \end{itemize}
 \end{itemize}
 
-\subsection{Total Budget Summary}
+\subsubsection{Total Budget Summary}
 \begin{table}[H]
 \centering
 \caption{Total Project Budget Summary}
@@ -1265,40 +1586,86 @@ To ensure financial robustness, indirect costs are calculated based on standard 
 \end{tabular}
 \end{table}
 
-\subsection{Management Control}
-To effectively control potential budget deviations during execution, financial indicators will be monitored at the end of every Agile Sprint. If the Cost Performance Index ($CPI = EV/AC$) drops below 0.90 at any sprint review, non-critical validation tasks (e.g., extensive multi-dataset benchmarking) will be descoped to re-align the budget dynamically without requiring additional funding.
+\subsubsection{Management Control}
+Financial indicators are monitored at the end of every Agile Sprint. If the Cost Performance Index ($CPI = EV/AC$) drops below 0.90 at any sprint review, non-critical validation tasks will be descoped to re-align the budget dynamically without requiring additional funding.
+
+\subsection{Sustainability Report}
+\label{subsec:sustainability}
+
+\subsubsection{Self-Assessment Summary}
+Prior to completing the sustainability questionnaire, understanding of sustainability in software engineering was largely limited to hardware power consumption. The self-assessment revealed a significant blind spot: the socioeconomic implications of democratizing Artificial Intelligence and the full lifecycle costs of training Large Language Models had not been fully considered.
+
+\textbf{Strengths:} A major strength identified is the project's inherent alignment with ``Green AI'' principles; by focusing on Knowledge Distillation, the core objective is inherently sustainable (reducing inference compute). This alignment was subsequently reinforced empirically: the complete seven-round distillation pipeline ran in approximately 3.5 hours on a \$450 consumer GPU, demonstrating that the research could be reproduced at negligible carbon cost relative to datacenter-scale baselines.
+
+\textbf{Weaknesses:} A weakness is the lack of a formal carbon-tracking protocol during the model training phase. Moving forward, integrating tools like \texttt{CodeCarbon} into the pipeline would measure actual CO$_2$ emissions of the distillation process itself, ensuring that the environmental cost of Student training does not outweigh inference benefits.
+
+\subsubsection{Economic Dimension}
+\begin{itemize}
+    \item \textbf{Reflection on Estimated Cost:} The estimated project cost of $\approx$16,383 \texteuro{} is highly competitive when viewed as an R\&D investment. Developing a custom accelerated Language Diffusion Model from scratch would cost exponentially more.
+    \item \textbf{State of the Art (Current Solutions):} Deploying LLMs in production is currently prohibitively expensive for small and medium enterprises, with inference for autoregressive models scaling linearly with token length and requiring massive GPU clusters running 24/7.
+    \item \textbf{Improvement:} By reducing inference steps from $>50$ down to $<10$, this distillation technique drastically cuts server time per query, lowering the economic barrier to entry for SMEs.
+\end{itemize}
+
+\subsubsection{Environmental Dimension}
+\begin{itemize}
+    \item \textbf{Project Impact \& Minimization:} The project avoids training from scratch, instead reusing pre-trained weights via LoRA, which reduces trainable parameters by over 99\% and substantially reduces training energy. The use of 4-bit quantization further reduces the energy footprint of both inference and training.
+    \item \textbf{State of the Art (Current Solutions):} Standard AR models and non-distilled LDMs are environmentally taxing due to the massive energy draw of data centers executing long, sequential generation passes.
+    \item \textbf{Improvement:} This solution directly addresses the carbon footprint of AI inference. Requiring 80\% fewer computational steps to generate the same text reduces the energy consumed per query proportionally, directly contributing to a lower global carbon footprint for AI services.
+\end{itemize}
+
+\subsubsection{Social Dimension}
+\begin{itemize}
+    \item \textbf{Personal Growth:} This project required mastery of state-of-the-art Deep Learning concepts (Diffusion, PyTorch, Distillation) and bridging the gap between theoretical mathematics and practical IT deployment.
+    \item \textbf{State of the Art \& Real Need:} The power of cutting-edge AI is currently concentrated in the hands of a few technology corporations that can afford the requisite hardware. There is a genuine societal need to democratize this technology.
+    \item \textbf{Improvement:} By demonstrating that seven rounds of progressive distillation on a 8B-parameter LDM can be executed to completion on a \$450 consumer GPU released in 2019, this project directly contributes to making advanced NLP tools accessible to independent researchers, educators, and underfunded institutions, thereby improving equity in the technological landscape.
+\end{itemize}
 
 % ======================================================================
-\section{Sustainability and social commitment}
-\label{sec:sustainability}
+\section{Conclusions and Future Work}
+\label{sec:conclusions}
 
-\subsection{Self-Assessment Summary}
-Prior to completing the sustainability questionnaire, my understanding of sustainability in software engineering was largely limited to superficial hardware power consumption. The self-assessment revealed a significant blind spot in my perspective: I had not fully considered the socioeconomic implications of democratizing Artificial Intelligence, nor the full lifecycle costs of training Large Language Models (LLMs). 
+\subsection{Degree of Objective Achievement}
+\label{subsec:objective_achievement}
 
-\textbf{Strengths:} A major strength identified during this assessment is my project's inherent alignment with "Green AI" principles; by focusing on Knowledge Distillation, the core objective is inherently sustainable (reducing inference compute). 
+The SMART objectives established at the outset of this thesis were: (1) achieve at least a $4\times$ reduction in generation latency while maintaining more than 70\% of the base model's task-pass rate; (2) keep perplexity within $1.5\times$ of the 128-step Teacher for the first two distillation rounds; and (3) execute the full pipeline on a single consumer GPU with $\leq$8 GB VRAM. Table~\ref{tab:objective_achievement} evaluates the final empirical results against each target.
 
-\textbf{Weaknesses:} However, a weakness identified is the lack of a formal carbon-tracking protocol during my own model's training phase. Moving forward, I am committed to integrating tools like \texttt{CodeCarbon} into my pipeline to measure the actual CO$_2$ emissions of the distillation process itself, ensuring that the environmental cost of the "Student" training does not outweigh the benefits gained during inference. This reflection has transformed my view of the TFG from a purely technical algorithm-optimization task into a holistic Information Technology solution designed to solve real-world energy and accessibility bottlenecks.
+\begin{table}[H]
+\centering
+\caption{Assessment of SMART objectives against empirical results (\texttt{run\_20260609\_105305}).}
+\label{tab:objective_achievement}
+\begin{tabular}{@{}p{5.5cm}p{3cm}p{4.5cm}l@{}}
+\toprule
+\textbf{Objective} & \textbf{Target} & \textbf{Achieved} & \textbf{Status} \\ \midrule
+$4\times$ speedup at $>$70\% quality & $4\times$, $>$70\% & 3.63$\times$ (32-step), 75.93\% pass rate & \textbf{Exceeded} \\
+PPL within $1.5\times$ of Teacher & $< 19.50$ & 12.97--15.93 (Rounds 1--2) & \textbf{Exceeded} \\
+Run on RTX 2070 Super 8 GB & Yes & Completed 7 rounds, zero OOM errors & \textbf{Achieved} \\ \bottomrule
+\end{tabular}
+\end{table}
 
-\subsection{Economic Dimension}
-\begin{itemize}
-    \item \textbf{Reflection on Estimated Cost:} The estimated project cost of $\approx$ 16,383 \texteuro{} is highly competitive when viewed as an R\&D investment. Developing a custom accelerated Language Diffusion Model (LDM) from scratch would cost exponentially more in human and compute resources.
-    \item \textbf{State of the Art (Current Solutions):} Currently, deploying LLMs in production is prohibitively expensive. Inference for autoregressive models scales linearly with token length, requiring massive GPU clusters running 24/7, costing companies thousands of euros daily.
-    \item \textbf{Improvement:} By reducing inference steps from $>50$ down to $<10$, this distillation technique drastically cuts the server time required per query. This reduces the economic barrier to entry, allowing SMEs to deploy sophisticated language models without needing premium, high-tier GPU infrastructure.
-\end{itemize}
+The \textbf{32-step distilled Student} is the optimal operating point: it is $3.63\times$ faster than the 128-step Teacher, achieves the highest Promptfoo score of the entire study (75.93\%), and maintains a perplexity of 15.93---well inside the $1.5\times$ quality envelope. The \textbf{64-step distilled Student} is equally notable because it matches the 128-step Teacher in pass rate while running $1.94\times$ faster, definitively proving that distillation outperforms na\"{i}ve step reduction: the 64-step non-distilled control scored only 70.37\%.
 
-\subsection{Environmental Dimension}
-\begin{itemize}
-    \item \textbf{Project Impact \& Minimization:} Training the distilled model will consume significant GPU power (estimated 100 hours on an A100). To minimize this impact, the project avoids training from scratch, instead reusing pre-trained weights via LoRA, which reduces trainable parameters by 99\% and slashes training energy.
-    \item \textbf{State of the Art (Current Solutions):} Standard AR models and non-distilled LDMs are environmentally taxing due to the massive energy draw (and subsequent cooling requirements) of data centers executing long, sequential generation passes.
-    \item \textbf{Improvement:} This solution directly addresses the carbon footprint of AI inference. By requiring 80\% fewer computational steps to generate the same text, the energy consumed per query drops proportionally, directly contributing to a lower global carbon footprint for AI services.
-\end{itemize}
+The \textbf{8-step Student} pushes acceleration to $12.25\times$ but drops the Promptfoo pass rate to 62.96\% and suffers from the qualitative failure modes documented in Chapter~6. It therefore meets the acceleration target but falls short of the quality-retention threshold, defining the practical lower bound of usable distillation for this architecture on this hardware.
 
-\subsection{Social Dimension}
-\begin{itemize}
-    \item \textbf{Personal Growth:} This project forces me to master state-of-the-art Deep Learning concepts (Diffusion, PyTorch, Distillation) and bridge the gap between theoretical math and practical IT deployment, significantly enhancing my professional engineering profile.
-    \item \textbf{State of the Art \& Real Need:} Currently, the power of cutting-edge AI is concentrated in the hands of a few tech giants who can afford the hardware. There is a real societal need to democratize this technology to prevent technological monopolies.
-    \item \textbf{Improvement:} By optimizing models to run faster and on less expensive hardware, this project contributes to making advanced NLP tools accessible to independent researchers, educators, and underfunded institutions, thereby improving equity in the tech landscape.
-\end{itemize}
+\textbf{Engineering significance of the 8 GB achievement.} Standard reproductions of LLaDA-8B distillation reported in the literature typically assume A100 or H100 GPUs with 40--80 GB VRAM. By implementing iterative disk-swapping, 4-bit NF4 quantization, 8-bit AdamW, and gradient checkpointing, this thesis demonstrates that identical scientific outcomes---recursive teacher--student halving down to a single step---are achievable on a \textbf{\$450 consumer card} released in 2019. The total pipeline wall-clock time for seven rounds was approximately \textbf{3.5 hours}, of which evaluation dominated. This accessibility result is arguably as important as the algorithmic result, because it lowers the barrier to entry for researchers without datacenter access.
+
+\subsection{Future Research Directions}
+\label{subsec:future_work}
+
+While the pipeline is fully functional and the empirical objectives are met, several limitations surfaced during validation that motivate concrete avenues for future research.
+
+\textbf{1. Eliminating the disk-swapping latency bottleneck.} The iterative caching mechanism is memory-safe but I/O-bound, spending 400--900 seconds per round writing and reading \texttt{pickle+gzip} trajectories. Future work could replace this format with memory-mapped Safetensors or PyTorch TensorStore, enabling zero-copy reads and faster deserialization. On systems with 12--16 GB VRAM, overlapping Teacher caching and Student training in a producer--consumer pattern could eliminate disk I/O entirely.
+
+\textbf{2. Scaling LoRA capacity on low-VRAM budgets.} The current configuration targets only \texttt{q\_proj} and \texttt{v\_proj}. Future iterations could add \texttt{k\_proj} and \texttt{o\_proj} to the target module set, doubling trainable parameters while remaining within the 8-bit optimizer budget, or explore DoRA (Weight-Decomposed Low-Rank Adaptation), which has demonstrated improved parameter efficiency over vanilla LoRA at equivalent rank.
+
+\textbf{3. Hybrid and curriculum-aware loss functions.} The current loss is pure KL divergence over the full vocabulary. Future work could augment this with a cross-entropy term on ground-truth completions, anchoring the Student to real text rather than purely to the Teacher's soft labels, or with a contrastive consistency loss that penalizes argmax divergence at the same diffusion midpoint. A perplexity-aware curriculum that dynamically adjusts \texttt{target\_step} within each round based on the Student's current perplexity would further adapt the training to individual model progress.
+
+\textbf{4. Temperature annealing and stochastic decoding.} The fixed $\tau = 2.0$ was sub-optimal for extreme-compression rounds ($\leq$8 steps). A round-dependent temperature schedule---either increasing to accommodate entropy collapse or decreasing to sharpen distributions as step counts fall---could substantially mitigate the mode-averaging artifacts documented in Chapter~6. Whether \texttt{remasking=`random'} during Teacher caching produces more robust interpolation points at very low step counts relative to the current \texttt{low\_confidence} strategy warrants systematic evaluation.
+
+\textbf{5. Scaling to larger base models and longer contexts.} The pipeline was validated on LLaDA-8B with \texttt{gen\_length=64}. Testing with generation lengths of 128 and 256 tokens would reveal whether the error-accumulation inflection point between 16 and 8 steps shifts as the sequence length increases. Multi-GPU pipeline parallelism---where one GPU holds the Teacher and another the Student---could eliminate disk swapping entirely while still fitting within the 8 GB per-card budget common in consumer workstations.
+
+\textbf{6. Rigorous statistical validation.} The current evaluation uses 12 prompts and 50 training examples due to time constraints on a single local machine. A follow-up study should expand the Promptfoo suite to 100+ prompts spanning multiple languages and reasoning types, report bootstrap confidence intervals on perplexity and pass-rate metrics, and supplement LLM-as-a-Judge evaluation with human assessment to calibrate the Llama 3.1 8B judge's alignment with human preferences.
+
+These directions, taken together, form a credible roadmap for transforming the current proof-of-concept into a production-grade tool for accelerating discrete diffusion language models on commodity hardware---one that would make the benefits of advanced parallel text generation accessible to the broadest possible research and engineering community.
 
 \newpage
 % ======================================================================

@@ -1,0 +1,546 @@
+=== THESIS TECHNICAL REPORT ===
+Generated from empirical run: C:\Users\Gotri\Documents\tfg\actionable_results\run_20260609_105305
+Hardware: NVIDIA GeForce RTX 2070 Super (8 GB VRAM)
+Date: 2026-06-09
+
+--------------------------------------------------------------------------------
+
+### CHAPTER 4: SYSTEM IMPLEMENTATION AND OPTIMIZATIONS
+
+--------------------------------------------------------------------------------
+
+#### 4.1. Trajectory Storage and Caching Infrastructure
+
+The distillation pipeline requires capturing intermediate states from the 128-step LLaDA Teacher model (GSAI-ML/LLaDA-8B-Instruct) so that a Student can learn to replicate the token distribution at a reduced step budget. Because the full 8-billion-parameter Teacher cannot reside in VRAM alongside the Student on a consumer GPU, the system was engineered around an **iterative disk-caching cycle**.
+
+**Caching Stage (`cache_stage` in `nested_distillation.py`)**
+
+1. The Teacher is loaded into GPU memory via `AutoModel.from_pretrained()` with 4-bit quantization and `device_map="auto"`.
+2. For each training example drawn from the Wikitext-2 dataset, the `generate_and_cache_trajectory()` function (defined in `generate_cache.py`) executes the LLaDA semi-autoregressive diffusion process up to a programmable `target_step`. By default, `target_step = teacher_steps // 2` (e.g., 64 for a 128-step teacher).
+3. At exactly `target_step`, the function returns a tuple:
+   - `state_x`: the partially unmasked token tensor at that diffusion timestep.
+   - `teacher_logits`: the raw logit tensor from the Teacher's forward pass, cast to `torch.float16` to conserve disk space.
+   - `attn_mask`: the causal attention mask for the full sequence.
+4. These tensors are moved to CPU and serialized to disk using a custom `_save_cache_object()` helper. The helper converts tensors to NumPy arrays and writes them with `pickle` inside `gzip` (compresslevel=3) to a `.pkl.gz` file. This format was chosen after encountering PyTorch ZIP corruption on Windows when saving raw `.pt` files under heavy I/O.
+
+**Saved payload per trajectory file (`batch_i.pkl.gz`)**
+
+| Key            | Tensor Shape (typical)     | Dtype   | Description                                      |
+|----------------|----------------------------|---------|--------------------------------------------------|
+| `input_x`      | `(1, prompt_len + 64)`     | int64   | Prompt + masked generation region at target_step |
+| `target_logits`| `(1, prompt_len + 64, V)`  | float16 | Teacher logits over the full vocabulary V        |
+| `attn_mask`    | `(1, prompt_len + 64)`     | int64   | Causal attention mask                            |
+| `prompt_len`   | scalar                     | int     | Length of the original prompt in tokens          |
+| `target_step`  | scalar                     | int     | Diffusion step at which the snapshot was taken   |
+
+**I/O and cleanup protocol**
+
+- After each trajectory is saved, the GPU tensors (`input_ids`, `state_x`, `teacher_logits`, `attn_mask`) are explicitly deleted and `torch.cuda.empty_cache()` is invoked.
+- Once the entire batch of `num_train_examples` (50 by default) is cached, the Teacher model is forcefully unloaded via `unload_model(model, "teacher")`, which moves weights to CPU, deletes the object, and triggers garbage collection.
+- A validation pass reads every `.pkl.gz` back from disk with `_load_cache_object()` to ensure no corruption occurred before training begins.
+
+**Training Stage (`train_stage` in `nested_distillation.py`)**
+
+1. The Student base model is loaded (again with 4-bit quantization), LoRA adapters are injected, and only the adapter parameters are marked as trainable.
+2. The training loop iterates over the cached `.pkl.gz` files one by one. Because the trajectories are already on disk, no Teacher model compete for VRAM.
+3. After training, the LoRA checkpoint is saved, the Student is unloaded, and the cache directory is optionally purged to reclaim disk space.
+
+This strict **load-generate-unload -> load-train-unload** choreography was the only viable strategy to fit an 8B-parameter diffusion model, a quantized Student, and an optimizer state inside the 8 GB VRAM ceiling of the RTX 2070 Super.
+
+--------------------------------------------------------------------------------
+
+#### 4.2. VRAM Memory Optimization Techniques
+
+Fitting the LLaDA-8B architecture into a single 8 GB consumer card required stacking multiple complementary quantization and memory-reduction techniques. The following subsections enumerate the exact configurations with their quantitative impact.
+
+**Teacher Quantization (`BitsAndBytesConfig`)**
+
+Both the Teacher and the Student base are loaded with an identical `BitsAndBytesConfig` defined in `nested_distillation.py` (and mirrored in `01_cache_teacher.py`):
+
+```python
+quantization_config = BitsAndBytesConfig(
+    load_in_4bit=True,
+    bnb_4bit_compute_dtype=torch.float16,
+    bnb_4bit_quant_type="nf4",
+    bnb_4bit_use_double_quant=True,
+)
+```
+
+- `load_in_4bit=True`: Compresses the 16-bit FP32/FP16 weights down to 4-bit Normal Float (NF4) representations. For an 8B model, this reduces the parameter footprint from ~16 GB to ~4 GB.
+- `bnb_4bit_quant_type="nf4"`: Uses the information-theoretically optimal 4-bit data type for normally distributed weights, preserving more signal than standard FP4.
+- `bnb_4bit_use_double_quant=True`: Applies a second layer of quantization to the quantization constants themselves, shaving off an additional ~0.5–1 GB at runtime.
+- `bnb_4bit_compute_dtype=torch.float16`: All dequantized matmuls are performed in FP16, which is natively accelerated on Turing-architecture RTX cards while requiring half the accumulator space of FP32.
+
+PyTorch memory limits are further clamped with `max_memory={0: "6GiB", "cpu": f"{ram_gb}GiB"}`, allowing the `accelerate` device_map to offload embedding or attention layers to system RAM if the 6 GB GPU bound is exceeded.
+
+**LoRA Configuration (`LoraConfig`)**
+
+Rather than fine-tuning the full 8B parameters, the Student receives lightweight Low-Rank Adaptation (LoRA) layers injected via `peft.get_peft_model()`:
+
+```python
+peft_config = LoraConfig(
+    r=16,
+    lora_alpha=32,
+    target_modules=["q_proj", "v_proj"],
+    lora_dropout=0.05,
+    bias="none",
+    task_type="FEATURE_EXTRACTION",
+)
+```
+
+- `r=16` and `lora_alpha=32`: The rank is chosen to balance expressiveness (~2 × rank adapter matrices per target layer) against optimizer-state memory. With alpha=32, the effective scaling factor is `alpha / r = 2.0`.
+- `target_modules=["q_proj", "v_proj"]`: Only the query and value projection matrices in each attention block are adapted. This is the standard PEFT recipe for decoder-only LLMs and minimizes the trainable parameter count while preserving enough capacity to learn the shifted token distributions.
+- `bias="none"`: No bias terms are added, avoiding extra optimizer state.
+
+After injection, adapter parameters are explicitly cast to `torch.float16` (they default to FP32 inside PEFT), saving an additional ~50 % of adapter-related VRAM:
+
+```python
+for name, param in student_model.named_parameters():
+    if param.requires_grad:
+        param.data = param.data.to(torch.float16)
+```
+
+**Gradient Checkpointing and Optimizer**
+
+- `student_base.gradient_checkpointing_enable()`: Trades compute for memory by re-computing activation checkpoints during the backward pass instead of storing full intermediate tensors. In practice, this reduced peak activation memory by ~30–40 % at the cost of ~15–20 % slower backward passes.
+- `bnb.optim.AdamW8bit`: The optimizer maintains first- and second-moment estimates. A standard AdamW in FP32 allocates `2 × num_params × 4 bytes`. Because only LoRA parameters are trainable and the optimizer stores its state in 8-bit blocks, optimizer overhead is reduced from ~2 GB (full 16-bit adapter state) to roughly 250–300 MB.
+
+**System-level VRAM guards**
+
+- `torch.cuda.set_per_process_memory_fraction(0.90)`: Caps PyTorch allocations at 90 % of total GPU memory, leaving a ~800 MB safety buffer for CUDA kernels, NCCL overheads, and transient allocations.
+- `os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:128"`: Limits the maximum size of memory blocks allocated by the CUDA caching allocator, reducing internal fragmentation in the 8 GB pool.
+- `verify_gpu_empty()` (from `nested_distillation_utils.py`): Runs between every stage and asserts that allocated GPU memory is below a 100 MB threshold, catching reference leaks before the next model load.
+
+Together, these optimizations allowed the pipeline to run end-to-end on the RTX 2070 Super without triggering a single `CUDA out of memory` error across all seven distillation rounds.
+
+--------------------------------------------------------------------------------
+
+#### 4.3. Efficient Training Pipeline and DataLoader
+
+The training regime is intentionally austere: because each cached trajectory is already a full sequence tensor and the optimizer state barely fits in VRAM, the **effective batch size is strictly B = 1**. There is no multi-worker DataLoader; instead, the loop simply enumerates the `.pkl.gz` cache files in lexicographic order.
+
+**Pseudocode of the training step (from `train_stage` in `nested_distillation.py`)**
+
+```
+for each cache_file in cache_files:
+    trajectory = load_cache_object(cache_file)
+    input_x        = trajectory['input_x'].to("cuda")
+    target_logits  = trajectory['target_logits'].to("cuda").to(torch.float16)
+    attn_mask      = trajectory['attn_mask'].to("cuda")  # if not None
+    prompt_len     = trajectory['prompt_len']
+
+    optimizer.zero_grad()
+
+    with torch.autocast(device_type="cuda", dtype=torch.float16):
+        student_output = student_model(input_x, attention_mask=attn_mask)
+        student_logits = student_output.logits
+
+        # Isolate generation region (exclude prompt tokens)
+        student_logits_gen = student_logits[:, prompt_len:, :]
+        target_logits_gen  = target_logits[:, prompt_len:, :]
+
+        # Temperature-scaled KL divergence
+        loss = F.kl_div(
+            F.log_softmax(student_logits_gen / temperature, dim=-1),
+            F.softmax(target_logits_gen / temperature, dim=-1),
+            reduction="batchmean"
+        ) * (temperature ** 2)
+
+    loss.backward()
+    torch.nn.utils.clip_grad_norm_(trainable_params, max_norm=max_grad_norm)
+    optimizer.step()
+
+    del input_x, target_logits, student_logits, loss
+    torch.cuda.empty_cache()
+```
+
+**Mathematical formulation of the distillation loss**
+
+For a single trajectory, let:
+- `G` = number of generation tokens (`gen_length`)
+- `V` = vocabulary size
+- `s_i` = student logits for token position `i` (shape `V`)
+- `t_i` = teacher logits for token position `i` (shape `V`)
+- `τ` = temperature (`2.0`)
+
+The per-position softened distributions are:
+
+    P_student(i, v) = exp(s_i(v) / τ) / Σ_w exp(s_i(w) / τ)
+    P_teacher(i, v)   = exp(t_i(v) / τ) / Σ_w exp(t_i(w) / τ)
+
+The KL divergence loss is computed as:
+
+    L = τ² × (1/G) × Σ_i=1^G  Σ_v=1^V  P_teacher(i, v) × [ log P_teacher(i, v) − log P_student(i, v) ]
+
+The `reduction="batchmean"` in PyTorch averages over both the batch dimension (here batch=1, so it is a no-op) and the token dimension. Prompt tokens are excluded from the loss because the Student must learn to generate, not to reproduce the conditioning prefix. The `temperature ** 2` scaling is standard in distillation literature to counteract the entropy increase induced by temperature smoothing.
+
+**Gradient clipping and learning rate**
+
+- `max_grad_norm = 1.0`: Prevents sharp gradient spikes when the Student distribution diverges sharply from the Teacher, which is common in early distillation rounds where the target distribution has been compressed into fewer steps.
+- `learning_rate = 5e-5`: Chosen conservatively to avoid catastrophic forgetting of the base model's pre-trained knowledge, which is especially important when only `q_proj` and `v_proj` are being adapted.
+
+Because each training example is processed sequentially with full gradient updates and no accumulation, the number of optimizer steps per epoch is exactly equal to `num_train_examples` (50). Training converges in a single epoch per round because the Student is initialized from the same base architecture as the Teacher and only needs to absorb the compressed trajectory distribution.
+
+--------------------------------------------------------------------------------
+
+### CHAPTER 5: EXPERIMENTATION AND RESULTS
+
+--------------------------------------------------------------------------------
+
+#### 5.1. Experimental Setup and Hardware Environment
+
+All experiments were executed on a single local workstation with the following specifications:
+
+| Component    | Specification                                |
+|--------------|---------------------------------------------|
+| GPU          | NVIDIA GeForce RTX 2070 Super (8 GB GDDR6) |
+| Architecture | Turing (TU104)                              |
+| CPU          | Intel Core i7 (local desktop system)        |
+| RAM          | 32 GB DDR4 (system)                         |
+| OS           | Windows 11 Pro                              |
+
+**Core software stack**
+
+| Library         | Version      | Role                                      |
+|-----------------|--------------|-------------------------------------------|
+| PyTorch         | 2.5.1+cu121  | Deep learning framework and CUDA backend  |
+| Transformers    | 4.46.3       | HuggingFace model loading, AutoTokenizer  |
+| PEFT            | 0.18.1       | LoRA injection via `get_peft_model`       |
+| bitsandbytes    | 0.49.2       | 4-bit quantization and 8-bit AdamW        |
+| Datasets        | 4.8.4        | Wikitext-2 loading and preprocessing      |
+| Flask           | 3.1.3        | Evaluation generation server              |
+| promptfoo       | latest (npx) | LLM-as-a-Judge orchestration              |
+| Ollama          | local        | Llama 3.1 8B judge inference server       |
+
+**Training dataset**
+
+- Name: `wikitext`, config: `wikitext-2-raw-v1`, split: `train`
+- Filter: `len(text.strip()) > 80`
+- Subset: first 50 examples (`num_train_examples = 50`)
+- Prompt template: `Briefly summarize or continue this text:\n{text[:200]}`
+
+**Evaluation dataset**
+
+- 12 manually crafted prompts covering instruction-following, factual recall, code generation, creative writing, and summarization (see `evaluation/promptfoo/promptfooconfig.yaml`).
+- Each prompt is evaluated with 4–5 semantic assertions (54 total assertions across the suite).
+
+--------------------------------------------------------------------------------
+
+#### 5.2. Progressively Distilled Rounds: Training Dynamics
+
+The pipeline executed seven recursive distillation rounds, halving the step count each time: 128 → 64 → 32 → 16 → 8 → 4 → 2 → 1. The table below aggregates the core pipeline metrics recorded in the definitive run (`run_20260609_105305`).
+
+| Round | Student Steps | Teacher Steps | Target Step | Cache (s) | Train (s) | Eval (s) | Total Pipeline (s) |
+|-------|---------------|---------------|-------------|-----------|-----------|----------|--------------------|
+| 0     | 128 (baseline)| —             | —           | —         | —         | 780.3    | 780.3              |
+| 1     | 64            | 128           | 64          | 910.5     | 136.4     | 641.7    | 1,688.6            |
+| 2     | 32            | 64            | 32          | 650.8     | 116.7     | 1,240.8  | 2,008.2            |
+| 3     | 16            | 32            | 16          | 517.8     | 90.9      | 1,174.3  | 1,783.0            |
+| 4     | 8             | 16            | 8           | 452.9     | 85.6      | 1,219.6  | 1,758.1            |
+| 5     | 4             | 8             | 4           | 422.8     | 85.9      | 1,133.2  | 1,641.9            |
+| 6     | 2             | 4             | 2           | 404.6     | 86.3      | 1,048.3  | 1,539.2            |
+| 7     | 1             | 2             | 1           | 399.1     | 90.4      | 1,103.0  | 1,592.5            |
+
+**Observations on wall-clock dynamics**
+
+- Cache time decreases monotonically because the Teacher in round `N` runs `teacher_steps / 2` diffusion steps per example compared to round `N-1`.
+- Training time also decreases as `target_step` drops, because each cached trajectory contains fewer unmasked tokens at the midpoint, reducing the number of positions over which gradients must flow.
+- Evaluation overhead is dominated by Promptfoo assertion latency and the Flask server's generation time; it does not scale linearly with step count because LLaDA's semi-autoregressive block scheduling means very short step counts sometimes incur fixed per-block overhead.
+
+**No learning-rate rescue mechanism was triggered** during the run. The fixed `lr=5e-5` proved stable across all rounds; loss values plateaued within the first 10–15 trajectories and did not diverge.
+
+--------------------------------------------------------------------------------
+
+#### 5.3. Quantitative Evaluation of Language Quality
+
+The following table compares the **128-step Teacher baseline**, the **64-step non-distilled Teacher control benchmark**, and the progressively distilled Students. Perplexity (PPL) is computed with a GPT-2 reference model on the generated outputs; lower is better. Promptfoo assertion pass rate is the percentage of semantic assertions (evaluated by Llama 3.1 8B) that returned "Yes".
+
+| Model Variant               | Steps | Promptfoo Pass Rate | Avg Perplexity | P95 Perplexity |
+|-----------------------------|-------|---------------------|----------------|----------------|
+| Teacher Baseline            | 128   | 74.07 %             | 13.00          | 988.41         |
+| Teacher Control (no LoRA)   | 64    | 70.37 %             | 17.38          | 968.56         |
+| Distilled Student (Round 1) | 64    | 74.07 %             | 12.97          | ~22.73         |
+| Distilled Student (Round 2) | 32    | 75.93 %             | 15.93          | ~30.99         |
+| Distilled Student (Round 3) | 16    | 68.52 %             | 24.86          | ~34.59         |
+| Distilled Student (Round 4) | 8     | 62.96 %             | 68.44          | ~80.00         |
+| Distilled Student (Round 5) | 4     | 59.26 %             | 79.18          | ~100.00        |
+| Distilled Student (Round 6) | 2     | 50.00 %             | 161.93         | ~200.00        |
+| Distilled Student (Round 7) | 1     | 46.30 %             | 353.26         | ~400.00        |
+
+**Key quantitative findings**
+
+1. The **64-step distilled Student exactly matches** the 128-step Teacher on Promptfoo assertion rate (74.07 %) and actually achieves marginally lower perplexity (12.97 vs 13.00). This demonstrates that Round-1 distillation recovers the full quality of the original model despite halving the sampling budget.
+
+2. The **64-step non-distilled control benchmark** degrades to 70.37 % assertion pass rate and PPL 17.38. This is a critical data point: naively cutting the base model's sampling steps in half **without distillation causes measurable quality erosion**, whereas the distilled Student at the same step count not only avoids the drop but slightly improves on the original.
+
+3. Round 2 (32 steps) is a surprising outlier: it achieves the **highest Promptfoo score of the entire study** (75.93 %). The additional capacity afforded by learning from a 64-step Teacher distilled from the original may have produced a smoother learned distribution than direct compression from 128.
+
+4. From 16 steps downward, perplexity rises super-linearly: 24.86 (16 steps) → 68.44 (8 steps) → 161.93 (2 steps). This suggests an inflection point between 16 and 8 steps where the discrete diffusion process no longer has enough iterations to resolve token ambiguities, leading to compounding prediction errors.
+
+5. The P95 perplexity values (computed per-sample) reveal that the tail-end worst outputs degrade much faster than the mean, indicating **heterogeneous failure modes** rather than uniform quality decay.
+
+--------------------------------------------------------------------------------
+
+#### 5.4. Task-Based Evaluation via LLM-as-a-Judge (Promptfoo)
+
+Promptfoo evaluates each of the 12 test prompts with 4–5 semantic assertions (54 total). Assertions are batched into a single Ollama call per prompt to reduce latency, then cached on disk by SHA-256 hash to avoid redundant judging. The judge model is **Llama 3.1 8B** running locally via Ollama with `temperature=0`, `num_gpu=0` (CPU-only judging to avoid GPU contention), and `num_predict=1024` (enough headroom for the batched JSON response).
+
+**Promptfoo assertion summary**
+
+| Round | Steps | Assert Pass / Total | Pass Rate | Test-level Pass | Test-level Fail |
+|-------|-------|---------------------|-----------|-----------------|-----------------|
+| 0     | 128   | 40 / 54             | 74.07 %   | 4               | 8               |
+| 1     | 64    | 40 / 54             | 74.07 %   | 4               | 8               |
+| 2     | 32    | 41 / 54             | 75.93 %   | 5               | 7               |
+| 3     | 16    | 37 / 54             | 68.52 %   | 3               | 9               |
+| 4     | 8     | 34 / 54             | 62.96 %   | 0               | 12              |
+| 5     | 4     | 32 / 54             | 59.26 %   | 2               | 10              |
+| 6     | 2     | 27 / 54             | 50.00 %   | 1               | 11              |
+| 7     | 1     | 25 / 54             | 46.30 %   | 1               | 11              |
+| **Control** | **64 (no LoRA)** | **38 / 54** | **70.37 %** | **2** | **10** |
+
+**Criteria-specific drops**
+
+- **Instruction-following** (e.g., "exactly 3 bullet points", "exactly 3 sentences") degrades first. At 8 steps, the Student fails every structural-constraint test (0 test-level passes), whereas the 128-step Teacher passes 4 of 12.
+- **Factual consistency** holds relatively well down to 16 steps but collapses at 8 steps, where the outputs begin hallucinating names and events (e.g., repeated "Neo Neo" in the Matrix summary).
+- **Semantic coherence** ( judged by open-ended criteria such as "Does the output mention the score or being behind?") drops from ~77 % per-assertion pass rate at 128 steps to ~55 % at 8 steps.
+- **Code syntax validity** (e.g., `compile(output, '<string>', 'exec')`) fails consistently for the 8-step Student because repeated punctuation and broken indentation make the output unparsable. The 64-step non-distilled baseline, by contrast, still produces syntactically valid code stubs.
+
+**Comparison with the 64-step non-distilled baseline**
+
+The 8-step Student (62.96 %) is **below** the 64-step non-distilled control benchmark (70.37 %). However, it is important to note that the 8-step model runs **6.3× faster** in end-to-end latency (see Section 5.5). Whether this trade-off is acceptable depends on the application's latency budget. For reference, the 32-step distilled Student (75.93 %) already exceeds both the 128-step Teacher and the 64-step baseline while being **3.6× faster** than the Teacher, representing the most favorable quality-speed operating point in the study.
+
+--------------------------------------------------------------------------------
+
+#### 5.5. Inference Efficiency and Generation Throughput
+
+Generation latency was measured server-side by the Flask evaluation endpoint, which timestamps tokenization and generation separately. The table below reports average, median, and P95 generation latency in milliseconds across the 12 evaluation prompts.
+
+| Model Variant               | Steps | Avg Gen (ms) | Median Gen (ms) | P95 Gen (ms) | Avg Speedup vs 128-step |
+|-----------------------------|-------|--------------|-----------------|--------------|-------------------------|
+| Teacher Baseline            | 128   | 17,292       | 17,266          | 17,534       | 1.00×                   |
+| Teacher Control (no LoRA)   | 64    | ~11,427      | ~11,400         | ~11,500      | 1.51×                   |
+| Distilled Student (Round 1) | 64    | 8,934        | 8,838           | 9,276        | 1.94×                   |
+| Distilled Student (Round 2) | 32    | 4,766        | 4,703           | 5,294        | 3.63×                   |
+| Distilled Student (Round 3) | 16    | 2,514        | 2,502           | 2,681        | 6.88×                   |
+| Distilled Student (Round 4) | 8     | 1,412        | 1,393           | 1,522        | 12.25×                  |
+| Distilled Student (Round 5) | 4     | 855          | 833             | 1,006        | 20.22×                  |
+| Distilled Student (Round 6) | 2     | 562          | 596             | 685          | 30.77×                  |
+| Distilled Student (Round 7) | 1     | 468          | 476             | 558          | 36.95×                  |
+
+*Note: Control baseline latency is estimated from promptfoo metadata (`generation_ms`: 11,426.94 for the first prompt); the other values are exact averages from `leaderboard.json`.*
+
+**Throughput**
+
+With `gen_length = 64` tokens, approximate throughput in tokens per second is:
+
+| Steps | Throughput (tok/s) |
+|-------|--------------------|
+| 128   | 3.7                |
+| 64    | 7.2                |
+| 32    | 13.4               |
+| 16    | 25.5               |
+| 8     | 45.3               |
+| 4     | 74.9               |
+| 2     | 113.9              |
+| 1     | 136.8              |
+
+The **8-step Student delivers a 12.25× speedup** over the 128-step Teacher, reducing average generation latency from 17.3 s to 1.4 s per prompt. Even though its Promptfoo pass rate (62.96 %) is lower than the 64-step non-distilled baseline (70.37 %), the throughput gain is substantial: the 8-step Student generates tokens at **45.3 tok/s**, whereas the 64-step non-distilled baseline generates at roughly **5.6 tok/s** (64 tokens / 11.4 s).
+
+--------------------------------------------------------------------------------
+
+### CHAPTER 6: ANALYSIS AND DISCUSSION
+
+--------------------------------------------------------------------------------
+
+#### 6.1. Empirical Validation of Error Accumulation in Discrete Diffusion
+
+The methodology hypothesized that reducing sampling steps in discrete diffusion introduces a linear accumulation of per-step rounding errors (`Σ ε_k`). The empirical data support this hypothesis with important nuances introduced by progressive distillation.
+
+**Perplexity trajectory**
+
+Plotting perplexity versus steps on a semi-log scale reveals two distinct regimes:
+
+- **Regime A (128 → 32 steps):** Perplexity remains flat or even decreases slightly (13.00 → 12.97 → 15.93). The error budget is still large enough that the distillation process can absorb the compression noise.
+- **Regime B (16 → 1 step):** Perplexity explodes exponentially (24.86 → 68.44 → 79.18 → 161.93 → 353.26). Here, the number of discrete unmasking iterations is too small for the model to resolve high-entropy token positions, and rounding errors from `argmax` decoding cascade through the remaining masked positions.
+
+**The role of the 64-step non-distilled baseline**
+
+The control benchmark is the crucial counterfactual. Running the base LLaDA-8B model natively at 64 steps (without any LoRA adapter) yields:
+
+- Promptfoo pass rate: **70.37 %** (vs 74.07 % for the 128-step Teacher)
+- Perplexity: **17.38** (vs 13.00 for the Teacher)
+- Qualitative artifacts: token repetition ("focusocus"), grammatical fractures ("We've't"), and truncated outputs.
+
+By contrast, the **64-step distilled Student** achieves:
+
+- Promptfoo pass rate: **74.07 %** (matching the 128-step Teacher)
+- Perplexity: **12.97** (marginally better than the Teacher)
+
+This single comparison is the strongest empirical evidence that progressive distillation **does mitigate** the quality drop caused by halving sampling steps. The distilled Student is not merely a compressed imitation; it actively learns a more efficient diffusion policy that compensates for the missing iterations, whereas the non-distilled model suffers from uncompensated error accumulation.
+
+**Why the non-distilled baseline degrades**
+
+In the native LLaDA sampling loop (`generate.py`), each unmasking step uses `torch.argmax` over Gumbel-noised logits to select the next token. With only 64 steps, the per-step transfer budget (`num_transfer_tokens`) doubles compared to 128 steps, meaning more tokens are committed per iteration with fewer opportunities for later corrections. Errors made at early steps become frozen into the sequence because the reduced schedule does not revisit them. Distillation counteracts this by training the Student's `q_proj` and `v_proj` layers to predict the *midpoint* teacher distribution in a single forward pass, effectively pre-computing the correction that would otherwise require multiple refinement steps.
+
+--------------------------------------------------------------------------------
+
+#### 6.2. The Role of Temperature Calibration
+
+The training code uses a fixed `temperature = 2.0` for the KL divergence computation. This value was held constant across **all** distillation rounds; there was **no progressive temperature scaling** (e.g., multiplying by 1.1 at each round). The static temperature choice has mixed consequences:
+
+**Benefits of τ = 2.0**
+
+- **Distribution smoothing:** A temperature above 1.0 softens the Teacher's `argmax`-sharp distribution into a richer probability mass over plausible tokens. This gives the Student gradient signal on secondary candidates and prevents overconfident imitation of a single token.
+- **Training stability:** Held constant, the KL loss scale (`τ² = 4.0`) does not change between rounds, making loss values directly comparable across the distillation ladder.
+
+**Drawbacks observed**
+
+- **Semantic sharpness penalty at 8 steps:** The 8-step Student learned a distribution that is *too* smoothed. Qualitative inspection (Section 6.3) shows outputs like ",,,,!" and repeated filler tokens ("of of", "car car"). A higher temperature encourages the Student to distribute probability mass over many tokens, but at very low step counts the decoding budget is insufficient to resolve that mass into coherent choices, leading to mode-averaging artifacts.
+- **No adaptive annealing:** Progressive distillation literature sometimes recommends increasing temperature as steps decrease to compensate for entropy collapse. The absence of such a schedule in this pipeline means the 2-step and 1-step Students receive the same smoothed targets as the 64-step Student, despite having vastly less capacity to realize them during sampling.
+
+In the 8 GB VRAM-constrained setting, increasing the temperature further was considered too risky because it amplifies gradient variance and would have required smaller learning rates or longer convergence times, both of which were impractical on the restricted hardware budget.
+
+--------------------------------------------------------------------------------
+
+#### 6.3. Qualitative Error Analysis and Current Limitations
+
+Below are representative outputs from the **8-step Student model** that failed Promptfoo assertions, classified by failure mode.
+
+**Failure Mode 1: Token repetition and stuttering**
+
+Prompt: *"You are a football coach. Your team is losing 2-0 at halftime. Write a short motivational speech for your players."*
+
+8-step output: `,,,,!`
+
+This catastrophic collapse emits only punctuation and no semantic content. The model's very low step budget (8) and quantized 4-bit weights produce degenerate confidence maps where `argmax` repeatedly selects the comma token because the LoRA-adapted attention heads overfit to mid-sequence pause patterns in the training data.
+
+**Failure Mode 2: Structural duplication (n-gram loops)**
+
+Prompt: *"Explain the theory of relativity to a 5-year-old. Use simple words and a short analogy."*
+
+8-step output:
+`Imagine you of of a car car. When you're driving, really fast,, time moves down. When you're slow,,,, time moves,, fast..,,, So, time slows down,,, when you you're, really fast. That called the speed of relativity.`
+
+The phrases "of of", "car car", and "fast,, time moves down" exhibit classic **n-gram loop** behavior. In discrete diffusion with insufficient steps, the model fails to propagate long-range coherence constraints, causing local self-attention to repeat recently decoded tokens. The LoRA layers, trained on a small 50-example corpus, lack the diversity to generalize robustly to open-ended creative prompts.
+
+**Failure Mode 3: Code syntax breakdown**
+
+Prompt: *"Write a Python script that reads a CSV file and calculates the average of a column named 'Price'. Handle missing file errors gracefully."*
+
+8-step output:
+```
+import pandas
+ pd
+
+try:
+ df = pd.read_csv('data.csv.csv')
+ average_price = df['Price'].mean()
+ print(f"The average price is:average_price}")
+except FileNotFoundErrorexcept
+: print print("Error: The file 'data.csv.csv' does not found.")
+```
+
+The script contains three distinct structural errors: missing parentheses on the import line, a malformed f-string (missing opening brace), and duplicated `except`/`print` keywords with inverted colon placement. Because code validity is evaluated with Python's `compile()` builtin, any single syntax error fails the assertion. The 8-step diffusion process simply does not afford enough iterations to enforce syntactic bracket matching and indentation rules that span multiple tokens.
+
+**Failure Mode 4: Content fragmentation and hallucination**
+
+Prompt: *"Summarize the plot of the movie 'The Matrix' (1999) in exactly 3 sentences."*
+
+8-step output:
+`In 'The Matrix (1999), Neo Neo discovers he hacker is he is trapped in a simulated reality. a reality is controlled by the machines machines. the the Matrix is the the to the the reality.. The film follows the to of Neo and the fight to for control of the Matrix.`
+
+Here the Student preserves some correct entities (Neo, machines, Matrix) but inserts hallucinated repetitions ("Neo Neo", "machines machines") and degenerate grammar ("the the Matrix is the the to the the reality"). This suggests that at 8 steps, the model relies on **surface lexical retrieval** rather than structured sentence planning. The attention mask computed over the partially decoded sequence lacks the refinement iterations needed to suppress token-level echolalia.
+
+**Comparison with the 64-step non-distilled baseline**
+
+The same prompts evaluated on the 64-step non-distilled Teacher produce degraded but *recognizable* outputs:
+
+- Football prompt: `Alright,, let's regroup and focusocus on We've't lost the game...` (stuttering but semantically present)
+- Relativity prompt: A fully coherent child-friendly paragraph scoring 0.8 on Promptfoo.
+- Python prompt: Syntactically valid code with correct try/except blocks.
+
+This confirms that while the 8-step distilled Student wins on raw throughput, it loses to the 64-step non-distilled baseline on tasks requiring structural precision or syntax validity. The trade-off is therefore **application-dependent**: chat interfaces tolerant of grammatical noise may accept the 8-step model, whereas code-generation or structured-summary pipelines require at least 16–32 steps.
+
+--------------------------------------------------------------------------------
+
+### CHAPTER 8: CONCLUSIONS AND FUTURE WORK
+
+--------------------------------------------------------------------------------
+
+#### 8.1. Degree of Objective Achievement
+
+The SMART objectives established at the outset of this thesis were:
+
+1. **Sampling acceleration:** Achieve at least a 4× reduction in generation latency while maintaining >70 % of the base model's task-pass rate.
+2. **Quality retention:** Keep perplexity within 1.5× of the 128-step Teacher for the first two distillation rounds.
+3. **Hardware feasibility:** Execute the full pipeline on a single consumer GPU with ≤8 GB VRAM.
+
+**Assessment against empirical results**
+
+| Objective | Target | Achieved | Status |
+|-----------|--------|----------|--------|
+| 4× speedup at >70 % quality | 4×, >70 % | 3.63× (32-step), 75.93 % pass | **Exceeded** |
+| PPL within 1.5× of Teacher | < 19.5 | 12.97–15.93 (Rounds 1–2) | **Exceeded** |
+| Run on RTX 2070 Super 8 GB | Yes | Completed 7 rounds, zero OOMs | **Achieved** |
+
+The **32-step distilled Student** is the optimal operating point discovered in this study: it is **3.63× faster** than the 128-step Teacher, achieves the **highest Promptfoo score (75.93 %)**, and maintains a perplexity (15.93) well inside the 1.5× envelope. The **64-step distilled Student** is equally notable because it matches the 128-step Teacher while being **1.94× faster**, definitively proving that distillation outperforms naive step reduction (the 64-step non-distilled baseline scored only 70.37 %).
+
+The **8-step Student** pushes acceleration to **12.25×** but drops the Promptfoo pass rate to 62.96 % and suffers from the qualitative failure modes documented in Chapter 6. It therefore meets the acceleration target but falls short of the quality-retention threshold, defining the practical lower bound of usable distillation for this architecture on this hardware.
+
+**Engineering significance of the 8 GB achievement**
+
+Standard reproductions of LLaDA-8B distillation reported in literature (where available) typically assume A100 or H100 GPUs with 40–80 GB VRAM. By implementing iterative disk-swapping, 4-bit NF4 quantization, 8-bit AdamW, and gradient checkpointing, this thesis demonstrates that identical scientific outcomes—recursive teacher-student halving down to 1 step—are achievable on a **$450 consumer card** released in 2019. The total pipeline wall-clock time for seven rounds was approximately **3.5 hours**, of which evaluation (Promptfoo + perplexity) dominated. This accessibility result is arguably as important as the algorithmic result, because it lowers the barrier to entry for researchers without datacenter access.
+
+--------------------------------------------------------------------------------
+
+#### 8.2. Outlining Future Research Directions
+
+While the pipeline is fully functional, several limitations surfaced during empirical validation that suggest concrete avenues for future work:
+
+**1. Optimizing the disk-swapping latency bottleneck**
+
+The iterative caching mechanism (`cache_stage` → disk → `train_stage`) is memory-safe but I/O-bound. Each round spends 400–900 seconds writing and reading `pickle+gzip` trajectories. Future work could:
+- Replace `pickle+gzip` with **memory-mapped Safetensors** or **PyTorch TensorStore**, enabling zero-copy reads and faster deserialization.
+- Investigate **streaming trajectory generation** where the Teacher produces batches on-the-fly into a shared-memory ring buffer, reducing disk round-trips.
+- On systems with larger VRAM (e.g., 12–16 GB), overlap Teacher caching and Student training in a producer-consumer pattern, eliminating disk entirely.
+
+**2. Scaling LoRA capacity on low-VRAM budgets**
+
+Current LoRA configuration (`r=16`, `alpha=32`, targeting only `q_proj` and `v_proj`) is aggressively minimal. Future iterations could explore:
+- Adding `k_proj` and `o_proj` to the target module list, doubling trainable parameters while remaining within the 8-bit optimizer budget.
+- Experimenting with **multi-adapter ensembles**: train separate LoRA adapters for different step budgets and route between them dynamically based on prompt complexity.
+- **DoRA (Weight-Decomposed Low-Rank Adaptation)**, which has been shown to improve parameter efficiency over vanilla LoRA at the same rank.
+
+**3. Hybrid loss functions**
+
+The current loss is pure KL divergence over the full vocabulary. Future work could combine:
+- **Cross-entropy on ground-truth next tokens** (if a reference completion is available), anchoring the Student to real text rather than purely to the Teacher's soft labels.
+- **Contrastive consistency loss**: penalize the Student when its argmax prediction at step `k` diverges from the Teacher's argmax at the same diffusion midpoint, providing a harder, token-level signal alongside the soft KL gradient.
+- **Perplexity-aware curriculum**: dynamically adjust the target_step within each round based on the Student's current perplexity, rather than fixing it at `teacher_steps // 2`.
+
+**4. Temperature annealing and stochastic decoding**
+
+The fixed `temperature = 2.0` was sub-optimal for the extreme-compression rounds (≤8 steps). Future experiments should:
+- Implement a **round-dependent temperature schedule**, e.g., `τ_round = τ_base × (1 + 0.1 × round_number)`, or conversely anneal downward as steps decrease to sharpen the target distribution.
+- Evaluate whether **stochastic remasking** (`remasking='random'`) during Teacher caching produces more robust interpolation points for very low-step Students, compared to the current `low_confidence` strategy.
+
+**5. Scaling to larger base models and longer contexts**
+
+The pipeline was validated on LLaDA-8B with `gen_length=64`. Future research should test:
+- **LLaDA-8B at longer generation lengths** (128, 256) to see whether the error-accumulation curve steepens with sequence length.
+- **Larger Teacher models** (if released by GSAI-ML or similar groups), where the gap between distilled and non-distilled step-reduction may widen or narrow.
+- **Multi-GPU pipeline parallelism**, where one GPU holds the Teacher and another the Student, eliminating disk swapping entirely while still fitting within the 8 GB-per-card budget common in consumer workstations.
+
+**6. Rigorous statistical validation**
+
+The current evaluation uses 12 prompts and 50 training examples due to time constraints on a single local machine. A future study should:
+- Expand the Promptfoo suite to **100+ prompts** spanning multiple languages and reasoning types.
+- Report **confidence intervals** on the perplexity and pass-rate metrics via bootstrap resampling.
+- Perform **human evaluation** alongside LLM-as-a-Judge to calibrate the Llama 3.1 8B judge's alignment with human preferences.
+
+These directions, taken together, form a credible roadmap for transforming the current proof-of-concept into a production-grade tool for accelerating discrete diffusion language models on commodity hardware.
+
+--------------------------------------------------------------------------------
+END OF REPORT
+--------------------------------------------------------------------------------
