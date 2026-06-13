@@ -7,7 +7,6 @@ from transformers import AutoTokenizer, AutoModel, BitsAndBytesConfig
 from peft import PeftModel
 from generate import generate
 
-# --- ENVIRONMENT CONFIGURATION ---
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
 
@@ -17,7 +16,7 @@ workspace_candidates = [
     os.environ.get("LLADA_WORKSPACE_DIR"),
     os.path.join(PROJECT_ROOT, "workspace"),
     os.path.join(BASE_DIR, "workspace"),
-    os.path.expanduser("~/groups/hpai-collaborators/albert-gomez-triunfante/tfg/workspace"),
+    os.path.expanduser("~/groups/hpai-collaborators/albert-gomez-triunfante/fast-parallel-token-inference-with-language-diffusion-models/workspace"),
 ]
 WORKSPACE_DIR = None
 for candidate in workspace_candidates:
@@ -28,7 +27,6 @@ if WORKSPACE_DIR is None:
     WORKSPACE_DIR = os.path.abspath(os.path.join(PROJECT_ROOT, "workspace"))
 
 os.makedirs(WORKSPACE_DIR, exist_ok=True)
-# Prefer explicit HF_HOME env var or config override, fallback to workspace/.cache
 HF_HOME = os.environ.get("HF_HOME") or os.path.join(WORKSPACE_DIR, ".cache")
 os.makedirs(HF_HOME, exist_ok=True)
 os.environ["HF_HOME"] = HF_HOME
@@ -37,12 +35,14 @@ os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 os.environ["SAFETENSORS_FAST_GPU"] = "0"
 
 if torch.cuda.is_available():
+    # Leave headroom for concurrent Ollama judge or Windows compositor VRAM usage.
     torch.cuda.set_per_process_memory_fraction(0.85)
 
 USE_LORA = os.environ.get("LLADA_USE_LORA", "1").lower() not in {"0", "false", "no"}
 LORA_DIR = os.path.abspath(os.path.expanduser(os.environ.get("LORA_DIR", os.path.join(WORKSPACE_DIR, "llada_student_lora"))))
 
-# --- MODEL INITIALIZATION ---
+# NF4 quant is chosen over INT8 because LLaDA's masking dynamics are sensitive to
+# outlier logits, and NF4 preserves tail behavior better.
 quantization_config = BitsAndBytesConfig(
     load_in_4bit=True,
     bnb_4bit_compute_dtype=torch.float16,
@@ -66,7 +66,8 @@ model = AutoModel.from_pretrained(
     low_cpu_mem_usage=True,
 )
 
-# Fix for "The model weights are not tied" error
+# LLaDA shares input/output embeddings; without tying, generation produces garbage
+# tokens at the vocabulary boundaries.
 model.tie_weights()
 
 if USE_LORA:
@@ -74,7 +75,6 @@ if USE_LORA:
     if os.path.exists(adapter_config):
         print(f"Loading LoRA adapters from {LORA_DIR}...")
         model = PeftModel.from_pretrained(model, LORA_DIR)
-        # Also need to tie weights after PEFT wrapping
         model.tie_weights()
     else:
         print(f"WARNING: LoRA not found at {LORA_DIR} (missing adapter_config.json).")
@@ -83,8 +83,12 @@ if USE_LORA:
 model.eval()
 print("Model loaded and ready to serve.")
 
-# Configure block_length to satisfy generate() divisibility constraints.
+
 def resolve_block_length(steps, gen_length):
+    """
+    generate() requires gen_length % block_length == 0 and steps % num_blocks == 0;
+    this brute-forces the largest valid block from common divisors.
+    """
     for bl in [32, 64, 128]:
         if gen_length % bl == 0:
             num_blocks = gen_length // bl
@@ -93,7 +97,6 @@ def resolve_block_length(steps, gen_length):
     return gen_length
 
 
-# Configurable generation params (mutable via /reload)
 STEPS = 128
 GEN_LENGTH = 128
 BLOCK_LENGTH = resolve_block_length(STEPS, GEN_LENGTH)
@@ -126,11 +129,10 @@ def reload_endpoint():
     global model, STEPS, GEN_LENGTH, BLOCK_LENGTH, TEMPERATURE, CFG_SCALE, REMASKING
     data = request.json or {}
 
-    # Update generation parameters if provided
     STEPS = data.get('steps', STEPS)
     GEN_LENGTH = data.get('gen_length', GEN_LENGTH)
-    # If the caller does not pass block_length explicitly, resolve it
-    # automatically so generate()'s divisibility constraint is always met.
+    # Auto-resolving prevents callers from accidentally violating divisibility
+    # after changing steps or gen_length.
     explicit_block = data.get('block_length')
     if explicit_block is not None:
         BLOCK_LENGTH = explicit_block
@@ -145,13 +147,15 @@ def reload_endpoint():
         adapter_config = os.path.join(new_lora_dir, "adapter_config.json")
         if os.path.exists(adapter_config):
             print(f"[/reload] Unloading old adapters and loading from {new_lora_dir}...")
-            # Unload PEFT wrappers to get back to base model
+            # unload() drops PEFT wrappers in-place; merge_and_unload() fuses weights permanently.
+            # We prefer unload to keep the base model reusable.
             if hasattr(model, 'unload'):
                 model = model.unload()
             elif hasattr(model, 'merge_and_unload'):
                 model = model.merge_and_unload()
             else:
-                # Fallback: reload base model (slow but safe)
+                # Full reload is a last resort when the PEFT version does not support
+                # runtime adapter swapping; it costs ~30s on a fast NVMe.
                 print("[/reload] Full model reload required (fallback)...")
                 del model
                 torch.cuda.empty_cache()
@@ -173,7 +177,6 @@ def reload_endpoint():
         else:
             return jsonify({"status": "error", "reason": f"No adapter_config.json in {new_lora_dir}"}), 400
     else:
-        # If lora_dir is explicitly null/empty, unload adapters (back to base)
         if 'lora_dir' in data and not new_lora_dir:
             if hasattr(model, 'unload'):
                 model = model.unload()
@@ -226,7 +229,6 @@ def generate_endpoint():
         "prompt_preview": prompt[:120],
     }
 
-    # Append to per-round timing log if configured (unique per round)
     timing_log = os.environ.get("LLADA_TIMING_LOG")
     if timing_log:
         try:

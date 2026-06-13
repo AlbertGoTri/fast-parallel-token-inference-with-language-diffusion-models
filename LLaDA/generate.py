@@ -6,11 +6,11 @@ from transformers import AutoTokenizer, AutoModel
 
 
 def add_gumbel_noise(logits, temperature):
-    '''
-    The Gumbel max is a method for sampling categorical distributions.
-    According to arXiv:2409.02908, for MDM, low-precision Gumbel Max improves perplexity score but reduces generation quality.
-    Thus, we use float64.
-    '''
+    """
+    Gumbel-max sampling for categorical distributions.
+    Float64 is used because low-precision Gumbel noise hurts generation quality
+    (see arXiv:2409.02908, Appendix B.2).
+    """
     if temperature == 0:
         return logits
     logits = logits.to(torch.float64)
@@ -20,13 +20,7 @@ def add_gumbel_noise(logits, temperature):
 
 
 def get_num_transfer_tokens(mask_index, steps):
-    '''
-    In the reverse process, the interval [0, 1] is uniformly discretized into steps intervals.
-    Furthermore, because LLaDA employs a linear noise schedule (as defined in Eq. (8)),
-    the expected number of tokens transitioned at each step should be consistent.
-
-    This function is designed to precompute the number of tokens that need to be transitioned at each step.
-    '''
+    """Precompute how many masked tokens to reveal per step under a linear schedule."""
     mask_num = mask_index.sum(dim=1, keepdim=True)
 
     base = mask_num // steps
@@ -43,20 +37,14 @@ def get_num_transfer_tokens(mask_index, steps):
 @ torch.no_grad()
 def generate(model, prompt, attention_mask=None, steps=128, gen_length=128, block_length=128, temperature=0.,
              cfg_scale=0., remasking='low_confidence', mask_id=126336, logits_eos_inf=False, confidence_eos_eot_inf=False):
-    '''
-    Args:
-        model: Mask predictor.
-        prompt: A tensor of shape (1, L).
-        steps: Sampling steps, less than or equal to gen_length.
-        gen_length: Generated answer length.
-        block_length: Block length, less than or equal to gen_length. If less than gen_length, it means using semi_autoregressive remasking.
-        temperature: Categorical distribution sampling temperature.
-        cfg_scale: Unsupervised classifier-free guidance scale.
-        remasking: Remasking strategy. 'low_confidence' or 'random'.
-        mask_id: The toke id of [MASK] is 126336.
-        logits_eos_inf: Whether to set the logits of EOS token to -inf. See Appendix B.4 of LLaDA for details
-        confidence_eos_eot_inf: Whether to set the confidence of EOS and EoT token to -inf. See Appendix B.4 of LLaDA for details
-    '''
+    """
+    LLaDA diffusion-based text generation.
+
+    Constraints: gen_length % block_length == 0 and steps % num_blocks == 0,
+    where num_blocks = gen_length // block_length. These ensure the semi-autoregressive
+    schedule is uniform across blocks.
+    """
+    # Start from a fully masked sequence; the diffusion process progressively reveals tokens.
     x = torch.full((prompt.shape[0], prompt.shape[1] + gen_length), mask_id, dtype=torch.long).to(model.device)
     x[:, :prompt.shape[1]] = prompt.clone()
 
@@ -77,6 +65,7 @@ def generate(model, prompt, attention_mask=None, steps=128, gen_length=128, bloc
         for i in range(steps):
             mask_index = (x == mask_id)
             if cfg_scale > 0.:
+                # Classifier-free guidance: interpolate conditional and unconditional logits.
                 un_x = x.clone()
                 un_x[prompt_index] = mask_id
                 x_ = torch.cat([x, un_x], dim=0)
@@ -89,18 +78,20 @@ def generate(model, prompt, attention_mask=None, steps=128, gen_length=128, bloc
                 logits = model(x, attention_mask=attention_mask).logits
 
             if logits_eos_inf:
+                # Suppress EOS during intermediate steps to avoid premature truncation.
                 logits[:, :, 126081] = -torch.inf
 
             logits_with_noise = add_gumbel_noise(logits, temperature=temperature)
-            x0 = torch.argmax(logits_with_noise, dim=-1) # b, l
-            
+            x0 = torch.argmax(logits_with_noise, dim=-1)
+
             if confidence_eos_eot_inf:
+                # Zero out both EOS (126081) and EoT (126348) confidence so neither can terminate early.
                 logits_with_noise[:, :, 126081] = logits[:, :, 126348] = -torch.inf
 
             if remasking == 'low_confidence':
                 p = F.softmax(logits, dim=-1)
                 x0_p = torch.squeeze(
-                    torch.gather(p, dim=-1, index=torch.unsqueeze(x0, -1)), -1) # b, l
+                    torch.gather(p, dim=-1, index=torch.unsqueeze(x0, -1)), -1)
             elif remasking == 'random':
                 x0_p = torch.rand((x0.shape[0], x0.shape[1]), device=x0.device)
             else:
@@ -111,6 +102,7 @@ def generate(model, prompt, attention_mask=None, steps=128, gen_length=128, bloc
             x0 = torch.where(mask_index, x0, x)
             confidence = torch.where(mask_index, x0_p, -np.inf)
 
+            # Each sample may have a different number of masked tokens, so transfer counts are per-example.
             transfer_index = torch.zeros_like(x0, dtype=torch.bool, device=x0.device)
             for j in range(confidence.shape[0]):
                 _, select_index = torch.topk(confidence[j], k=num_transfer_tokens[j, i])
@@ -126,19 +118,16 @@ def main():
     model = AutoModel.from_pretrained('GSAI-ML/LLaDA-8B-Instruct', trust_remote_code=True, torch_dtype=torch.bfloat16).to(device).eval()
     tokenizer = AutoTokenizer.from_pretrained('GSAI-ML/LLaDA-8B-Instruct', trust_remote_code=True)
 
-    # The LLaDA architecture theoretically supports both left-padding and right-padding. 
-    # However, the sampling code implementation is simpler with left-padding.
+    # LLaDA generation assumes left-padding; the model handles both, but the unmasking loop simplifies with padding on the left.
     if tokenizer.padding_side != 'left':
         tokenizer.padding_side = 'left'
 
-    # If the padding ID equals the mask ID, you need to modify our generate function to achieve correct inference.
     assert tokenizer.pad_token_id != 126336
 
     prompts = [ "Lily can run 12 kilometers per hour for 4 hours. After that, she runs 6 kilometers per hour. How many kilometers can she run in 8 hours?",
              "Joy can read 8 pages of a book in 20 minutes. How many hours will it take her to read 120 pages?",
              "Randy has 60 mango trees on his farm. He also has 5 less than half as many coconut trees as mango trees. How many trees does Randy have in all on his farm?"]
 
-    # Add special tokens for the Instruct model. The Base model does not require the following two lines.
     messages = [{"role": "user", "content": prompt} for prompt in prompts]
     prompts = [tokenizer.apply_chat_template([message], add_generation_prompt=True, tokenize=False) for message in messages]
 

@@ -50,7 +50,6 @@ def _save_cache_object(obj: Dict[str, Any], path: str) -> None:
     """Save cache dict using pickle+gzip to avoid PyTorch ZIP corruption on Windows."""
     temp_path = path + ".tmp"
     with gzip.open(temp_path, "wb", compresslevel=3) as f:
-        # Convert tensors to numpy arrays for compatibility
         payload = {}
         for k, v in obj.items():
             if isinstance(v, torch.Tensor):
@@ -77,10 +76,8 @@ def _load_cache_object(path: str) -> Dict[str, Any]:
 def _resolve_run_dir(base_output_dir: str, args: argparse.Namespace) -> str:
     """Resolve the active run directory for this invocation.
 
-    Behavior:
-    - New runs create outputs under base_output_dir/runs/run_YYYYmmdd_HHMMSS.
-    - --resume/--status use --run-dir when provided, else latest_run.txt.
-    - Falls back to legacy base_output_dir for backward compatibility.
+    Timestamped run directories keep distillation experiments reproducible and
+    prevent resume ambiguity.
     """
     base_output_dir = os.path.abspath(base_output_dir)
     latest_run_file = os.path.join(base_output_dir, "latest_run.txt")
@@ -100,10 +97,8 @@ def _resolve_run_dir(base_output_dir: str, args: argparse.Namespace) -> str:
                     return candidate
             except Exception:
                 pass
-        # Backward compatibility with older layout that stored everything at base_output_dir.
         return base_output_dir
 
-    # New non-resume run: create an isolated timestamped directory.
     runs_root = os.path.join(base_output_dir, "runs")
     ensure_dir(runs_root)
     run_name = datetime.now().strftime("run_%Y%m%d_%H%M%S")
@@ -136,7 +131,11 @@ def _build_run_scoped_paths(config_paths: Dict[str, Any], run_dir: str) -> Dict[
 
 
 def resolve_teacher_model_paths(teacher_path: str, fallback_model_path: str) -> tuple[str, Optional[str]]:
-    """Resolve the base model and optional LoRA adapter for a teacher checkpoint."""
+    """Resolve the base model and optional LoRA adapter for a teacher checkpoint.
+
+    When the teacher is a LoRA checkpoint, we must load the base model separately
+    so the student starts from the same backbone.
+    """
     adapter_config_path = os.path.join(teacher_path, "adapter_config.json")
     if os.path.isdir(teacher_path) and os.path.exists(adapter_config_path):
         try:
@@ -192,7 +191,7 @@ def _managed_or_external_server(
             raise RuntimeError(f"No external server on port {port}")
         if not _reload_external_server(checkpoint_dir, steps, port):
             raise RuntimeError("External server /reload failed")
-        yield None  # No server object needed
+        yield None
     else:
         with managed_server(
             checkpoint_dir, steps, port=port, timeout=timeout,
@@ -214,20 +213,17 @@ def cache_stage(
     cache_dir: str,
     logger: ProgressLogger
 ) -> bool:
-    """
-    Stage 1: Generate teacher trajectories for current round.
+    """Stage 1: Generate teacher trajectories for current round.
 
     The teacher generates trajectories at the target_step (intermediate state),
     which the student will learn to predict.
     """
     logger.start_stage("cache")
 
-    # Verify GPU is empty before starting
     if config['execution']['verify_gpu_empty']:
         verify_gpu_empty()
     log_memory_usage("cache_start")
 
-    # Import required modules
     try:
         from transformers import AutoTokenizer, AutoModel, BitsAndBytesConfig
         from datasets import load_dataset
@@ -236,8 +232,9 @@ def cache_stage(
         logger.log(f"ERROR: Failed to import required modules: {e}")
         return False
 
-    # Setup quantization
     quant_config = config['system']['quantization']
+    # Same 4-bit config as 01_cache_teacher.py; mismatched compute_dtype causes
+    # subtle logit shifts.
     quantization_config = BitsAndBytesConfig(
         load_in_4bit=quant_config['load_in_4bit'],
         bnb_4bit_compute_dtype=getattr(torch, quant_config['compute_dtype']),
@@ -245,7 +242,6 @@ def cache_stage(
         bnb_4bit_use_double_quant=quant_config['use_double_quant'],
     )
 
-    # Setup environment
     os.environ["HF_HOME"] = os.path.expanduser(config['system']['hf_home'])
     os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
     os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
@@ -254,16 +250,14 @@ def cache_stage(
 
     torch.cuda.set_per_process_memory_fraction(config['system']['cuda_memory_fraction'])
 
-    # Clear cache dir for this round
     if os.path.exists(cache_dir):
         shutil.rmtree(cache_dir)
     os.makedirs(cache_dir, exist_ok=True)
     logger.log(f"Cache directory prepared: {cache_dir}")
 
-    # Calculate available RAM
+    # Leave 3 GB headroom for OS and dataset paging on machines with tight RAM.
     ram_gb = int(psutil.virtual_memory().available / 1024**3) - 3
 
-    # Load teacher model
     base_model_path, adapter_path = resolve_teacher_model_paths(
         teacher_path,
         config['teacher']['model_path']
@@ -284,6 +278,8 @@ def cache_stage(
         )
         if adapter_path:
             from peft import PeftModel
+            # LoRA adapters are merged at runtime, not permanently, so the base
+            # model stays shareable across rounds.
             model = PeftModel.from_pretrained(model, adapter_path)
         model.tie_weights()
         model.eval()
@@ -292,7 +288,6 @@ def cache_stage(
         logger.log(f"ERROR: Failed to load teacher model: {e}")
         return False
 
-    # Load dataset
     logger.log("Loading dataset...")
     try:
         dataset = load_dataset(
@@ -309,13 +304,14 @@ def cache_stage(
         unload_model(model, "teacher")
         return False
 
-    # Generate trajectories
     logger.log(f"Generating trajectories with steps={teacher_steps}, target_step={target_step}")
 
     student_config = config['student']
 
     with torch.no_grad():
         for i, text in enumerate(texts):
+            # The summarize-or-continue framing forces the model to attend broadly,
+            # yielding richer teacher logits than a simple continuation.
             prompt_content = f"Briefly summarize or continue this text:\n{text[:200]}"
             conversation = [{"role": "user", "content": prompt_content}]
 
@@ -340,7 +336,8 @@ def cache_stage(
 
                 file_path = os.path.join(cache_dir, f"batch_{i}.pkl.gz")
                 try:
-                    # Ensure GPU writes are complete before saving to disk
+                    # Ensure kernels finish before touching GPU memory from the
+                    # CPU-side save.
                     if torch.cuda.is_available():
                         torch.cuda.synchronize()
                     payload = {
@@ -360,13 +357,13 @@ def cache_stage(
                 logger.log(f"ERROR: Failed to generate trajectory {i+1}: {e}")
                 continue
 
-            # Clear cache after each example
             del input_ids, state_x, teacher_logits
             if attn_mask is not None:
                 del attn_mask
             torch.cuda.empty_cache()
 
-    # Cleanup and validate count
+    # Corrupted caches usually result from OOM kills during saving; validating
+    # here prevents cryptic training failures later.
     all_files = [f for f in os.listdir(cache_dir) if f.endswith('.pkl.gz')]
     logger.log(f"Validating {len(all_files)} cache files...")
     valid_count = 0
@@ -399,17 +396,13 @@ def train_stage(
     student_steps: int,
     logger: ProgressLogger
 ) -> bool:
-    """
-    Stage 2: Train student model on cached trajectories.
-    """
+    """Stage 2: Train student model on cached trajectories."""
     logger.start_stage("train")
 
-    # Verify GPU is empty before starting
     if config['execution']['verify_gpu_empty']:
         verify_gpu_empty()
     log_memory_usage("train_start")
 
-    # Import required modules
     try:
         from transformers import AutoModel, AutoTokenizer, BitsAndBytesConfig
         from peft import get_peft_model, LoraConfig
@@ -419,7 +412,6 @@ def train_stage(
         logger.log(f"ERROR: Failed to import required modules: {e}")
         return False
 
-    # Setup quantization
     quant_config = config['system']['quantization']
     quantization_config = BitsAndBytesConfig(
         load_in_4bit=quant_config['load_in_4bit'],
@@ -428,7 +420,6 @@ def train_stage(
         bnb_4bit_use_double_quant=quant_config['use_double_quant'],
     )
 
-    # Setup environment
     os.environ["HF_HOME"] = os.path.expanduser(config['system']['hf_home'])
     os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
     os.environ["SAFETENSORS_FAST_GPU"] = "0"
@@ -436,7 +427,6 @@ def train_stage(
 
     torch.cuda.set_per_process_memory_fraction(config['system']['cuda_memory_fraction'])
 
-    # Load cache files
     cache_files = glob.glob(os.path.join(cache_dir, "*.pkl.gz"))
     if not cache_files:
         logger.log(f"ERROR: No cache files found in {cache_dir}")
@@ -444,7 +434,6 @@ def train_stage(
 
     logger.log(f"Found {len(cache_files)} cached trajectories")
 
-    # Load base model
     model_id = config['teacher']['model_path']
     ram_gb = int(psutil.virtual_memory().available / 1024**3) - 3
 
@@ -460,11 +449,14 @@ def train_stage(
         )
         if hasattr(student_base, "gradient_checkpointing_enable"):
             try:
+                # Checkpointing trades ~20% slowdown for enabling larger batch sizes;
+                # with single-example batches the benefit is marginal but safe.
                 student_base.gradient_checkpointing_enable()
             except Exception as e:
                 logger.log(f"WARNING: Gradient checkpointing not supported: {e}")
 
-        # Freeze base parameters
+        # Only LoRA deltas are trainable, so the optimizer state is ~0.1% of
+        # full-model AdamW.
         for param in student_base.parameters():
             param.requires_grad = False
 
@@ -473,7 +465,6 @@ def train_stage(
         logger.log(f"ERROR: Failed to load base model: {e}")
         return False
 
-    # Add LoRA adapters
     lora_config = config['student']['lora']
     logger.log(f"Injecting LoRA adapters (r={lora_config['r']}, alpha={lora_config['alpha']})")
 
@@ -488,7 +479,8 @@ def train_stage(
         )
         student_model = get_peft_model(student_base, peft_config)
 
-        # Cast LoRA parameters to float16
+        # PEFT initializes adapters in f32; downcasting saves ~50% optimizer state
+        # VRAM with negligible impact on LoRA convergence.
         for name, param in student_model.named_parameters():
             if param.requires_grad:
                 param.data = param.data.to(torch.float16)
@@ -500,10 +492,11 @@ def train_stage(
         unload_model(student_base, "base_model")
         return False
 
-    # Setup optimizer
     learning_rate = float(config['student']['learning_rate'])
     try:
         import bitsandbytes as bnb
+        # 8-bit Adam uses block-wise quantization; for LoRA this is usually
+        # indistinguishable from full-precision convergence.
         optimizer = bnb.optim.AdamW8bit(
             [p for p in student_model.parameters() if p.requires_grad],
             lr=learning_rate
@@ -516,14 +509,13 @@ def train_stage(
         )
         logger.log("Using standard AdamW optimizer")
 
-    # Training loop
     temperature = config['student']['temperature']
     max_grad_norm = config['student']['max_grad_norm']
 
     logger.log(f"Starting training with temperature={temperature}")
 
     try:
-        for epoch in range(1):  # Single epoch for now
+        for epoch in range(1):
             for i, cache_file in enumerate(cache_files):
                 torch.cuda.empty_cache()
 
@@ -547,6 +539,8 @@ def train_stage(
                     student_logits_gen = student_logits[:, prompt_len:, :]
                     target_logits_gen = target_logits[:, prompt_len:, :]
 
+                    # Scaling by T^2 preserves gradient magnitude across
+                    # temperatures, as in standard distillation (Hinton et al.).
                     loss = torch.nn.functional.kl_div(
                         torch.nn.functional.log_softmax(student_logits_gen / temperature, dim=-1),
                         torch.nn.functional.softmax(target_logits_gen / temperature, dim=-1),
@@ -554,6 +548,8 @@ def train_stage(
                     ) * (temperature ** 2)
 
                 loss.backward()
+                # Clip at max_grad_norm because 4-bit LoRA training is sensitive to
+                # gradient spikes from outlier teacher logits.
                 torch.nn.utils.clip_grad_norm_(
                     [p for p in student_model.parameters() if p.requires_grad],
                     max_norm=max_grad_norm
@@ -575,7 +571,6 @@ def train_stage(
         unload_model(student_model, "student")
         return False
 
-    # Save checkpoint
     logger.log(f"Saving checkpoint to {checkpoint_dir}")
     try:
         os.makedirs(checkpoint_dir, exist_ok=True)
@@ -585,7 +580,6 @@ def train_stage(
         unload_model(student_model, "student")
         return False
 
-    # Cleanup
     unload_model(student_model, "student")
     log_memory_usage("train_end")
 
@@ -606,15 +600,15 @@ def run_single_round(
     use_external_server: bool = False,
     previous_result: Optional[RoundResult] = None,
 ) -> Optional[RoundResult]:
-    """
-    Run a complete distillation round.
+    """Run a complete distillation round.
 
     Returns:
         RoundResult if successful, None otherwise
     """
     logger.start_round(round_num, student_steps)
 
-    # Validate halving schedule
+    # Strict halving guarantees the student sees exactly half the teacher's
+    # diffusion steps, which is the core assumption of the nested schedule.
     try:
         expected_student_steps = max(config['schedule']['min_steps'], teacher_steps // 2)
         if student_steps != expected_student_steps:
@@ -628,7 +622,8 @@ def run_single_round(
     logger.log(f"Teacher: {teacher_steps} steps | Student: {student_steps} steps")
     logger.log(f"Teacher path: {teacher_path}")
 
-    # Calculate target_step as midpoint (as in original code)
+    # Midpoint caching exposes the teacher when roughly 50% of tokens are still
+    # masked; earlier steps are too noisy, later steps too easy.
     target_step = teacher_steps // 2
 
     # Stage 1: Cache teacher trajectories
@@ -647,7 +642,8 @@ def run_single_round(
         return None
     train_duration = time.time() - t0_train
 
-    # Clean up cache files after training to save disk space
+    # Cache files can exceed 100 MB each; deleting after training avoids disk
+    # exhaustion across rounds.
     if os.path.exists(cache_dir):
         cache_files = [f for f in os.listdir(cache_dir) if f.endswith('.pkl.gz')]
         if cache_files:
@@ -662,16 +658,13 @@ def run_single_round(
     # Stage 3 & 4: Evaluation
     logger.start_stage("evaluation")
 
-    # Ensure clean GPU before evaluation
     if config['execution']['verify_gpu_empty']:
         verify_gpu_empty()
     cleanup_gpu_memory()
     log_memory_usage("eval_start")
 
-    # Per-round timing log path (used by managed server)
     timing_log_path = os.path.join(output_dirs['eval'], "generation_timing.jsonl")
 
-    # Run evaluation with managed server
     eval_result = None
     t0_eval = time.time()
     try:
@@ -700,7 +693,8 @@ def run_single_round(
             )
             eval_server_timeout = 1800.0 if eval_server_device == 'cpu' else 600.0
 
-        # Use eval_steps if configured, otherwise use student_steps
+        # eval_steps=0 is a sentinel meaning "use the student's trained step
+        # count" rather than a separate eval budget.
         eval_steps = eval_config.get('eval_steps', 0)
         if eval_steps == 0:
             eval_steps = student_steps
@@ -731,7 +725,6 @@ def run_single_round(
             os.makedirs(reports_dir, exist_ok=True)
             reports_dir = os.path.abspath(reports_dir)
 
-            # Use absolute paths for promptfoo config to avoid path issues
             promptfoo_template = os.path.abspath(eval_config['promptfoo']['config_path'])
             provider_abs = os.path.abspath(eval_config['promptfoo']['provider_path'])
 
@@ -766,15 +759,12 @@ def run_single_round(
     log_memory_usage("eval_end")
     logger.end_stage("evaluation", success=eval_result.get('promptfoo_success', False))
 
-    # Promptfoo score is informational only; continuation is no longer gated on it.
     promptfoo_percent = eval_result.get('promptfoo_assertion_percent', eval_result.get('promptfoo_percent', 0.0))
     perplexity = eval_result.get('perplexity', 999.9)
     passed = True
 
-    # Compute per-prompt latency aggregates from timing log
     per_prompt_records = _read_timing_log(timing_log_path)
     if not per_prompt_records and use_external_server:
-        # External server: timing log unavailable, try to read from promptfoo metadata if present
         promptfoo_details = eval_result.get('promptfoo_details', {})
         raw_results = promptfoo_details.get('results', [])
         if isinstance(raw_results, dict) and 'results' in raw_results:
@@ -792,7 +782,6 @@ def run_single_round(
     latency_aggs.eval_s = eval_duration
     latency_aggs.total_pipeline_s = cache_duration + train_duration + eval_duration
 
-    # Create result
     result = RoundResult(
         round_number=round_num,
         student_name=f"student_steps_{student_steps}",
@@ -810,6 +799,8 @@ def run_single_round(
         per_prompt_latencies=per_prompt_records,
     )
 
+    # Speedup is computed relative to the immediately prior round so we can
+    # detect diminishing returns early.
     if previous_result is not None:
         result.previous_avg_generation_ms = previous_result.stage_timings.avg_generation_ms
 
@@ -919,7 +910,6 @@ def evaluate_teacher_baseline(
     perplexity = eval_result.get('perplexity', 999.9)
     passed = True
 
-    # Compute per-prompt latency aggregates
     per_prompt_records = _read_timing_log(timing_log_path)
     latency_aggs = compute_latency_aggregates(per_prompt_records)
     latency_aggs.eval_s = eval_duration
@@ -945,10 +935,8 @@ def evaluate_teacher_baseline(
 
 def update_leaderboard(results: list, paths: Dict[str, str]) -> None:
     """Update all leaderboard files (MD, CSV, JSON)."""
-    # JSON
     save_json([r.to_dict() for r in results], paths['json'])
 
-    # CSV — flatten stage_timings so columns are readable
     if results:
         flat_rows = []
         for r in results:
@@ -974,7 +962,6 @@ def update_leaderboard(results: list, paths: Dict[str, str]) -> None:
             })
         save_csv(flat_rows, paths['csv'])
 
-    # Markdown
     md_lines = ["# Nested Distillation Leaderboard\n"]
     md_lines.append(
         "\n| Round | Steps | Promptfoo % | Perplexity | Cache(s) | Train(s) | Eval(s) | "
@@ -1118,12 +1105,9 @@ def main():
 
     args = parser.parse_args()
 
-    # Load configuration
     print(f"Loading configuration from {args.config}")
     config = load_yaml_config(args.config)
 
-    # Resolve paths relative to the config file's directory so relative
-    # entries such as "workspace/outputs/..." are stable regardless of CWD.
     script_dir = os.path.dirname(os.path.abspath(__file__))
     config_dir = os.path.dirname(os.path.abspath(args.config))
 
@@ -1131,7 +1115,6 @@ def main():
         value = os.path.expanduser(value)
         if os.path.isabs(value):
             return value
-        # Prefer resolution relative to the config file; fallback to script dir
         candidate = os.path.join(config_dir, value)
         if os.path.exists(candidate) or os.path.dirname(candidate):
             return os.path.abspath(candidate)
@@ -1145,14 +1128,12 @@ def main():
             config["paths"]["leaderboard"][key] = _resolve_config_path(value)
     if "hf_home" in config.get("system", {}):
         config["system"]["hf_home"] = _resolve_config_path(config["system"]["hf_home"])
-    # Similarly resolve promptfoo config/template and provider paths
     for pkey in ("config_path", "provider_path"):
         if pkey in config.get("evaluation", {}).get("promptfoo", {}):
             config["evaluation"]["promptfoo"][pkey] = _resolve_config_path(
                 config["evaluation"]["promptfoo"][pkey]
             )
 
-    # Setup run-scoped paths
     config_paths = config['paths']
     legacy_base_output_dir = config_paths['base_output_dir']
     ensure_dir(legacy_base_output_dir)
@@ -1161,13 +1142,10 @@ def main():
     ensure_dir(paths['base_output_dir'])
     print(f"Run directory: {paths['base_output_dir']}")
 
-    # Route all round artifacts under the active run directory.
     base_output_dir = paths['base_output_dir']
 
-    # Initialize state manager
     state_manager = StateManager(paths['state_file'])
 
-    # Status command
     if args.status:
         state = state_manager.load()
         if state:
@@ -1177,7 +1155,6 @@ def main():
             print(f"Current teacher: {state.current_teacher_path}")
             print(f"Current teacher steps: {state.current_teacher_steps}")
 
-            # Load and print leaderboard
             if os.path.exists(paths['leaderboard']['json']):
                 data = load_json(paths['leaderboard']['json'])
                 results = [RoundResult.from_dict(d) for d in data]
@@ -1186,19 +1163,16 @@ def main():
             print("No experiment state found. Pipeline has not been run yet.")
         return
 
-    # Dry run
     if args.dry_run:
         print_dry_run(config)
         return
 
-    # Setup experiment
     set_seed(config['execution']['seed'])
 
     thresholds = EvaluationThresholds(
         promptfoo_min=float(config['evaluation'].get('promptfoo_threshold', 0.0))
     )
 
-    # Initialize or resume experiment
     initial_steps = config['teacher']['initial_steps']
     min_steps = config['schedule']['min_steps']
     teacher_path = config['teacher']['model_path']
@@ -1235,7 +1209,6 @@ def main():
             initial_steps
         )
 
-    # Check Ollama for evaluation
     if not check_ollama_running():
         print("WARNING: Ollama server not detected at 127.0.0.1:11434")
         print("Evaluation will not work properly without Ollama running.")
@@ -1243,7 +1216,6 @@ def main():
         if not input("Continue anyway? (y/N): ").lower().startswith('y'):
             return
 
-    # Calculate max rounds
     max_rounds = calculate_max_rounds(initial_steps, min_steps)
     logger = ProgressLogger(max_rounds)
 
@@ -1257,14 +1229,12 @@ def main():
     print("Promptfoo assertion threshold: disabled (informational only)")
     print("=" * 70 + "\n")
 
-    # Load existing results if resuming
     results = []
     if args.resume and os.path.exists(paths['leaderboard']['json']):
         data = load_json(paths['leaderboard']['json'])
         results = [RoundResult.from_dict(d) for d in data]
         print(f"Loaded {len(results)} previous results")
 
-    # Baseline evaluation for initial teacher (round 0)
     baseline_done = any(r.round_number == 0 for r in results)
     if state.current_round == 0 and not baseline_done:
         try:
@@ -1290,7 +1260,6 @@ def main():
         except Exception as e:
             print(f"WARNING: Teacher baseline evaluation failed: {e}")
 
-    # Main distillation loop
     teacher_steps = state.current_teacher_steps
     current_teacher_path = state.current_teacher_path
     start_round = state.current_round + 1 if args.resume else 1
@@ -1302,10 +1271,8 @@ def main():
             print(f"\nReached minimum steps ({min_steps}). Stopping.")
             break
 
-        # Get output directories
         output_dirs = get_output_dirs(base_output_dir, round_num, student_steps)
 
-        # Check if already completed (unless force)
         if args.resume and os.path.exists(output_dirs['checkpoint']):
             existing = [r for r in results if r.round_number == round_num]
             if existing:
@@ -1314,14 +1281,12 @@ def main():
                 current_teacher_path = existing[0].checkpoint_dir
                 continue
 
-        # Determine previous result for speedup calculation
         previous_result = None
         if results:
             prev = [r for r in results if r.round_number == round_num - 1]
             if prev:
                 previous_result = prev[0]
 
-        # Run the round
         result = run_single_round(
             config,
             state,
@@ -1342,11 +1307,9 @@ def main():
             state_manager.save(state)
             break
 
-        # Update results
         results.append(result)
         update_leaderboard(results, paths['leaderboard'])
 
-        # Write per-prompt latencies to master JSONL in run dir
         if 'timing' in paths and result.per_prompt_latencies:
             with open(paths['timing']['per_prompt'], 'a', encoding='utf-8') as f:
                 for entry in result.per_prompt_latencies:
@@ -1355,14 +1318,12 @@ def main():
                     enriched['student_steps'] = result.student_steps
                     f.write(json.dumps(enriched) + '\n')
 
-        # Update state
         state.current_round = round_num
         state.current_teacher_path = result.checkpoint_dir
         state.current_teacher_steps = student_steps
         state.completed_rounds.append(round_num)
         state_manager.save(state)
 
-        # Print summary
         print("\n" + "-" * 70)
         print(f"Round {round_num} completed!")
         print(result.format_summary())
@@ -1372,15 +1333,12 @@ def main():
         if not result.passed:
             print(f"\nPromptfoo assertion score {result.promptfoo_percent:.1f}% recorded for reporting only.")
 
-        # Prepare for next round
         teacher_steps = student_steps
         current_teacher_path = result.checkpoint_dir
 
-        # Memory cleanup between rounds
         if config['execution']['memory_cleanup']:
             cleanup_gpu_memory()
 
-    # Finalize
     state.is_running = False
     state_manager.save(state)
 
