@@ -14,6 +14,7 @@
 \usepackage{graphicx}
 \usepackage{wrapfig}
 \usepackage{booktabs}
+\usepackage{tabularx}
 \usepackage{amsmath, amssymb, amsfonts}
 \usepackage{listings}
 \usepackage{xcolor}
@@ -677,22 +678,143 @@ Eq.~\eqref{eq:kd_loss} in Background). For a batch of sequences the loss used is
 \caption{Knowledge Distillation Architecture}
 \end{figure}
 
-\noindent To further ground the discrete diffusion mechanics, Figure~\ref{fig:progressive_distillation_steps} illustrates the step-halving structure of two successive progressive distillation rounds: starting from a 4-step teacher, one distillation round produces a 2-step student, and a second round produces a 1-step student. Each blue arrow labelled ``Distillation'' represents a full training phase in which the student is optimised to match the teacher's soft-token distributions over a two-step window.
+\noindent To make this concrete, Figure~\ref{fig:token_unmasking} compares token unmasking across two denoising schedules on the same sentence. The top row shows a Teacher operating at 8 steps: at each step only a fraction of the masked positions $\texttt{[M]}$ are committed, and by step 4 the sentence is already largely readable. The bottom row shows a Student distilled to 4 steps: each step must commit twice as many tokens simultaneously, yet because the Student has been trained to match the Teacher's two-step soft distribution in a single forward pass, the revealed tokens are of comparable quality. This is precisely what progressive distillation achieves in the discrete domain---not simply skipping steps, but learning a compressed policy that approximates two Teacher transitions in one.
 
 \begin{figure}[H]
-    \centering
-    \includegraphics[width=\linewidth]{image1.png}
-    \caption{Example of two iterations of progressive distillation applied to a speech-spectrogram diffusion process. The same halving structure is applied in this thesis to discrete text tokens: the step count is compressed from 128 down to 1 across seven recursive rounds. \textit{Source: Salimans \& Ho, ICLR 2022 \cite{salimans2022progressive}.}}
-    \label{fig:progressive_distillation_steps}
-\end{figure}
+\centering
+% Sentence: The | cat | sat | on | the | warm | sunny | mat  (8 tokens)
+% Teacher: t=8,7,6,5,4,3,2,1,0 — 1 new token revealed per step
+% Student: t=4,3,2,1,0          — 2 new tokens revealed per step
+\begin{tikzpicture}[
+    font=\small,
+    tok/.style={draw, rounded corners=3pt,
+                minimum width=1.18cm, minimum height=0.68cm,
+                inner sep=3pt, align=center, font=\ttfamily\small},
+    masked/.style={tok, fill=gray!22, draw=gray!50, text=gray!65!black},
+    revealed/.style={tok, fill=green!16, draw=green!50!black, text=black},
+    slbl/.style={font=\footnotesize, text=gray!55!black, anchor=east},
+    rlbl/.style={font=\small\bfseries, anchor=east, align=right},
+]
 
-\noindent Figure~\ref{fig:token_unmasking} provides a complementary perspective by depicting the \emph{token unmasking trajectory} in the discrete domain. Starting from a fully masked sequence ($x_T$, upper right), each denoising step resolves a fraction of masked positions, moving through intermediate partially-unmasked states toward the final clean output ($x_0$, lower left). The blue curves represent two plausible denoising paths taken by the model; the dashed red curve shows the ``oracle'' straight-line path that a perfectly distilled single-step student would ideally follow. The images inset at each trajectory endpoint illustrate the quality of the decoded output at that stage: the fully masked state produces a near-unrecognisable noisy sample, while the clean endpoint yields the target output. This trajectory view is directly analogous to the continuous-diffusion ODE picture, but operates over the probability simplex of the vocabulary rather than over continuous pixel values.
+\def\TW{1.30}    % horizontal token pitch
+\def\RH{1.05}    % vertical row pitch
+\def\LX{-2.8}    % left-margin x for step labels
+\def\SX{10.3}    % right-margin x for arrows  (= 8*TW + 0.5)
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.82\linewidth]{image2.png}
-    \caption{Token unmasking trajectory in discrete masked diffusion. Starting from a fully masked sequence $x_T$ (upper right), the model iteratively resolves masked positions across denoising steps, converging toward the clean output $x_0$ (lower left). Blue solid curves show two sampled denoising paths; the dashed red curve represents the idealized straight-line trajectory a perfectly distilled student would follow. The inset images illustrate output quality at each trajectory endpoint. \textit{Source: Compiled by the author.}}
-    \label{fig:token_unmasking}
+%% ═══════════════════════════════════════════════════════════
+%% TEACHER  (t = 8 down to 0, one row per step)
+%% Unmasking schedule: reveal token i at step t = 8-i
+%%   t=8: none  t=7: The  t=6: cat  t=5: sat  t=4: on
+%%   t=3: the   t=2: warm  t=1: sunny  t=0: mat
+%% ═══════════════════════════════════════════════════════════
+\node[rlbl, text=blue!70!black] at (-4.8, 0) {Teacher\\8 steps};
+
+% t=8  all masked
+\node[slbl] at (\LX, 0)       {$t=8$ (start)};
+\foreach \i in {0,...,7}{\node[masked] at (\i*\TW,0){[M]};}
+
+% t=7  reveal: The
+\node[slbl] at (\LX,-1*\RH)   {$t=7$};
+\node[revealed] at (0,-1*\RH){The};
+\foreach \i in {1,...,7}{\node[masked] at (\i*\TW,-1*\RH){[M]};}
+
+% t=6  reveal: cat
+\node[slbl] at (\LX,-2*\RH)   {$t=6$};
+\foreach \i/\w in {0/The,1/cat}{\node[revealed] at (\i*\TW,-2*\RH){\w};}
+\foreach \i in {2,...,7}{\node[masked] at (\i*\TW,-2*\RH){[M]};}
+
+% t=5  reveal: sat
+\node[slbl] at (\LX,-3*\RH)   {$t=5$};
+\foreach \i/\w in {0/The,1/cat,2/sat}{\node[revealed] at (\i*\TW,-3*\RH){\w};}
+\foreach \i in {3,...,7}{\node[masked] at (\i*\TW,-3*\RH){[M]};}
+
+% t=4  reveal: on
+\node[slbl] at (\LX,-4*\RH)   {$t=4$};
+\foreach \i/\w in {0/The,1/cat,2/sat,3/on}{\node[revealed] at (\i*\TW,-4*\RH){\w};}
+\foreach \i in {4,...,7}{\node[masked] at (\i*\TW,-4*\RH){[M]};}
+
+% t=3  reveal: the
+\node[slbl] at (\LX,-5*\RH)   {$t=3$};
+\foreach \i/\w in {0/The,1/cat,2/sat,3/on,4/the}{\node[revealed] at (\i*\TW,-5*\RH){\w};}
+\foreach \i in {5,...,7}{\node[masked] at (\i*\TW,-5*\RH){[M]};}
+
+% t=2  reveal: warm
+\node[slbl] at (\LX,-6*\RH)   {$t=2$};
+\foreach \i/\w in {0/The,1/cat,2/sat,3/on,4/the,5/warm}{\node[revealed] at (\i*\TW,-6*\RH){\w};}
+\foreach \i in {6,7}{\node[masked] at (\i*\TW,-6*\RH){[M]};}
+
+% t=1  reveal: sunny
+\node[slbl] at (\LX,-7*\RH)   {$t=1$};
+\foreach \i/\w in {0/The,1/cat,2/sat,3/on,4/the,5/warm,6/sunny}{\node[revealed] at (\i*\TW,-7*\RH){\w};}
+\node[masked] at (7*\TW,-7*\RH){[M]};
+
+% t=0  all revealed
+\node[slbl] at (\LX,-8*\RH)   {$t=0$ (done)};
+\foreach \i/\w in {0/The,1/cat,2/sat,3/on,4/the,5/warm,6/sunny,7/mat}{
+  \node[revealed] at (\i*\TW,-8*\RH){\w};}
+
+% Teacher arrows
+\foreach \y in {0,...,7}{
+  \draw[->,blue!50,thick] (\SX,-\y*\RH-0.18)--(\SX,-\y*\RH-0.86);
+}
+
+%% ═══════════════════════════════════════════════════════════
+%% DIVIDER
+%% ═══════════════════════════════════════════════════════════
+\def\DY{-9.2}
+\draw[dashed,gray!40,thick] (-5.2,\DY) -- (\SX+0.4,\DY);
+\node[font=\footnotesize\itshape,gray!50!black] at (3.5*\TW,\DY-0.38)
+     {distillation halves the step count};
+
+%% ═══════════════════════════════════════════════════════════
+%% STUDENT  (t = 4 down to 0, 2 tokens per step)
+%% Schedule: t=4: none  t=3: The+cat  t=2: sat+on
+%%           t=1: the+warm  t=0: sunny+mat
+%% ═══════════════════════════════════════════════════════════
+\def\SY{-10.2}
+\node[rlbl, text=red!65!black] at (-4.8,\SY) {Student\\4 steps};
+
+% t=4  all masked
+\node[slbl] at (\LX,\SY)            {$t=4$ (start)};
+\foreach \i in {0,...,7}{\node[masked] at (\i*\TW,\SY){[M]};}
+
+% t=3  reveal: The, cat
+\node[slbl] at (\LX,\SY-1*\RH)     {$t=3$};
+\foreach \i/\w in {0/The,1/cat}{\node[revealed] at (\i*\TW,\SY-1*\RH){\w};}
+\foreach \i in {2,...,7}{\node[masked] at (\i*\TW,\SY-1*\RH){[M]};}
+
+% t=2  reveal: sat, on
+\node[slbl] at (\LX,\SY-2*\RH)     {$t=2$};
+\foreach \i/\w in {0/The,1/cat,2/sat,3/on}{\node[revealed] at (\i*\TW,\SY-2*\RH){\w};}
+\foreach \i in {4,...,7}{\node[masked] at (\i*\TW,\SY-2*\RH){[M]};}
+
+% t=1  reveal: the, warm
+\node[slbl] at (\LX,\SY-3*\RH)     {$t=1$};
+\foreach \i/\w in {0/The,1/cat,2/sat,3/on,4/the,5/warm}{\node[revealed] at (\i*\TW,\SY-3*\RH){\w};}
+\foreach \i in {6,7}{\node[masked] at (\i*\TW,\SY-3*\RH){[M]};}
+
+% t=0  all revealed
+\node[slbl] at (\LX,\SY-4*\RH)     {$t=0$ (done)};
+\foreach \i/\w in {0/The,1/cat,2/sat,3/on,4/the,5/warm,6/sunny,7/mat}{
+  \node[revealed] at (\i*\TW,\SY-4*\RH){\w};}
+
+% Student arrows
+\foreach \y in {0,...,3}{
+  \draw[->,red!55,thick] (\SX,\SY-\y*\RH-0.18)--(\SX,\SY-\y*\RH-0.86);
+}
+
+%% ═══════════════════════════════════════════════════════════
+%% LEGEND
+%% ═══════════════════════════════════════════════════════════
+\def\LGY{\SY-5.4}
+\node[revealed, minimum width=1.1cm] at (1.5,\LGY){};
+\node[anchor=west,font=\small] at (2.2,\LGY){Revealed token};
+\node[masked,   minimum width=1.1cm] at (6.0,\LGY){};
+\node[anchor=west,font=\small] at (6.75,\LGY){Masked position \texttt{[M]}};
+
+\end{tikzpicture}
+\caption{Token unmasking step-by-step for the sentence \textit{``The cat sat on the warm sunny mat''}. \textbf{Top (blue, Teacher, 8 steps):} one token is committed per step, giving fine-grained, gradual unmasking. \textbf{Bottom (red, Student, 4 steps):} two tokens are committed per step. The Student is trained via KL divergence to match the Teacher's two-step soft distributions in a single forward pass, so the tokens revealed at each distilled step are of comparable quality to those revealed after two Teacher steps---progressive distillation learns a compressed unmasking policy, not a naive step-skip.}
+\label{fig:token_unmasking}
 \end{figure}
 
 \begin{equation}
@@ -998,15 +1120,15 @@ These tensors are moved to CPU and serialized to disk using a custom \texttt{\_s
 \centering
 \caption{Saved payload per trajectory cache file (\texttt{batch\_i.pkl.gz}).}
 \label{tab:cache_payload}
-\begin{tabular}{@{}llll@{}}
+\begin{tabularx}{\textwidth}{@{}lXlX@{}}
 \toprule
 \textbf{Key} & \textbf{Tensor Shape (typical)} & \textbf{Dtype} & \textbf{Description} \\ \midrule
-\texttt{input\_x}       & \texttt{(1, prompt\_len + 64)} & int64   & Prompt + masked generation region at \texttt{target\_step} \\
+\texttt{input\_x}       & \texttt{(1, prompt\_len + 64)}    & int64   & Prompt + masked generation region at \texttt{target\_step} \\
 \texttt{target\_logits} & \texttt{(1, prompt\_len + 64, V)} & float16 & Teacher logits over vocabulary $V$ \\
-\texttt{attn\_mask}     & \texttt{(1, prompt\_len + 64)} & int64   & Causal attention mask \\
-\texttt{prompt\_len}    & scalar                          & int     & Length of the original prompt in tokens \\
-\texttt{target\_step}   & scalar                          & int     & Diffusion step at which snapshot was taken \\ \bottomrule
-\end{tabular}
+\texttt{attn\_mask}     & \texttt{(1, prompt\_len + 64)}    & int64   & Causal attention mask \\
+\texttt{prompt\_len}    & scalar                            & int     & Length of the original prompt in tokens \\
+\texttt{target\_step}   & scalar                            & int     & Diffusion step at which snapshot was taken \\ \bottomrule
+\end{tabularx}
 \end{table}
 
 After each trajectory is saved, GPU tensors are explicitly deleted and \texttt{torch.cuda.empty\_cache()} is invoked. Once the entire batch of \texttt{num\_train\_examples} is cached, the Teacher model is forcefully unloaded via an \texttt{unload\_model()} function, which moves weights to CPU, deletes the Python object, and triggers garbage collection. A validation pass then reads every \texttt{.pkl.gz} back from disk to verify integrity before training begins.
@@ -1328,161 +1450,150 @@ The 8-step Student delivers a 12.25$\times$ speedup over the 128-step Teacher, r
 \subsubsection{Quality vs.\ Latency Trade-off: Promptfoo and Perplexity}
 \label{subsubsec:quality_latency_tradeoff}
 
-Figure~\ref{fig:quality_latency} synthesises all evaluation data into a single quality--latency chart. The horizontal axis plots average generation latency (ms, log scale); the left vertical axis plots the Promptfoo pass rate (\%), and the right vertical axis plots the GPT-2 perplexity (log scale). Each model variant is labelled with its step count. The Teacher Baseline ($\bullet$) and the non-distilled Control ($\triangle$) are shown as reference anchors.
+Figures~\ref{fig:latency_promptfoo} and~\ref{fig:latency_perplexity} plot the two quality dimensions separately against average generation latency (log scale). In both plots the horizontal axis is identical, making them easy to compare side-by-side. Each labelled point corresponds to one model variant; the $\triangle$ marker is the non-distilled 64-step control.
 
+% ---------------------------------------------------------------
+% Figure A: Generation Latency vs Promptfoo Pass Rate
+% ---------------------------------------------------------------
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}
 \begin{axis}[
-    % --- layout ---
-    width=13cm, height=8cm,
+    width=13cm, height=7.5cm,
     xmode=log,
-    % --- x axis ---
-    xlabel={Avg Generation Latency (ms)},
+    x dir=reverse,           % high latency (slow/good) on LEFT, fast on RIGHT
+    xlabel={Avg Generation Latency (ms) --- fewer steps $\rightarrow$},
     xmin=400, xmax=22000,
-    xtick={500,1000,2000,5000,10000,17292},
-    xticklabels={500,1000,2000,5000,10k,17292},
-    x tick label style={font=\small, rotate=30, anchor=east},
-    % --- left y axis (Promptfoo) ---
+    xtick={468,562,855,1412,2514,4766,8934,11427,17292},
+    xticklabels={1,2,4,8,16,32,64d,ctrl,128},
+    x tick label style={font=\small},
     ylabel={Promptfoo Pass Rate (\%)},
-    ylabel style={text=blue!70!black},
-    ymin=40, ymax=83,
+    ymin=40, ymax=84,
     ytick={40,50,60,70,75,80},
     yticklabel={\pgfmathprintnumber{\tick}\%},
-    yticklabel style={font=\small, text=blue!70!black},
-    % --- grid ---
     grid=both,
     grid style={gray!25, dashed},
-    minor grid style={gray!10},
-    % --- general style ---
     tick align=outside,
     axis line style={thick},
     legend style={
-        at={(0.02,0.03)}, anchor=south west,
-        font=\small, draw=gray!60,
-        fill=white, fill opacity=0.9,
-        row sep=2pt
+        at={(0.02,0.05)}, anchor=south west,   % bottom-left: away from annotation
+        font=\small, draw=gray!60, fill=white, fill opacity=0.95,
+        row sep=1pt
     },
-    % second y axis via scaling trick:
-    % PPL range 10..400 mapped onto 40..83 for display
-    % y_display = 40 + 43*(log10(PPL)-log10(10))/(log10(400)-log10(10))
-    %           = 40 + 43*(log10(PPL)-1)/1.602
-    extra y ticks={40,46.84,53.68,60.52,67.37,74.21,80},
-    extra y tick labels={},   % suppress — right axis handled separately
 ]
-
-%% ---------------------------------------------------------------
-%% DATA (all points pre-computed to avoid pgfmath dimension errors)
-%%   PPL scaled: y = 40 + 43*(log10(PPL)-1)/1.602
-%%   Teacher 128: latency=17292, PF=74.07, PPL=13.00 -> scaled=45.23
-%%   Ctrl   64c:  latency=11427, PF=70.37, PPL=17.38 -> scaled=51.55
-%%   R1     64d:  latency=8934,  PF=74.07, PPL=12.97 -> scaled=45.19
-%%   R2     32:   latency=4766,  PF=75.93, PPL=15.93 -> scaled=50.31
-%%   R3     16:   latency=2514,  PF=68.52, PPL=24.86 -> scaled=57.86
-%%   R4      8:   latency=1412,  PF=62.96, PPL=68.44 -> scaled=72.26
-%%   R5      4:   latency=855,   PF=59.26, PPL=79.18 -> scaled=73.97
-%%   R6      2:   latency=562,   PF=50.00, PPL=161.93-> scaled=80.83 (capped at 83)
-%%   R7      1:   latency=468,   PF=46.30, PPL=353.26-> scaled=88.xx (capped at 83)
-%% ---------------------------------------------------------------
-
-% --- Promptfoo: distilled students + teacher (blue, solid) ---
+% Distilled students + Teacher
 \addplot[
     color=blue!70!black, thick, mark=*, mark size=2.5pt,
     mark options={fill=blue!70!black}
 ] coordinates {
-    (17292, 74.07)   % Teacher 128
-    (8934,  74.07)   % R1 64-distilled
-    (4766,  75.93)   % R2 32-distilled  ← optimal
-    (2514,  68.52)   % R3 16-distilled
-    (1412,  62.96)   % R4 8-distilled
-    (855,   59.26)   % R5 4-distilled
-    (562,   50.00)   % R6 2-distilled
-    (468,   46.30)   % R7 1-distilled
+    (17292, 74.07)   % 128
+    (8934,  74.07)   % 64d
+    (4766,  75.93)   % 32
+    (2514,  68.52)   % 16
+    (1412,  62.96)   % 8
+    (855,   59.26)   % 4
+    (562,   50.00)   % 2
+    (468,   46.30)   % 1
 };
-\addlegendentry{Promptfoo pass rate (distilled)}
+\addlegendentry{Distilled students}
 
-% node labels for each distilled point
-\node[font=\tiny, blue!70!black, above=3pt] at (axis cs:17292,74.07) {128};
-\node[font=\tiny, blue!70!black, above=3pt] at (axis cs:8934, 74.07) {64d};
-\node[font=\tiny, blue!70!black, above=3pt] at (axis cs:4766, 75.93) {32};
-\node[font=\tiny, blue!70!black, above=3pt] at (axis cs:2514, 68.52) {16};
-\node[font=\tiny, blue!70!black, above=3pt] at (axis cs:1412, 62.96) {8};
-\node[font=\tiny, blue!70!black, above=3pt] at (axis cs:855,  59.26) {4};
-\node[font=\tiny, blue!70!black, below=3pt] at (axis cs:562,  50.00) {2};
-\node[font=\tiny, blue!70!black, below=3pt] at (axis cs:468,  46.30) {1};
-
-% --- Promptfoo: non-distilled control (blue triangle) ---
+% Non-distilled control
 \addplot[
-    color=blue!40!black, thick, mark=triangle*, mark size=3.5pt,
-    only marks, mark options={fill=blue!30!white}
-] coordinates {
-    (11427, 70.37)   % Control 64 no-LoRA
-};
-\addlegendentry{Non-distilled control (Promptfoo)}
-\node[font=\tiny, blue!40!black, below right=2pt] at (axis cs:11427,70.37) {64 ctrl};
+    color=blue!40!black, mark=triangle*, mark size=3.5pt,
+    only marks, mark options={fill=blue!25!white}
+] coordinates { (11427, 70.37) };
+\addlegendentry{Non-distilled control (64 steps)}
+\node[font=\tiny, blue!40!black, below left=2pt] at (axis cs:11427,70.37) {ctrl};
 
-% --- Perplexity: distilled (red, dashed) — values scaled to left axis ---
-\addplot[
-    color=red!70!black, thick, dashed, mark=o, mark size=2.5pt,
-    mark options={draw=red!70!black, fill=white}
-] coordinates {
-    (17292, 45.23)   % PPL=13.00
-    (8934,  45.19)   % PPL=12.97
-    (4766,  50.31)   % PPL=15.93
-    (2514,  57.86)   % PPL=24.86
-    (1412,  72.26)   % PPL=68.44
-    (855,   73.97)   % PPL=79.18
-    (562,   81.00)   % PPL=161.93  (slightly capped)
-    (468,   83.00)   % PPL=353.26  (capped at axis max)
-};
-\addlegendentry{Avg Perplexity (distilled, right axis)}
-
-% --- Perplexity: control (red cross) ---
-\addplot[
-    color=red!50!black, thick, mark=x, mark size=4pt,
-    only marks, mark options={draw=red!50!black}
-] coordinates {
-    (11427, 51.55)   % PPL=17.38
-};
-\addlegendentry{Non-distilled control (Perplexity)}
-
-% --- Optimal point annotation ---
+% Optimal annotation — arrow from above pointing DOWN onto the 32-step peak
+% 32-step point is at (4766, 75.93). Arrow starts above at y=80, lands at y=77.
 \draw[->, orange!80!black, very thick]
-    (axis cs:5800, 78) -- (axis cs:4900, 76.5);
-\node[font=\small, orange!80!black, align=center] at (axis cs:7500,79.5)
-    {\textbf{Optimal}\\32 steps};
+    (axis cs:4766, 80.5) -- (axis cs:4766, 77.2);
+\node[font=\small, orange!80!black, align=center, anchor=south]
+    at (axis cs:4766, 80.7) {\textbf{Optimal (32 steps)}};
 
 \end{axis}
-
-% --- Right y-axis label + PPL tick labels (drawn after axis) ---
-\begin{scope}[shift={(13.05cm,0)}]
-  % axis line
-  \draw[thick] (0,0) -- (0,8cm);
-  % ticks + labels  (y mapped: PPL=10->0cm, PPL=400->8cm via log)
-  % y_cm = 8 * (log10(PPL)-1) / (log10(400)-1) = 8*(log10(PPL)-1)/1.602
-  \foreach \ppl/\ycm in {10/0.00, 20/1.494, 50/3.320, 100/4.988, 200/6.482, 353/7.877}{
-    \draw (0,\ycm cm) -- (0.12cm,\ycm cm)
-          node[right, font=\small, text=red!70!black] {\ppl};
-  }
-  \node[rotate=90, above=0.9cm, font=\small, text=red!70!black] at (0,4cm)
-       {Avg Perplexity (log scale)};
-\end{scope}
 \end{tikzpicture}
-\caption{Quality--latency trade-off across all model variants.
-\textbf{Blue solid line:} Promptfoo pass rate (\%, left axis)
-vs.\ average generation latency (ms, log scale) for all distilled
-students; the 128-step teacher is the rightmost point.
-\textbf{Red dashed line:} GPT-2 perplexity mapped onto the left axis
-for visual alignment (true perplexity values read from the right axis).
-$\triangle$ and $\times$ markers denote the 64-step non-distilled
-control. The orange arrow highlights the 32-step distilled student as
-the optimal quality--speed operating point; both evaluators agree on
-the inflection between 16 and 8 steps, below which quality degrades
-super-exponentially.}
-\label{fig:quality_latency}
+\caption{Generation latency vs.\ Promptfoo pass rate, with latency axis reversed so that faster (fewer-step) models appear on the right. Each x-tick label shows the step count for the corresponding distilled student. The 32-step student achieves the highest pass rate (75.93\%), surpassing even the 128-step Teacher (74.07\%) while running 3.63$\times$ faster. Quality degrades sharply to the right of the 16-step point.}
+\label{fig:latency_promptfoo}
 \end{figure}
 
-\noindent The chart makes two key findings immediately apparent. First, both evaluators---Promptfoo task-pass rate and GPT-2 perplexity---are \textbf{consistent} in their verdict: quality remains roughly flat from 128 steps down to 32 steps, after which it degrades sharply, with a visible inflection between 16 and 8 steps. Second, perplexity is the \emph{more sensitive} of the two metrics: it begins rising already at 32 steps (from 12.97 to 15.93), whereas the Promptfoo pass rate at 32 steps actually \emph{exceeds} the Teacher baseline (75.93\% vs.\ 74.07\%), suggesting that perplexity captures fine-grained fluency degradation before it manifests in task-level assertion failures. The two evaluators are therefore complementary: Promptfoo quantifies \emph{semantic correctness} while perplexity quantifies \emph{language fluency}, and practitioners should consult both when selecting an operating point.
+% ---------------------------------------------------------------
+% Figure B: Generation Latency vs Avg Perplexity
+% ---------------------------------------------------------------
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=13cm, height=7.5cm,
+    xmode=log,
+    x dir=reverse,           % fewer steps → right, consistent with Figure 5
+    xlabel={Avg Generation Latency (ms) --- fewer steps $\rightarrow$},
+    xmin=400, xmax=22000,
+    xtick={468,562,855,1412,2514,4766,8934,11427,17292},
+    xticklabels={1,2,4,8,16,32,64d,ctrl,128},
+    x tick label style={font=\small},
+    ylabel={Avg Perplexity (lower is better)},
+    ymin=0, ymax=380,
+    ytick={0,50,100,150,200,250,300,350},
+    grid=both,
+    grid style={gray!25, dashed},
+    tick align=outside,
+    axis line style={thick},
+    legend style={
+        at={(0.98,0.98)}, anchor=north east,
+        font=\small, draw=gray!60, fill=white, fill opacity=0.95
+    },
+]
+% Distilled students + Teacher
+\addplot[
+    color=red!70!black, thick, mark=*, mark size=2.5pt,
+    mark options={fill=red!70!black}
+] coordinates {
+    (17292, 13.00)   % 128 steps
+    (8934,  12.97)   % 64d
+    (4766,  15.93)   % 32
+    (2514,  24.86)   % 16
+    (1412,  68.44)   % 8
+    (855,   79.18)   % 4
+    (562,   161.93)  % 2
+    (468,   353.26)  % 1
+};
+\addlegendentry{Distilled students}
+
+% Step-count labels
+\node[font=\tiny, red!70!black, right=2pt]  at (axis cs:17292,13.00)  {128};
+\node[font=\tiny, red!70!black, above=3pt]  at (axis cs:8934, 12.97)  {64d};
+\node[font=\tiny, red!70!black, right=2pt]  at (axis cs:4766, 15.93)  {32};
+\node[font=\tiny, red!70!black, right=2pt]  at (axis cs:2514, 24.86)  {16};
+\node[font=\tiny, red!70!black, right=2pt]  at (axis cs:1412, 68.44)  {8};
+\node[font=\tiny, red!70!black, left=2pt]   at (axis cs:855,  79.18)  {4};
+\node[font=\tiny, red!70!black, left=2pt]   at (axis cs:562,  161.93) {2};
+\node[font=\tiny, red!70!black, left=2pt]   at (axis cs:468,  353.26) {1};
+
+% Non-distilled control
+\addplot[
+    color=red!45!black, mark=triangle*, mark size=3.5pt,
+    only marks, mark options={fill=red!20!white}
+] coordinates { (11427, 17.38) };
+\addlegendentry{Non-distilled control (64 steps)}
+\node[font=\tiny, red!45!black, above=3pt] at (axis cs:11427,17.38) {ctrl};
+
+% Inflection annotation
+\draw[dashed, gray!55, thick] (axis cs:2514, 0) -- (axis cs:2514, 380);
+\node[font=\small, gray!55!black, rotate=90, anchor=south]
+    at (axis cs:2000, 190) {inflection};
+
+\end{axis}
+\end{tikzpicture}
+\caption{Generation latency vs.\ GPT-2 perplexity, with latency axis reversed (fewer steps on the right). Perplexity remains near the Teacher baseline from 128 down to 32 steps (15.93), then rises sharply below 16 steps, reaching 353 at a single step. The dashed vertical line marks the inflection point between the two quality regimes.}
+\label{fig:latency_perplexity}
+\end{figure}
+
+\noindent The two charts make two key findings immediately apparent. First, both evaluators---Promptfoo task-pass rate and GPT-2 perplexity---are \textbf{consistent} in their verdict: quality remains roughly flat from 128 steps down to 32 steps, after which it degrades sharply, with a visible inflection between 16 and 8 steps. Second, perplexity is the \emph{more sensitive} of the two metrics: it begins rising already at 32 steps (from 12.97 to 15.93), whereas the Promptfoo pass rate at 32 steps actually \emph{exceeds} the Teacher baseline (75.93\% vs.\ 74.07\%), suggesting that perplexity captures fine-grained fluency degradation before it manifests in task-level assertion failures. The two evaluators are therefore complementary: Promptfoo quantifies \emph{semantic correctness} while perplexity quantifies \emph{language fluency}, and practitioners should consult both when selecting an operating point.
+
+% ======================================================================
+\section{Analysis and Discussion}
 \label{sec:analysis}
 
 \subsection{Empirical Validation of Error Accumulation in Discrete Diffusion}
