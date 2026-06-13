@@ -14,11 +14,11 @@ from transformers import AutoTokenizer, AutoModel, BitsAndBytesConfig
 from peft import PeftModel
 
 # Add LLaDA directory to path for imports
-sys.path.insert(0, r"C:\Users\Gotri\Documents\tfg\LLaDA")
+sys.path.insert(0, r"C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\LLaDA")
 from generate import generate
 
 # --- CONFIGURATION ---
-os.environ["HF_HOME"] = r"D:/tfg/.cache"
+os.environ["HF_HOME"] = r"D:/fast-parallel-token-inference-with-language-diffusion-models/.cache"
 os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 os.environ["SAFETENSORS_FAST_GPU"] = "0"
@@ -29,7 +29,7 @@ CUDA_MEMORY_FRACTION = 0.85
 if DEVICE == "cuda":
     torch.cuda.set_per_process_memory_fraction(CUDA_MEMORY_FRACTION)
 
-CHECKPOINT_DIR = r"C:\Users\Gotri\Documents\tfg\LLaDA\workspace\LLaDA_outputs\nested_distillation\runs\run_20260609_105305\round_006_steps_2\checkpoint"
+CHECKPOINT_DIR = r"C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\LLaDA\workspace\LLaDA_outputs\nested_distillation\runs\run_20260609_105305\round_006_steps_2\checkpoint"
 CHECKPOINT_DIR_POSIX = r"C:/Users/Gotri/Documents/tfg/LLaDA/workspace/LLaDA_outputs/nested_distillation/runs/run_20260609_105305/round_006_steps_2/checkpoint"
 PORT = 5000
 STEPS = 2

@@ -3,6 +3,8 @@
 % --- PACKAGES ---
 \usepackage{tikz}
 \usetikzlibrary{positioning, arrows.meta, shapes, backgrounds, fit, decorations.pathreplacing, calc}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage[english]{babel}
@@ -24,6 +26,7 @@
 \usepackage{csquotes}
 \usepackage{pgfgantt}
 \usepackage{textcomp} % For the Euro symbol (\texteuro{})
+\usepackage{url}     % For \url{} in abstract
 
 % --- CODE LISTING STYLE ---
 \lstset{
@@ -184,6 +187,34 @@
 }
 
 \tableofcontents
+\newpage
+
+% ======================================================================
+% --- ABSTRACT ---
+\newpage
+\thispagestyle{fancy}
+\begin{center}
+    {\Large\bfseries Abstract}
+\end{center}
+\vspace{0.8cm}
+
+\noindent This thesis investigates the adaptation of \textbf{Progressive Distillation}, a technique originally developed for accelerating continuous image-diffusion models, to the discrete token domain of \textbf{Language Diffusion Models (LDMs)}. The central contribution is a complete, reproducible pipeline that compresses the inference step count of LLaDA-8B---a state-of-the-art masked-diffusion language model requiring 128 denoising steps at baseline---down to a single step through seven recursive teacher--student distillation rounds, executed entirely on a single consumer GPU with 8 GB VRAM.
+
+\vspace{0.5cm}
+\noindent The core technical challenge is the absence of a continuous interpolation space in the discrete setting: unlike image diffusion, where the teacher's two-step output is a real-valued vector usable as a regression target, text tokens are categorical. This work resolves the challenge by formulating distillation as a KL divergence minimization over the teacher's soft vocabulary distributions, cached offline from intermediate denoising trajectories, and paired with parameter-efficient LoRA fine-tuning to keep the pipeline within consumer VRAM constraints.
+
+\vspace{0.5cm}
+\noindent Empirical evaluation across all seven distillation rounds demonstrates that a 32-step distilled Student achieves the optimal quality--speed trade-off: it is $3.63\times$ faster than the 128-step Teacher while \emph{surpassing} its Promptfoo assertion pass rate (75.93\% vs.\ 74.07\%) and maintaining a perplexity of 15.93. The 64-step distilled Student exactly matches the Teacher on pass rate while running $1.94\times$ faster, confirming that progressive distillation actively compensates for the quality drop that naïve step reduction incurs. A super-exponential degradation regime is identified below 16 steps, setting the practical lower bound for this architecture and hardware configuration.
+
+\vspace{0.5cm}
+\noindent The complete source code, trained adapter checkpoints, and evaluation scripts are openly available at:
+\begin{center}
+    \url{https://github.com/AlbertGoTri/fast-parallel-token-inference-with-language-diffusion-models}
+\end{center}
+
+\vspace{0.5cm}
+\noindent \textbf{Keywords:} Language Diffusion Models, Progressive Distillation, Knowledge Distillation, LLaDA, LoRA, Discrete Diffusion, Parallel Text Generation, Inference Acceleration.
+
 \newpage
 
 % ======================================================================
@@ -645,6 +676,25 @@ Eq.~\eqref{eq:kd_loss} in Background). For a batch of sequences the loss used is
 \end{tikzpicture}
 \caption{Knowledge Distillation Architecture}
 \end{figure}
+
+\noindent To further ground the discrete diffusion mechanics, Figure~\ref{fig:progressive_distillation_steps} illustrates the step-halving structure of two successive progressive distillation rounds: starting from a 4-step teacher, one distillation round produces a 2-step student, and a second round produces a 1-step student. Each blue arrow labelled ``Distillation'' represents a full training phase in which the student is optimised to match the teacher's soft-token distributions over a two-step window.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{image1.png}
+    \caption{Example of two iterations of progressive distillation applied to a speech-spectrogram diffusion process. The same halving structure is applied in this thesis to discrete text tokens: the step count is compressed from 128 down to 1 across seven recursive rounds. \textit{Source: Salimans \& Ho, ICLR 2022 \cite{salimans2022progressive}.}}
+    \label{fig:progressive_distillation_steps}
+\end{figure}
+
+\noindent Figure~\ref{fig:token_unmasking} provides a complementary perspective by depicting the \emph{token unmasking trajectory} in the discrete domain. Starting from a fully masked sequence ($x_T$, upper right), each denoising step resolves a fraction of masked positions, moving through intermediate partially-unmasked states toward the final clean output ($x_0$, lower left). The blue curves represent two plausible denoising paths taken by the model; the dashed red curve shows the ``oracle'' straight-line path that a perfectly distilled single-step student would ideally follow. The images inset at each trajectory endpoint illustrate the quality of the decoded output at that stage: the fully masked state produces a near-unrecognisable noisy sample, while the clean endpoint yields the target output. This trajectory view is directly analogous to the continuous-diffusion ODE picture, but operates over the probability simplex of the vocabulary rather than over continuous pixel values.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.82\linewidth]{image2.png}
+    \caption{Token unmasking trajectory in discrete masked diffusion. Starting from a fully masked sequence $x_T$ (upper right), the model iteratively resolves masked positions across denoising steps, converging toward the clean output $x_0$ (lower left). Blue solid curves show two sampled denoising paths; the dashed red curve represents the idealized straight-line trajectory a perfectly distilled student would follow. The inset images illustrate output quality at each trajectory endpoint. \textit{Source: Compiled by the author.}}
+    \label{fig:token_unmasking}
+\end{figure}
+
 \begin{equation}
 \mathcal{L}_{\mathrm{distill}} = \tau^2 \cdot \frac{1}{B} \sum_{b=1}^B \sum_{t=1}^{L_b}
 D_{\mathrm{KL}}\big(p_T(\cdot\mid b,t)\;\|\;p_S(\cdot\mid b,t)\big),
@@ -1275,8 +1325,164 @@ A noteworthy characteristic of the throughput curve is that it is not perfectly 
 
 The 8-step Student delivers a 12.25$\times$ speedup over the 128-step Teacher, reducing average generation latency from 17.3 s to 1.4 s per prompt and generating at 45.3 tok/s. Although its Promptfoo pass rate (62.96\%) falls below the 64-step non-distilled control (70.37\%), it runs 6.3$\times$ faster in end-to-end latency, making it attractive for latency-sensitive applications that tolerate moderate quality degradation. The 32-step distilled Student occupies the optimal trade-off point in this study: it is 3.63$\times$ faster than the Teacher, achieves the highest observed Promptfoo score (75.93\%), and maintains a perplexity of 15.93---comfortably within the 1.5$\times$ envelope relative to the Teacher baseline of 13.00.
 
-% ======================================================================
-\section{Analysis and Discussion}
+\subsubsection{Quality vs.\ Latency Trade-off: Promptfoo and Perplexity}
+\label{subsubsec:quality_latency_tradeoff}
+
+Figure~\ref{fig:quality_latency} synthesises all evaluation data into a single quality--latency chart. The horizontal axis plots average generation latency (ms, log scale); the left vertical axis plots the Promptfoo pass rate (\%), and the right vertical axis plots the GPT-2 perplexity (log scale). Each model variant is labelled with its step count. The Teacher Baseline ($\bullet$) and the non-distilled Control ($\triangle$) are shown as reference anchors.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    % --- layout ---
+    width=13cm, height=8cm,
+    xmode=log,
+    % --- x axis ---
+    xlabel={Avg Generation Latency (ms)},
+    xmin=400, xmax=22000,
+    xtick={500,1000,2000,5000,10000,17292},
+    xticklabels={500,1000,2000,5000,10k,17292},
+    x tick label style={font=\small, rotate=30, anchor=east},
+    % --- left y axis (Promptfoo) ---
+    ylabel={Promptfoo Pass Rate (\%)},
+    ylabel style={text=blue!70!black},
+    ymin=40, ymax=83,
+    ytick={40,50,60,70,75,80},
+    yticklabel={\pgfmathprintnumber{\tick}\%},
+    yticklabel style={font=\small, text=blue!70!black},
+    % --- grid ---
+    grid=both,
+    grid style={gray!25, dashed},
+    minor grid style={gray!10},
+    % --- general style ---
+    tick align=outside,
+    axis line style={thick},
+    legend style={
+        at={(0.02,0.03)}, anchor=south west,
+        font=\small, draw=gray!60,
+        fill=white, fill opacity=0.9,
+        row sep=2pt
+    },
+    % second y axis via scaling trick:
+    % PPL range 10..400 mapped onto 40..83 for display
+    % y_display = 40 + 43*(log10(PPL)-log10(10))/(log10(400)-log10(10))
+    %           = 40 + 43*(log10(PPL)-1)/1.602
+    extra y ticks={40,46.84,53.68,60.52,67.37,74.21,80},
+    extra y tick labels={},   % suppress — right axis handled separately
+]
+
+%% ---------------------------------------------------------------
+%% DATA (all points pre-computed to avoid pgfmath dimension errors)
+%%   PPL scaled: y = 40 + 43*(log10(PPL)-1)/1.602
+%%   Teacher 128: latency=17292, PF=74.07, PPL=13.00 -> scaled=45.23
+%%   Ctrl   64c:  latency=11427, PF=70.37, PPL=17.38 -> scaled=51.55
+%%   R1     64d:  latency=8934,  PF=74.07, PPL=12.97 -> scaled=45.19
+%%   R2     32:   latency=4766,  PF=75.93, PPL=15.93 -> scaled=50.31
+%%   R3     16:   latency=2514,  PF=68.52, PPL=24.86 -> scaled=57.86
+%%   R4      8:   latency=1412,  PF=62.96, PPL=68.44 -> scaled=72.26
+%%   R5      4:   latency=855,   PF=59.26, PPL=79.18 -> scaled=73.97
+%%   R6      2:   latency=562,   PF=50.00, PPL=161.93-> scaled=80.83 (capped at 83)
+%%   R7      1:   latency=468,   PF=46.30, PPL=353.26-> scaled=88.xx (capped at 83)
+%% ---------------------------------------------------------------
+
+% --- Promptfoo: distilled students + teacher (blue, solid) ---
+\addplot[
+    color=blue!70!black, thick, mark=*, mark size=2.5pt,
+    mark options={fill=blue!70!black}
+] coordinates {
+    (17292, 74.07)   % Teacher 128
+    (8934,  74.07)   % R1 64-distilled
+    (4766,  75.93)   % R2 32-distilled  ← optimal
+    (2514,  68.52)   % R3 16-distilled
+    (1412,  62.96)   % R4 8-distilled
+    (855,   59.26)   % R5 4-distilled
+    (562,   50.00)   % R6 2-distilled
+    (468,   46.30)   % R7 1-distilled
+};
+\addlegendentry{Promptfoo pass rate (distilled)}
+
+% node labels for each distilled point
+\node[font=\tiny, blue!70!black, above=3pt] at (axis cs:17292,74.07) {128};
+\node[font=\tiny, blue!70!black, above=3pt] at (axis cs:8934, 74.07) {64d};
+\node[font=\tiny, blue!70!black, above=3pt] at (axis cs:4766, 75.93) {32};
+\node[font=\tiny, blue!70!black, above=3pt] at (axis cs:2514, 68.52) {16};
+\node[font=\tiny, blue!70!black, above=3pt] at (axis cs:1412, 62.96) {8};
+\node[font=\tiny, blue!70!black, above=3pt] at (axis cs:855,  59.26) {4};
+\node[font=\tiny, blue!70!black, below=3pt] at (axis cs:562,  50.00) {2};
+\node[font=\tiny, blue!70!black, below=3pt] at (axis cs:468,  46.30) {1};
+
+% --- Promptfoo: non-distilled control (blue triangle) ---
+\addplot[
+    color=blue!40!black, thick, mark=triangle*, mark size=3.5pt,
+    only marks, mark options={fill=blue!30!white}
+] coordinates {
+    (11427, 70.37)   % Control 64 no-LoRA
+};
+\addlegendentry{Non-distilled control (Promptfoo)}
+\node[font=\tiny, blue!40!black, below right=2pt] at (axis cs:11427,70.37) {64 ctrl};
+
+% --- Perplexity: distilled (red, dashed) — values scaled to left axis ---
+\addplot[
+    color=red!70!black, thick, dashed, mark=o, mark size=2.5pt,
+    mark options={draw=red!70!black, fill=white}
+] coordinates {
+    (17292, 45.23)   % PPL=13.00
+    (8934,  45.19)   % PPL=12.97
+    (4766,  50.31)   % PPL=15.93
+    (2514,  57.86)   % PPL=24.86
+    (1412,  72.26)   % PPL=68.44
+    (855,   73.97)   % PPL=79.18
+    (562,   81.00)   % PPL=161.93  (slightly capped)
+    (468,   83.00)   % PPL=353.26  (capped at axis max)
+};
+\addlegendentry{Avg Perplexity (distilled, right axis)}
+
+% --- Perplexity: control (red cross) ---
+\addplot[
+    color=red!50!black, thick, mark=x, mark size=4pt,
+    only marks, mark options={draw=red!50!black}
+] coordinates {
+    (11427, 51.55)   % PPL=17.38
+};
+\addlegendentry{Non-distilled control (Perplexity)}
+
+% --- Optimal point annotation ---
+\draw[->, orange!80!black, very thick]
+    (axis cs:5800, 78) -- (axis cs:4900, 76.5);
+\node[font=\small, orange!80!black, align=center] at (axis cs:7500,79.5)
+    {\textbf{Optimal}\\32 steps};
+
+\end{axis}
+
+% --- Right y-axis label + PPL tick labels (drawn after axis) ---
+\begin{scope}[shift={(13.05cm,0)}]
+  % axis line
+  \draw[thick] (0,0) -- (0,8cm);
+  % ticks + labels  (y mapped: PPL=10->0cm, PPL=400->8cm via log)
+  % y_cm = 8 * (log10(PPL)-1) / (log10(400)-1) = 8*(log10(PPL)-1)/1.602
+  \foreach \ppl/\ycm in {10/0.00, 20/1.494, 50/3.320, 100/4.988, 200/6.482, 353/7.877}{
+    \draw (0,\ycm cm) -- (0.12cm,\ycm cm)
+          node[right, font=\small, text=red!70!black] {\ppl};
+  }
+  \node[rotate=90, above=0.9cm, font=\small, text=red!70!black] at (0,4cm)
+       {Avg Perplexity (log scale)};
+\end{scope}
+\end{tikzpicture}
+\caption{Quality--latency trade-off across all model variants.
+\textbf{Blue solid line:} Promptfoo pass rate (\%, left axis)
+vs.\ average generation latency (ms, log scale) for all distilled
+students; the 128-step teacher is the rightmost point.
+\textbf{Red dashed line:} GPT-2 perplexity mapped onto the left axis
+for visual alignment (true perplexity values read from the right axis).
+$\triangle$ and $\times$ markers denote the 64-step non-distilled
+control. The orange arrow highlights the 32-step distilled student as
+the optimal quality--speed operating point; both evaluators agree on
+the inflection between 16 and 8 steps, below which quality degrades
+super-exponentially.}
+\label{fig:quality_latency}
+\end{figure}
+
+\noindent The chart makes two key findings immediately apparent. First, both evaluators---Promptfoo task-pass rate and GPT-2 perplexity---are \textbf{consistent} in their verdict: quality remains roughly flat from 128 steps down to 32 steps, after which it degrades sharply, with a visible inflection between 16 and 8 steps. Second, perplexity is the \emph{more sensitive} of the two metrics: it begins rising already at 32 steps (from 12.97 to 15.93), whereas the Promptfoo pass rate at 32 steps actually \emph{exceeds} the Teacher baseline (75.93\% vs.\ 74.07\%), suggesting that perplexity captures fine-grained fluency degradation before it manifests in task-level assertion failures. The two evaluators are therefore complementary: Promptfoo quantifies \emph{semantic correctness} while perplexity quantifies \emph{language fluency}, and practitioners should consult both when selecting an operating point.
 \label{sec:analysis}
 
 \subsection{Empirical Validation of Error Accumulation in Discrete Diffusion}

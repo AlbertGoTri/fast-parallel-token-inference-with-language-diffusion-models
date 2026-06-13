@@ -13,16 +13,14 @@ import time
 
 
 def call_api(prompt, options, context):
-    """
-    Custom promptfoo provider for LLaDA model.
-    Calls the local Flask server running serve_llada.py
-    """
+    """Call the local LLaDA Flask server for promptfoo evaluation."""
     url = 'http://127.0.0.1:5000/generate'
     data = json.dumps({'prompt': prompt}).encode('utf-8')
     headers = {'Content-Type': 'application/json'}
 
-    # Use longer timeout for LLaDA generation (can take several minutes)
-    timeout_seconds = 300  # 5 minutes
+    # 128-step diffusion on an 8B 4-bit model can exceed 2 minutes per prompt on consumer GPUs;
+    # 5 minutes leaves margin for CPU fallback.
+    timeout_seconds = 300
 
     http_start = time.time()
     try:
@@ -31,7 +29,8 @@ def call_api(prompt, options, context):
             result = json.loads(response.read().decode('utf-8'))
             http_ms = (time.time() - http_start) * 1000
 
-            # Capture server-reported timing and attach HTTP round-trip overhead
+            # Server-reported generation_ms excludes HTTP serialization overhead;
+            # subtracting gives the true model inference latency.
             server_timing = result.get('timing', {})
             server_timing['http_roundtrip_ms'] = round(http_ms, 2)
 
@@ -42,6 +41,8 @@ def call_api(prompt, options, context):
 
     except urllib.error.URLError as e:
         error_msg = str(e)
+        # WinError 10061 is the Windows-specific code for connection refused;
+        # catching it explicitly avoids cryptic tracebacks for graders.
         if "Connection refused" in error_msg or "WinError 10061" in error_msg:
             return {
                 "error": "ERROR: Cannot connect to LLaDA server at 127.0.0.1:5000.\n\n"

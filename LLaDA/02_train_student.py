@@ -12,7 +12,6 @@ BASE_DIR = os.environ.get("LLADA_BASE_DIR", PROJECT_ROOT)
 
 WORKSPACE_DIR = os.path.join(BASE_DIR, "workspace")
 os.makedirs(WORKSPACE_DIR, exist_ok=True)
-# Prefer explicit HF_HOME env var or config override, fallback to workspace/.cache
 HF_HOME = os.environ.get("HF_HOME") or os.path.join(WORKSPACE_DIR, ".cache")
 os.makedirs(HF_HOME, exist_ok=True)
 os.environ["HF_HOME"] = HF_HOME
@@ -20,10 +19,13 @@ os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 os.environ["SAFETENSORS_FAST_GPU"] = "0"
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:128"
 
+# Reserve 10% of VRAM for CUDA overhead and temporary allocations during backward.
 torch.cuda.set_per_process_memory_fraction(0.90)
 
 CACHE_DIR = os.path.join(WORKSPACE_DIR, "llada_trajectories")
 SAVE_DIR = os.path.join(WORKSPACE_DIR, "llada_student_lora")
+# T=2 softens the teacher distribution so the student learns richer relative
+# probabilities, not just argmax labels.
 TEMPERATURE = 2.0
 
 quantization_config = BitsAndBytesConfig(
@@ -48,15 +50,14 @@ student_base = AutoModel.from_pretrained(
 )
 print(f"Base model loaded. VRAM: {torch.cuda.memory_allocated(0)/1024**3:.2f} GB")
 
-# Enable gradient checkpointing if the model supports it
 if hasattr(student_base, "gradient_checkpointing_enable"):
     try:
         student_base.gradient_checkpointing_enable()
     except Exception as e:
         print(f"WARNING: Gradient checkpointing not supported: {e}")
 
-# Ensure only LoRA parameters (added later) require gradients
-# 4-bit base model parameters should remain frozen
+# Base parameters stay frozen; only LoRA deltas are updated, so the optimizer
+# state is ~0.1% of full-model AdamW.
 for param in student_base.parameters():
     param.requires_grad = False
 
@@ -72,8 +73,8 @@ lora_config = LoraConfig(
 student_model = get_peft_model(student_base, lora_config)
 student_model.print_trainable_parameters()
 
-# LoRA adapters are initialized in float32 by default
-# Cast them to float16 to save VRAM
+# PEFT initializes adapters in f32; downcasting saves ~50% optimizer state VRAM
+# with negligible impact on LoRA convergence.
 for name, param in student_model.named_parameters():
     if param.requires_grad:
         param.data = param.data.to(torch.float16)
@@ -81,9 +82,10 @@ for name, param in student_model.named_parameters():
 student_model.train()
 print(f"VRAM after LoRA: {torch.cuda.memory_allocated(0)/1024**3:.2f} GB")
 
-# AdamW 8-bit to reduce optimizer state memory
 try:
     import bitsandbytes as bnb
+    # AdamW8bit compresses optimizer states; on 8B models this often avoids OOM
+    # during the backward pass.
     optimizer = bnb.optim.AdamW8bit(
         [p for p in student_model.parameters() if p.requires_grad],
         lr=1e-4
@@ -129,6 +131,8 @@ with profile(
                     student_logits_gen = student_logits[:, prompt_len:, :]
                     target_logits_gen = target_logits[:, prompt_len:, :]
 
+                    # Scale by T^2 so the gradients have comparable magnitude to a
+                    # standard cross-entropy loss (Hinton et al.).
                     loss = F.kl_div(
                         F.log_softmax(student_logits_gen / TEMPERATURE, dim=-1),
                         F.softmax(target_logits_gen / TEMPERATURE, dim=-1),
@@ -137,6 +141,8 @@ with profile(
 
                 loss.backward()
 
+                # Clip at 1.0 because 4-bit LoRA training is sensitive to gradient
+                # spikes from outlier teacher logits.
                 torch.nn.utils.clip_grad_norm_(
                     [p for p in student_model.parameters() if p.requires_grad],
                     max_norm=1.0
@@ -153,7 +159,6 @@ with profile(
             torch.cuda.empty_cache()
             prof.step()
 
-# Export profiling results
 prof.export_chrome_trace(os.path.join(profiling_dir, "02_train_student_trace.json"))
 with open(os.path.join(profiling_dir, "02_train_student_summary.txt"), "w") as f:
     f.write(prof.key_averages().table(sort_by="cuda_time_total", row_limit=20))

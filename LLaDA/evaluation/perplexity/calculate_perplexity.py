@@ -3,16 +3,6 @@ Perplexity Evaluation for LLaDA Model
 
 Calculates perplexity of LLaDA-generated outputs using GPT-2 as a reference model.
 Lower perplexity indicates more natural, fluent text.
-
-Usage:
-    python calculate_perplexity.py --input results.json --output perplexity_report.json
-    python calculate_perplexity.py --text "Your text here to evaluate"
-    python calculate_perplexity.py --file sample_texts.txt
-
-The script accepts three input modes:
-1. --input: JSON file from promptfoo evaluation (extracts LLaDA outputs)
-2. --text: Single text string to evaluate
-3. --file: Text file with one sample per line
 """
 
 import argparse
@@ -27,8 +17,9 @@ from tqdm import tqdm
 from transformers import GPT2LMHeadModel, GPT2TokenizerFast
 
 
+# GPT-2 is used as a proxy for fluency because it is small, fast, and has a
+# well-calibrated perplexity scale on general English.
 def load_gpt2_model(device: str = "cuda" if torch.cuda.is_available() else "cpu"):
-    """Load GPT-2 model and tokenizer for perplexity calculation."""
     print(f"Loading GPT-2 model on {device}...")
     tokenizer = GPT2TokenizerFast.from_pretrained("gpt2")
     model = GPT2LMHeadModel.from_pretrained("gpt2").to(device)
@@ -45,25 +36,12 @@ def calculate_perplexity(
     max_length: int = 512,
     stride: int = 512
 ) -> float:
-    """
-    Calculate perplexity of a text using sliding window approach.
-
-    Args:
-        text: The text to evaluate
-        model: The language model (GPT-2)
-        tokenizer: The tokenizer
-        device: Device to run on
-        max_length: Maximum sequence length for the model
-        stride: Stride for sliding window
-
-    Returns:
-        Perplexity score (lower is better)
-    """
-    # Encode the text
+    """Calculate perplexity using a sliding window."""
     encodings = tokenizer(text, return_tensors="pt")
     seq_len = encodings.input_ids.size(1)
 
-    # Handle short texts
+    # Single-pass perplexity is exact for short texts; sliding window introduces
+    # boundary effects.
     if seq_len <= max_length:
         input_ids = encodings.input_ids.to(device)
         target_ids = input_ids.clone()
@@ -73,7 +51,8 @@ def calculate_perplexity(
             perplexity = torch.exp(outputs.loss).item()
         return perplexity
 
-    # Long text: use sliding window
+    # A stride equal to max_length means no overlap; this is faster and usually
+    # sufficient for LLaDA's short generations (<128 tokens).
     nlls = []
     prev_end_loc = 0
 
@@ -84,12 +63,12 @@ def calculate_perplexity(
         input_ids = encodings.input_ids[:, begin_loc:end_loc].to(device)
         target_ids = input_ids.clone()
 
-        # Mask tokens we don't want to compute loss for (from previous window)
+        # Only compute loss on the new non-overlapping tail to avoid
+        # double-counting tokens across windows.
         target_ids[:, :-trg_len] = -100
 
         with torch.no_grad():
             outputs = model(input_ids, labels=target_ids)
-            # Loss is averaged over non-ignored tokens
             neg_log_likelihood = outputs.loss * trg_len
 
         nlls.append(neg_log_likelihood)
@@ -98,17 +77,12 @@ def calculate_perplexity(
         if end_loc == seq_len:
             break
 
-    # Calculate perplexity from accumulated negative log-likelihoods
     ppl = torch.exp(torch.stack(nlls).sum() / end_loc)
     return ppl.item()
 
 
 def extract_outputs_from_promptfoo(json_path: str) -> List[Dict[str, str]]:
-    """
-    Extract LLaDA outputs and prompts from promptfoo_results.json.
-
-    Returns list of dicts with 'prompt', 'output', and 'prompt_id' keys.
-    """
+    """Extract LLaDA outputs and prompts from promptfoo_results.json."""
     with open(json_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
 
@@ -135,8 +109,6 @@ def extract_outputs_from_promptfoo(json_path: str) -> List[Dict[str, str]]:
 def evaluate_single_text(text: str, model, tokenizer, device) -> Dict:
     """Evaluate a single text and return results."""
     perplexity = calculate_perplexity(text, model, tokenizer, device)
-
-    # Token count for reference
     tokens = tokenizer.encode(text)
 
     return {
@@ -172,6 +144,8 @@ def evaluate_from_promptfoo(
             'perplexity': round(ppl, 4)
         })
 
+    # One catastrophic output (e.g., repetition loops) can dominate the mean;
+    # trimming the worst stabilizes comparisons across rounds.
     excluded_max_ppl = None
     if len(ppls) > 1:
         excluded_max_ppl = max(ppls)
@@ -251,13 +225,13 @@ def generate_html_report(results: Dict, output_path: str):
 
     # Color code based on perplexity
     if avg_ppl < 20:
-        ppl_color = "text-emerald-400"  # Excellent
+        ppl_color = "text-emerald-400"
         ppl_label = "Excellent"
     elif avg_ppl < 50:
-        ppl_color = "text-amber-400"    # Good
+        ppl_color = "text-amber-400"
         ppl_label = "Good"
     else:
-        ppl_color = "text-rose-400"     # High
+        ppl_color = "text-rose-400"
         ppl_label = "High"
 
     samples_html = ""
@@ -290,6 +264,8 @@ def generate_html_report(results: Dict, output_path: str):
         </div>
         """
 
+    # The HTML report is standalone (CDN-hosted Tailwind) so it can be viewed on
+    # clustered compute nodes without internet access to the build pipeline.
     html = f"""<!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
@@ -409,16 +385,13 @@ def main():
 
     args = parser.parse_args()
 
-    # Validate input
     if not any([args.input, args.text, args.file]):
         parser.print_help()
         print("\nError: Must specify one of --input, --text, or --file")
         sys.exit(1)
 
-    # Load model
     model, tokenizer, device = load_gpt2_model(args.device)
 
-    # Run evaluation based on input type
     if args.text:
         print(f"Evaluating single text...")
         result = evaluate_single_text(args.text, model, tokenizer, device)
@@ -438,13 +411,11 @@ def main():
             sys.exit(1)
         results = evaluate_from_promptfoo(args.input, model, tokenizer, device)
 
-    # Save JSON results
     with open(args.output, 'w', encoding='utf-8') as f:
         json.dump(results, f, indent=2, ensure_ascii=False)
     print(f"\nResults saved to: {args.output}")
     print(f"Average Perplexity: {results['average_perplexity']:.4f}")
 
-    # Generate HTML report if requested
     if args.html:
         generate_html_report(results, args.html)
 

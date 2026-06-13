@@ -1,7 +1,4 @@
-"""
-Utility functions for nested distillation pipeline.
-Includes memory management, GPU verification, and logging utilities.
-"""
+"""Utility functions for nested distillation pipeline."""
 
 import os
 import sys
@@ -15,9 +12,12 @@ from typing import Dict, Any, Optional, Tuple
 from dataclasses import dataclass, asdict, field
 
 
-# Aggregate generation timer — stored with stage durations per round.
 class StageTimings:
-    """Wall-clock stage durations and per-prompt latency aggregates."""
+    """Wall-clock stage durations and per-prompt latency aggregates.
+
+    Timings are wall-clock, not GPU-kernel-only, because the bottleneck is often
+    dataset loading and Ollama judge latency.
+    """
 
     def __init__(self):
         self.cache_s: float = 0.0
@@ -25,7 +25,6 @@ class StageTimings:
         self.eval_s: float = 0.0
         self.total_pipeline_s: float = 0.0
 
-        # Per-prompt generation timing aggregates (ms)
         self.avg_generation_ms: float = 0.0
         self.median_generation_ms: float = 0.0
         self.p95_generation_ms: float = 0.0
@@ -59,17 +58,11 @@ import psutil
 
 
 def log_memory_usage(stage: str = "") -> Dict[str, float]:
-    """Log current CUDA memory usage.
-
-    Args:
-        stage: Name of the current stage for logging
-
-    Returns:
-        Dictionary with memory statistics
-    """
+    """Log current CUDA memory usage."""
     if not torch.cuda.is_available():
         return {"available": False}
 
+    # Allocated = tensors + caches; Reserved = CUDA pool; Max peaks help detect fragmentation.
     allocated = torch.cuda.memory_allocated(0) / 1024**3
     reserved = torch.cuda.memory_reserved(0) / 1024**3
     max_allocated = torch.cuda.max_memory_allocated(0) / 1024**3
@@ -90,25 +83,19 @@ def cleanup_gpu_memory() -> None:
     if not torch.cuda.is_available():
         return
 
-    # Force garbage collection first
+    # Python may hold references to GPU tensors in exception tracebacks; gc clears them.
     gc.collect()
 
-    # Clear PyTorch cache
     torch.cuda.empty_cache()
     torch.cuda.synchronize()
 
-    # Clear memory stats
     torch.cuda.reset_peak_memory_stats(0)
 
     print("GPU memory cleanup completed")
 
 
 def verify_gpu_empty() -> bool:
-    """Verify that no model objects remain on GPU.
-
-    Returns:
-        True if GPU is empty (no allocated memory), False otherwise
-    """
+    """Verify that no model objects remain on GPU."""
     if not torch.cuda.is_available():
         return True
 
@@ -116,7 +103,9 @@ def verify_gpu_empty() -> bool:
     torch.cuda.empty_cache()
 
     allocated = torch.cuda.memory_allocated(0)
-    threshold = 100 * 1024 * 1024  # 100 MB threshold
+    # 100 MB is a pragmatic threshold: PyTorch's caching allocator usually holds a
+    # small pool even after empty_cache.
+    threshold = 100 * 1024 * 1024
 
     if allocated > threshold:
         print(f"WARNING: GPU memory still allocated: {allocated / 1024**3:.2f}GB")
@@ -128,40 +117,29 @@ def verify_gpu_empty() -> bool:
 
 
 def unload_model(model: Any, name: str = "model") -> None:
-    """
-    Safely unload a model from GPU and delete references.
-
-    Args:
-        model: The model to unload
-        name: Name of the model for logging
-    """
+    """Safely unload a model from GPU and delete references."""
     if model is None:
         return
 
     print(f"Unloading {name} from GPU...")
 
     try:
-        # Move to CPU first to free GPU memory
+        # Explicit CPU migration is safer than del alone because CUDA memory is not
+        # freed until the tensor leaves the GPU context.
         if hasattr(model, 'cpu'):
             model.cpu()
     except Exception as e:
         print(f"Warning: Could not move {name} to CPU: {e}")
 
-    # Delete the model reference
     del model
 
-    # Cleanup
     cleanup_gpu_memory()
 
     print(f"{name} unloaded successfully")
 
 
 def set_seed(seed: int) -> None:
-    """Set random seeds for reproducibility.
-
-    Args:
-        seed: Random seed value
-    """
+    """Set random seeds for reproducibility."""
     import random
     import numpy as np
 
@@ -170,7 +148,8 @@ def set_seed(seed: int) -> None:
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
-        # Make CUDA operations deterministic (slower but reproducible)
+        # Determinism slows convolutions but makes distillation runs bitwise
+        # reproducible for debugging.
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
 
@@ -178,31 +157,19 @@ def set_seed(seed: int) -> None:
 
 
 def ensure_dir(path: str) -> Path:
-    """Ensure directory exists, create if it doesn't.
-
-    Args:
-        path: Directory path
-
-    Returns:
-        Path object
-    """
+    """Ensure directory exists, create if it doesn't."""
     path_obj = Path(path)
     path_obj.mkdir(parents=True, exist_ok=True)
     return path_obj
 
 
 def load_yaml_config(config_path: str) -> Dict[str, Any]:
-    """Load YAML configuration file.
-
-    Args:
-        config_path: Path to YAML config file
-
-    Returns:
-        Dictionary with configuration
-    """
+    """Load YAML configuration file."""
     try:
         import yaml
     except ImportError:
+        # Auto-install is a convenience for fresh academic cluster nodes where
+        # dependencies are not pre-installed.
         print("PyYAML not installed. Installing...")
         os.system("pip install pyyaml -q")
         import yaml
@@ -214,39 +181,20 @@ def load_yaml_config(config_path: str) -> Dict[str, Any]:
 
 
 def save_json(data: Dict[str, Any], path: str, indent: int = 2) -> None:
-    """Save data as JSON file.
-
-    Args:
-        data: Data to save
-        path: Output file path
-        indent: JSON indentation
-    """
+    """Save data as JSON file."""
     ensure_dir(os.path.dirname(path))
     with open(path, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=indent, ensure_ascii=False)
 
 
 def load_json(path: str) -> Dict[str, Any]:
-    """Load JSON file.
-
-    Args:
-        path: Path to JSON file
-
-    Returns:
-        Dictionary with loaded data
-    """
+    """Load JSON file."""
     with open(path, 'r', encoding='utf-8') as f:
         return json.load(f)
 
 
 def save_csv(rows: list, path: str, headers: Optional[list] = None) -> None:
-    """Save data as CSV file.
-
-    Args:
-        rows: List of dictionaries or lists
-        path: Output file path
-        headers: Optional list of column headers
-    """
+    """Save data as CSV file."""
     import csv
 
     ensure_dir(os.path.dirname(path))
@@ -293,7 +241,6 @@ class RoundResult:
     latency_seconds: float = 0.0
     previous_latency: float = 0.0
     stage_timings: StageTimings = field(default_factory=StageTimings)
-    # Raw per-prompt latency list (optional, for JSON detail, omitted from CSV by default)
     per_prompt_latencies: list = field(default_factory=list, repr=False)
     previous_avg_generation_ms: float = 0.0
 
@@ -430,11 +377,7 @@ class ProgressLogger:
 
 
 def print_leaderboard(results: list) -> None:
-    """Print a formatted leaderboard to console.
-
-    Args:
-        results: List of RoundResult objects or dictionaries
-    """
+    """Print a formatted leaderboard to console."""
     if not results:
         print("No results to display.")
         return
@@ -453,16 +396,7 @@ def print_leaderboard(results: list) -> None:
 
 def validate_step_reduction(teacher_steps: int, student_steps: int,
                            expected_decrement: int = 1) -> bool:
-    """Validate that student uses exactly one fewer step than teacher.
-
-    Args:
-        teacher_steps: Teacher's step count
-        student_steps: Student's step count
-        expected_decrement: Expected reduction (default 1)
-
-    Returns:
-        True if valid, raises ValueError otherwise
-    """
+    """Validate that student uses exactly one fewer step than teacher."""
     expected = teacher_steps - expected_decrement
     if student_steps != expected:
         raise ValueError(
@@ -474,16 +408,7 @@ def validate_step_reduction(teacher_steps: int, student_steps: int,
 
 
 def run_command(cmd: str, cwd: Optional[str] = None, check: bool = True) -> Tuple[int, str, str]:
-    """Run a shell command and capture output.
-
-    Args:
-        cmd: Command to run
-        cwd: Working directory
-        check: If True, raise exception on non-zero exit
-
-    Returns:
-        Tuple of (returncode, stdout, stderr)
-    """
+    """Run a shell command and capture output."""
     import subprocess
 
     print(f"Running: {cmd}")
@@ -509,11 +434,13 @@ def run_command(cmd: str, cwd: Optional[str] = None, check: bool = True) -> Tupl
 
 
 def compute_latency_aggregates(latencies: list[Dict[str, Any]]) -> "StageTimings":
-    """Compute aggregate timing statistics from a list of per-prompt timing dicts.
+    """Compute aggregate timing statistics from per-prompt timing dicts.
 
     Each dict should contain at least a 'generation_ms' key (float, milliseconds).
     """
     t = StageTimings()
+    # Filter out non-dict entries because malformed JSONL lines can appear when
+    # the server crashes mid-write.
     generation_times = [float(item.get("generation_ms", 0)) for item in latencies if isinstance(item, dict)]
     n = len(generation_times)
     t.num_prompts = n
@@ -535,7 +462,7 @@ def compute_latency_aggregates(latencies: list[Dict[str, Any]]) -> "StageTimings
     else:
         t.median_generation_ms = sorted_g[mid]
 
-    # P95: 95th percentile (linear interpolation between closest ranks)
+    # P95: linear interpolation between closest ranks avoids bias from discrete sample sizes.
     idx = 0.95 * (n - 1)
     low = int(idx)
     high = low + 1

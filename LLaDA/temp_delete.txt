@@ -1,22 +1,22 @@
-(llada_env) PS C:\Users\Gotri\Documents\tfg\LLaDA> python .\nested_distillation.py
-[DEBUG|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\utils\import_utils.py:68] 2026-05-04 13:25:40,698 >> Detected accelerate version: 1.13.0
-[DEBUG|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\utils\import_utils.py:68] 2026-05-04 13:25:40,701 >> Detected bitsandbytes version: 0.49.2
-[DEBUG|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\utils\import_utils.py:68] 2026-05-04 13:25:40,706 >> Detected datasets version: 4.8.4
-[DEBUG|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\utils\import_utils.py:68] 2026-05-04 13:25:40,710 >> Detected jinja2 version: 3.1.6
-[DEBUG|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\utils\import_utils.py:68] 2026-05-04 13:25:40,716 >> Detected pandas version: 3.0.2
-[DEBUG|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\utils\import_utils.py:68] 2026-05-04 13:25:40,718 >> Detected peft version: 0.18.1
-[DEBUG|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\utils\import_utils.py:68] 2026-05-04 13:25:40,720 >> Detected psutil version: 7.2.2
-[DEBUG|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\utils\import_utils.py:68] 2026-05-04 13:25:40,722 >> Detected pygments version: 2.20.0
-[DEBUG|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\utils\import_utils.py:68] 2026-05-04 13:25:40,725 >> Detected safetensors version: 0.4.3
-[DEBUG|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\utils\import_utils.py:68] 2026-05-04 13:25:40,731 >> Detected tokenizers version: 0.20.3
-[DEBUG|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\utils\import_utils.py:68] 2026-05-04 13:25:40,735 >> Detected torch version: 2.5.1+cu121
+(llada_env) PS C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\LLaDA> python .\nested_distillation.py
+[DEBUG|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\utils\import_utils.py:68] 2026-05-04 13:25:40,698 >> Detected accelerate version: 1.13.0
+[DEBUG|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\utils\import_utils.py:68] 2026-05-04 13:25:40,701 >> Detected bitsandbytes version: 0.49.2
+[DEBUG|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\utils\import_utils.py:68] 2026-05-04 13:25:40,706 >> Detected datasets version: 4.8.4
+[DEBUG|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\utils\import_utils.py:68] 2026-05-04 13:25:40,710 >> Detected jinja2 version: 3.1.6
+[DEBUG|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\utils\import_utils.py:68] 2026-05-04 13:25:40,716 >> Detected pandas version: 3.0.2
+[DEBUG|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\utils\import_utils.py:68] 2026-05-04 13:25:40,718 >> Detected peft version: 0.18.1
+[DEBUG|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\utils\import_utils.py:68] 2026-05-04 13:25:40,720 >> Detected psutil version: 7.2.2
+[DEBUG|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\utils\import_utils.py:68] 2026-05-04 13:25:40,722 >> Detected pygments version: 2.20.0
+[DEBUG|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\utils\import_utils.py:68] 2026-05-04 13:25:40,725 >> Detected safetensors version: 0.4.3
+[DEBUG|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\utils\import_utils.py:68] 2026-05-04 13:25:40,731 >> Detected tokenizers version: 0.20.3
+[DEBUG|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\utils\import_utils.py:68] 2026-05-04 13:25:40,735 >> Detected torch version: 2.5.1+cu121
 Loading configuration from nested_distillation_config.yaml
-Run directory: C:\Users\Gotri\Documents\tfg\LLaDA\outputs\nested_distillation\runs\run_20260504_132541
+Run directory: C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\LLaDA\outputs\nested_distillation\runs\run_20260504_132541
 Random seed set to 42
 
 ======================================================================
 Starting Nested Distillation Pipeline
-Run directory: C:\Users\Gotri\Documents\tfg\LLaDA\outputs\nested_distillation\runs\run_20260504_132541
+Run directory: C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\LLaDA\outputs\nested_distillation\runs\run_20260504_132541
 Initial teacher: GSAI-ML/LLaDA-8B-Instruct
 Initial steps: 128
 Min steps: 1
@@ -40,17 +40,17 @@ Starting LLaDA server on port 5000...
   Steps: 128
   Device: cuda
   CUDA memory fraction: 0.85
-  Log file: C:\Users\Gotri\Documents\tfg\LLaDA\outputs\nested_distillation\runs\run_20260504_132541\teacher_eval\server.log
+  Log file: C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\LLaDA\outputs\nested_distillation\runs\run_20260504_132541\teacher_eval\server.log
 Waiting for server on port 5000 (timeout: 900.0s)...
   Still waiting... (13s elapsed, model loading)
 Server ready in 18.0s
 [Round 0][teacher_eval] Server is ready, running teacher baseline evaluation...
 Running promptfoo evaluation...
-  Config: C:\Users\Gotri\Documents\tfg\LLaDA\outputs\nested_distillation\runs\run_20260504_132541\teacher_eval\promptfooconfig.yaml
-  Output: C:\Users\Gotri\Documents\tfg\LLaDA\outputs\nested_distillation\runs\run_20260504_132541\teacher_eval\promptfoo_results.json
+  Config: C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\LLaDA\outputs\nested_distillation\runs\run_20260504_132541\teacher_eval\promptfooconfig.yaml
+  Output: C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\LLaDA\outputs\nested_distillation\runs\run_20260504_132541\teacher_eval\promptfoo_results.json
   Max retries: 3
-  Working dir: C:\Users\Gotri\Documents\tfg\LLaDA\outputs\nested_distillation\runs\run_20260504_132541\teacher_eval
-  Command: npx promptfoo eval -c "C:\Users\Gotri\Documents\tfg\LLaDA\outputs\nested_distillation\runs\run_20260504_132541\teacher_eval\promptfooconfig.yaml" -o "C:\Users\Gotri\Documents\tfg\LLaDA\outputs\nested_distillation\runs\run_20260504_132541\teacher_eval\promptfoo_results.json"
+  Working dir: C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\LLaDA\outputs\nested_distillation\runs\run_20260504_132541\teacher_eval
+  Command: npx promptfoo eval -c "C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\LLaDA\outputs\nested_distillation\runs\run_20260504_132541\teacher_eval\promptfooconfig.yaml" -o "C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\LLaDA\outputs\nested_distillation\runs\run_20260504_132541\teacher_eval\promptfoo_results.json"
 Starting evaluation eval-QQX-2026-05-04T10:26:08
 Running 12 test cases (up to 1 at a time)...
 Traceback (most recent call last):
@@ -164,23 +164,23 @@ Stack Trace: Error: json.decoder.JSONDecodeError: Unterminated string starting a
 WARNING: promptfoo exited with code 100
 [+] Assertion count check: 60/60 ✓
 
-[+] ¡Reporte HTML futurista generado con éxito en 'C:\Users\Gotri\Documents\tfg\LLaDA\outputs\nested_distillation\runs\run_20260504_132541\teacher_eval\reports\promptfoo_report.html'!
+[+] ¡Reporte HTML futurista generado con éxito en 'C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\LLaDA\outputs\nested_distillation\runs\run_20260504_132541\teacher_eval\reports\promptfoo_report.html'!
     Precisión global calculada: 86.7%
 Promptfoo assertion-level evaluation complete: 86.67%
 Running perplexity evaluation...
-  Input: C:\Users\Gotri\Documents\tfg\LLaDA\outputs\nested_distillation\runs\run_20260504_132541\teacher_eval\promptfoo_results.json
-  Output: C:\Users\Gotri\Documents\tfg\LLaDA\outputs\nested_distillation\runs\run_20260504_132541\teacher_eval\perplexity_results.json
+  Input: C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\LLaDA\outputs\nested_distillation\runs\run_20260504_132541\teacher_eval\promptfoo_results.json
+  Output: C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\LLaDA\outputs\nested_distillation\runs\run_20260504_132541\teacher_eval\perplexity_results.json
   Device: cpu
 Loading GPT-2 model on cpu...
 Request bbb82647-9777-48de-9f82-9a8d9731f481: HEAD https://huggingface.co/gpt2/resolve/main/tokenizer_config.json (authenticated: True)
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\tokenization_utils_base.py:2211] 2026-05-04 13:42:29,160 >> loading file vocab.json from cache at D:\.cache\hub\models--gpt2\snapshots\607a30d783dfa663caf39e06633721c8d4cfcd7e\vocab.json
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\tokenization_utils_base.py:2211] 2026-05-04 13:42:29,160 >> loading file merges.txt from cache at D:\.cache\hub\models--gpt2\snapshots\607a30d783dfa663caf39e06633721c8d4cfcd7e\merges.txt
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\tokenization_utils_base.py:2211] 2026-05-04 13:42:29,160 >> loading file tokenizer.json from cache at D:\.cache\hub\models--gpt2\snapshots\607a30d783dfa663caf39e06633721c8d4cfcd7e\tokenizer.json
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\tokenization_utils_base.py:2211] 2026-05-04 13:42:29,160 >> loading file added_tokens.json from cache at None
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\tokenization_utils_base.py:2211] 2026-05-04 13:42:29,160 >> loading file special_tokens_map.json from cache at None
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\tokenization_utils_base.py:2211] 2026-05-04 13:42:29,160 >> loading file tokenizer_config.json from cache at D:\.cache\hub\models--gpt2\snapshots\607a30d783dfa663caf39e06633721c8d4cfcd7e\tokenizer_config.json
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\configuration_utils.py:679] 2026-05-04 13:42:32,011 >> loading configuration file config.json from cache at D:\.cache\hub\models--gpt2\snapshots\607a30d783dfa663caf39e06633721c8d4cfcd7e\config.json
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\configuration_utils.py:746] 2026-05-04 13:42:32,012 >> Model config GPT2Config {
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\tokenization_utils_base.py:2211] 2026-05-04 13:42:29,160 >> loading file vocab.json from cache at D:\.cache\hub\models--gpt2\snapshots\607a30d783dfa663caf39e06633721c8d4cfcd7e\vocab.json
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\tokenization_utils_base.py:2211] 2026-05-04 13:42:29,160 >> loading file merges.txt from cache at D:\.cache\hub\models--gpt2\snapshots\607a30d783dfa663caf39e06633721c8d4cfcd7e\merges.txt
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\tokenization_utils_base.py:2211] 2026-05-04 13:42:29,160 >> loading file tokenizer.json from cache at D:\.cache\hub\models--gpt2\snapshots\607a30d783dfa663caf39e06633721c8d4cfcd7e\tokenizer.json
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\tokenization_utils_base.py:2211] 2026-05-04 13:42:29,160 >> loading file added_tokens.json from cache at None
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\tokenization_utils_base.py:2211] 2026-05-04 13:42:29,160 >> loading file special_tokens_map.json from cache at None
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\tokenization_utils_base.py:2211] 2026-05-04 13:42:29,160 >> loading file tokenizer_config.json from cache at D:\.cache\hub\models--gpt2\snapshots\607a30d783dfa663caf39e06633721c8d4cfcd7e\tokenizer_config.json
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\configuration_utils.py:679] 2026-05-04 13:42:32,011 >> loading configuration file config.json from cache at D:\.cache\hub\models--gpt2\snapshots\607a30d783dfa663caf39e06633721c8d4cfcd7e\config.json
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\configuration_utils.py:746] 2026-05-04 13:42:32,012 >> Model config GPT2Config {
   "_name_or_path": "gpt2",
   "activation_function": "gelu_new",
   "architectures": [
@@ -221,8 +221,8 @@ Request bbb82647-9777-48de-9f82-9a8d9731f481: HEAD https://huggingface.co/gpt2/r
 
 Request fd0ff381-70e1-4a15-9576-7574cbbab95f: HEAD https://huggingface.co/gpt2/resolve/main/config.json (authenticated: True)
 Request e262cb4c-7616-4df5-bd4c-9e769dad45e6: HEAD https://huggingface.co/gpt2/resolve/main/config.json (authenticated: True)
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\configuration_utils.py:679] 2026-05-04 13:42:32,678 >> loading configuration file config.json from cache at D:\.cache\hub\models--gpt2\snapshots\607a30d783dfa663caf39e06633721c8d4cfcd7e\config.json
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\configuration_utils.py:746] 2026-05-04 13:42:32,678 >> Model config GPT2Config {
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\configuration_utils.py:679] 2026-05-04 13:42:32,678 >> loading configuration file config.json from cache at D:\.cache\hub\models--gpt2\snapshots\607a30d783dfa663caf39e06633721c8d4cfcd7e\config.json
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\configuration_utils.py:746] 2026-05-04 13:42:32,678 >> Model config GPT2Config {
   "activation_function": "gelu_new",
   "architectures": [
     "GPT2LMHeadModel"
@@ -260,29 +260,29 @@ Request e262cb4c-7616-4df5-bd4c-9e769dad45e6: HEAD https://huggingface.co/gpt2/r
   "vocab_size": 50257
 }
 
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\modeling_utils.py:3937] 2026-05-04 13:42:32,679 >> loading weights file model.safetensors from cache at D:\.cache\hub\models--gpt2\snapshots\607a30d783dfa663caf39e06633721c8d4cfcd7e\model.safetensors
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\generation\configuration_utils.py:1096] 2026-05-04 13:42:33,915 >> Generate config GenerationConfig {
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\modeling_utils.py:3937] 2026-05-04 13:42:32,679 >> loading weights file model.safetensors from cache at D:\.cache\hub\models--gpt2\snapshots\607a30d783dfa663caf39e06633721c8d4cfcd7e\model.safetensors
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\generation\configuration_utils.py:1096] 2026-05-04 13:42:33,915 >> Generate config GenerationConfig {
   "bos_token_id": 50256,
   "eos_token_id": 50256
 }
 
-[DEBUG|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\modeling_utils.py:359] 2026-05-04 13:42:33,949 >> GPT2Model does not support param buffer assignment, loading will be slower
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\modeling_utils.py:4800] 2026-05-04 13:42:53,395 >> All model checkpoint weights were used when initializing GPT2LMHeadModel.
+[DEBUG|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\modeling_utils.py:359] 2026-05-04 13:42:33,949 >> GPT2Model does not support param buffer assignment, loading will be slower
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\modeling_utils.py:4800] 2026-05-04 13:42:53,395 >> All model checkpoint weights were used when initializing GPT2LMHeadModel.
 
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\modeling_utils.py:4808] 2026-05-04 13:42:53,395 >> All the weights of GPT2LMHeadModel were initialized from the model checkpoint at gpt2.
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\modeling_utils.py:4808] 2026-05-04 13:42:53,395 >> All the weights of GPT2LMHeadModel were initialized from the model checkpoint at gpt2.
 If your task is similar to the task the model of the checkpoint was trained on, you can already use GPT2LMHeadModel for predictions without further training.
 Request d8bc158a-5d00-45f6-93e5-eb1f2ec37520: HEAD https://huggingface.co/gpt2/resolve/main/generation_config.json (authenticated: True)
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\generation\configuration_utils.py:1051] 2026-05-04 13:42:53,537 >> loading configuration file generation_config.json from cache at D:\.cache\hub\models--gpt2\snapshots\607a30d783dfa663caf39e06633721c8d4cfcd7e\generation_config.json
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\generation\configuration_utils.py:1096] 2026-05-04 13:42:53,538 >> Generate config GenerationConfig {
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\generation\configuration_utils.py:1051] 2026-05-04 13:42:53,537 >> loading configuration file generation_config.json from cache at D:\.cache\hub\models--gpt2\snapshots\607a30d783dfa663caf39e06633721c8d4cfcd7e\generation_config.json
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\generation\configuration_utils.py:1096] 2026-05-04 13:42:53,538 >> Generate config GenerationConfig {
   "bos_token_id": 50256,
   "eos_token_id": 50256
 }
 
 GPT-2 loaded successfully.
-Loading results from C:\Users\Gotri\Documents\tfg\LLaDA\outputs\nested_distillation\runs\run_20260504_132541\teacher_eval\promptfoo_results.json...
+Loading results from C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\LLaDA\outputs\nested_distillation\runs\run_20260504_132541\teacher_eval\promptfoo_results.json...
 Found 12 outputs to evaluate.
 Calculating perplexity: 100%|██████████████████████████████████████████████████████████| 12/12 [00:01<00:00, 10.56it/s]
-HTML report saved to: C:\Users\Gotri\Documents\tfg\LLaDA\outputs\nested_distillation\runs\run_20260504_132541\teacher_eval\reports\perplexity_report.html
+HTML report saved to: C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\LLaDA\outputs\nested_distillation\runs\run_20260504_132541\teacher_eval\reports\perplexity_report.html
 Perplexity evaluation complete: 65.83
 Stopping LLaDA server (PID 25692)...
 Server stopped
@@ -304,24 +304,24 @@ ROUND 1/7 | Student Steps: 64
 >>> [cache] Starting...
 GPU verification passed: 0.000GB allocated (below threshold)
 [cache_start] CUDA Memory: Allocated=0.00GB, Reserved=0.00GB, Max=0.00GB
-[Round 1][cache] Cache directory prepared: C:\Users\Gotri\Documents\tfg\LLaDA\outputs\nested_distillation\runs\run_20260504_132541\round_001_steps_64\cache
+[Round 1][cache] Cache directory prepared: C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\LLaDA\outputs\nested_distillation\runs\run_20260504_132541\round_001_steps_64\cache
 [Round 1][cache] Loading teacher model: GSAI-ML/LLaDA-8B-Instruct
 [Round 1][cache] Resolved base model: GSAI-ML/LLaDA-8B-Instruct
 Request 28938bf6-e865-4ca8-82dc-cf2e3e5a3836: HEAD https://huggingface.co/GSAI-ML/LLaDA-8B-Instruct/resolve/main/tokenizer_config.json (authenticated: True)
 Request 3a2c655f-927d-4604-8f81-e3719a6d12d6: HEAD https://huggingface.co/api/resolve-cache/models/GSAI-ML/LLaDA-8B-Instruct/08b83a6feb34df1a6011b80c3c00c7563e963b07/tokenizer_config.json (authenticated: True)
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\tokenization_utils_base.py:2211] 2026-05-04 13:42:56,297 >> loading file tokenizer.json from cache at D:\.cache\hub\models--GSAI-ML--LLaDA-8B-Instruct\snapshots\08b83a6feb34df1a6011b80c3c00c7563e963b07\tokenizer.json
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\tokenization_utils_base.py:2211] 2026-05-04 13:42:56,297 >> loading file tokenizer.model from cache at None
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\tokenization_utils_base.py:2211] 2026-05-04 13:42:56,298 >> loading file added_tokens.json from cache at None
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\tokenization_utils_base.py:2211] 2026-05-04 13:42:56,298 >> loading file special_tokens_map.json from cache at D:\.cache\hub\models--GSAI-ML--LLaDA-8B-Instruct\snapshots\08b83a6feb34df1a6011b80c3c00c7563e963b07\special_tokens_map.json
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\tokenization_utils_base.py:2211] 2026-05-04 13:42:56,298 >> loading file tokenizer_config.json from cache at D:\.cache\hub\models--GSAI-ML--LLaDA-8B-Instruct\snapshots\08b83a6feb34df1a6011b80c3c00c7563e963b07\tokenizer_config.json
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\tokenization_utils_base.py:2475] 2026-05-04 13:42:56,567 >> Special tokens have been added in the vocabulary, make sure the associated word embeddings are fine-tuned or trained.
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\tokenization_utils_base.py:2211] 2026-05-04 13:42:56,297 >> loading file tokenizer.json from cache at D:\.cache\hub\models--GSAI-ML--LLaDA-8B-Instruct\snapshots\08b83a6feb34df1a6011b80c3c00c7563e963b07\tokenizer.json
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\tokenization_utils_base.py:2211] 2026-05-04 13:42:56,297 >> loading file tokenizer.model from cache at None
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\tokenization_utils_base.py:2211] 2026-05-04 13:42:56,298 >> loading file added_tokens.json from cache at None
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\tokenization_utils_base.py:2211] 2026-05-04 13:42:56,298 >> loading file special_tokens_map.json from cache at D:\.cache\hub\models--GSAI-ML--LLaDA-8B-Instruct\snapshots\08b83a6feb34df1a6011b80c3c00c7563e963b07\special_tokens_map.json
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\tokenization_utils_base.py:2211] 2026-05-04 13:42:56,298 >> loading file tokenizer_config.json from cache at D:\.cache\hub\models--GSAI-ML--LLaDA-8B-Instruct\snapshots\08b83a6feb34df1a6011b80c3c00c7563e963b07\tokenizer_config.json
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\tokenization_utils_base.py:2475] 2026-05-04 13:42:56,567 >> Special tokens have been added in the vocabulary, make sure the associated word embeddings are fine-tuned or trained.
 Request 98693624-cb86-4802-948b-716fe8400977: HEAD https://huggingface.co/GSAI-ML/LLaDA-8B-Instruct/resolve/main/config.json (authenticated: True)
 Request 68f5b79e-7c00-4483-bb48-9008b4dfdb49: HEAD https://huggingface.co/api/resolve-cache/models/GSAI-ML/LLaDA-8B-Instruct/08b83a6feb34df1a6011b80c3c00c7563e963b07/config.json (authenticated: True)
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\configuration_utils.py:679] 2026-05-04 13:42:56,761 >> loading configuration file config.json from cache at D:\.cache\hub\models--GSAI-ML--LLaDA-8B-Instruct\snapshots\08b83a6feb34df1a6011b80c3c00c7563e963b07\config.json
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\configuration_utils.py:679] 2026-05-04 13:42:56,761 >> loading configuration file config.json from cache at D:\.cache\hub\models--GSAI-ML--LLaDA-8B-Instruct\snapshots\08b83a6feb34df1a6011b80c3c00c7563e963b07\config.json
 Request 830c6a35-f853-47f1-b5f8-3dbe60b02cf6: HEAD https://huggingface.co/GSAI-ML/LLaDA-8B-Instruct/resolve/main/configuration_llada.py (authenticated: True)
 Request 2b086409-36d5-4841-8f7d-ea4cf2e90403: HEAD https://huggingface.co/api/resolve-cache/models/GSAI-ML/LLaDA-8B-Instruct/08b83a6feb34df1a6011b80c3c00c7563e963b07/configuration_llada.py (authenticated: True)
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\configuration_utils.py:679] 2026-05-04 13:42:56,984 >> loading configuration file config.json from cache at D:\.cache\hub\models--GSAI-ML--LLaDA-8B-Instruct\snapshots\08b83a6feb34df1a6011b80c3c00c7563e963b07\config.json
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\configuration_utils.py:746] 2026-05-04 13:42:56,984 >> Model config LLaDAConfig {
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\configuration_utils.py:679] 2026-05-04 13:42:56,984 >> loading configuration file config.json from cache at D:\.cache\hub\models--GSAI-ML--LLaDA-8B-Instruct\snapshots\08b83a6feb34df1a6011b80c3c00c7563e963b07\config.json
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\configuration_utils.py:746] 2026-05-04 13:42:56,984 >> Model config LLaDAConfig {
   "_name_or_path": "GSAI-ML/LLaDA-8B-Instruct",
   "activation_type": "silu",
   "alibi": false,
@@ -380,28 +380,28 @@ Request 2b086409-36d5-4841-8f7d-ea4cf2e90403: HEAD https://huggingface.co/api/re
 Request ab86a06e-050a-4b23-a2a6-66f0df28f5c0: HEAD https://huggingface.co/GSAI-ML/LLaDA-8B-Instruct/resolve/main/modeling_llada.py (authenticated: True)
 Request 3b888192-1a27-4a94-a133-e3c0c4608a44: HEAD https://huggingface.co/api/resolve-cache/models/GSAI-ML/LLaDA-8B-Instruct/08b83a6feb34df1a6011b80c3c00c7563e963b07/modeling_llada.py (authenticated: True)
 [W504 13:42:57.000000000 unwind.cpp:11] Warning: record_context_cpp is not support on non-linux non-x86_64 platforms (function operator ())
-[DEBUG|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\integrations\bitsandbytes.py:519] 2026-05-04 13:42:59,069 >> Multi-backend validation successful.
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\quantizers\quantizer_bnb_4bit.py:252] 2026-05-04 13:42:59,070 >> Overriding torch_dtype=None with `torch_dtype=torch.float16` due to requirements of `bitsandbytes` to enable model loading in 8-bit or 4-bit. Pass your own torch_dtype to specify the dtype of the remaining non-linear layers or pass torch_dtype=torch.float16 to remove this warning.
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\modeling_utils.py:3937] 2026-05-04 13:42:59,071 >> loading weights file model.safetensors from cache at D:\.cache\hub\models--GSAI-ML--LLaDA-8B-Instruct\snapshots\08b83a6feb34df1a6011b80c3c00c7563e963b07\model.safetensors.index.json
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\modeling_utils.py:1670] 2026-05-04 13:42:59,108 >> Instantiating LLaDAModelLM model under default dtype torch.float16.
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\generation\configuration_utils.py:1096] 2026-05-04 13:42:59,109 >> Generate config GenerationConfig {
+[DEBUG|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\integrations\bitsandbytes.py:519] 2026-05-04 13:42:59,069 >> Multi-backend validation successful.
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\quantizers\quantizer_bnb_4bit.py:252] 2026-05-04 13:42:59,070 >> Overriding torch_dtype=None with `torch_dtype=torch.float16` due to requirements of `bitsandbytes` to enable model loading in 8-bit or 4-bit. Pass your own torch_dtype to specify the dtype of the remaining non-linear layers or pass torch_dtype=torch.float16 to remove this warning.
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\modeling_utils.py:3937] 2026-05-04 13:42:59,071 >> loading weights file model.safetensors from cache at D:\.cache\hub\models--GSAI-ML--LLaDA-8B-Instruct\snapshots\08b83a6feb34df1a6011b80c3c00c7563e963b07\model.safetensors.index.json
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\modeling_utils.py:1670] 2026-05-04 13:42:59,108 >> Instantiating LLaDAModelLM model under default dtype torch.float16.
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\generation\configuration_utils.py:1096] 2026-05-04 13:42:59,109 >> Generate config GenerationConfig {
   "eos_token_id": 126081,
   "pad_token_id": 126081,
   "use_cache": false
 }
 
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\quantizers\quantizer_bnb_4bit.py:122] 2026-05-04 13:42:59,351 >> target_dtype {target_dtype} is replaced by `CustomDtype.INT4` for 4-bit BnB quantization
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\quantizers\quantizer_bnb_4bit.py:122] 2026-05-04 13:42:59,351 >> target_dtype {target_dtype} is replaced by `CustomDtype.INT4` for 4-bit BnB quantization
 The model weights are not tied. Please use the `tie_weights` method before using the `infer_auto_device` function.
-[DEBUG|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\integrations\bitsandbytes.py:519] 2026-05-04 13:42:59,371 >> Multi-backend validation successful.
+[DEBUG|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\integrations\bitsandbytes.py:519] 2026-05-04 13:42:59,371 >> Multi-backend validation successful.
 Loading checkpoint shards: 100%|█████████████████████████████████████████████████████████| 6/6 [05:09<00:00, 51.55s/it]
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\modeling_utils.py:4800] 2026-05-04 13:48:08,704 >> All model checkpoint weights were used when initializing LLaDAModelLM.
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\modeling_utils.py:4800] 2026-05-04 13:48:08,704 >> All model checkpoint weights were used when initializing LLaDAModelLM.
 
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\modeling_utils.py:4808] 2026-05-04 13:48:08,704 >> All the weights of LLaDAModelLM were initialized from the model checkpoint at GSAI-ML/LLaDA-8B-Instruct.
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\modeling_utils.py:4808] 2026-05-04 13:48:08,704 >> All the weights of LLaDAModelLM were initialized from the model checkpoint at GSAI-ML/LLaDA-8B-Instruct.
 If your task is similar to the task the model of the checkpoint was trained on, you can already use LLaDAModelLM for predictions without further training.
 Request aae98b7b-ebe1-4789-adff-b415414a8d9a: HEAD https://huggingface.co/GSAI-ML/LLaDA-8B-Instruct/resolve/main/generation_config.json (authenticated: True)
 Request 80b4415b-190c-40ed-8855-8506cf8c376c: HEAD https://huggingface.co/api/resolve-cache/models/GSAI-ML/LLaDA-8B-Instruct/08b83a6feb34df1a6011b80c3c00c7563e963b07/generation_config.json (authenticated: True)
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\generation\configuration_utils.py:1051] 2026-05-04 13:48:09,167 >> loading configuration file generation_config.json from cache at D:\.cache\hub\models--GSAI-ML--LLaDA-8B-Instruct\snapshots\08b83a6feb34df1a6011b80c3c00c7563e963b07\generation_config.json
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\generation\configuration_utils.py:1096] 2026-05-04 13:48:09,167 >> Generate config GenerationConfig {
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\generation\configuration_utils.py:1051] 2026-05-04 13:48:09,167 >> loading configuration file generation_config.json from cache at D:\.cache\hub\models--GSAI-ML--LLaDA-8B-Instruct\snapshots\08b83a6feb34df1a6011b80c3c00c7563e963b07\generation_config.json
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\generation\configuration_utils.py:1096] 2026-05-04 13:48:09,167 >> Generate config GenerationConfig {
   "bos_token_id": 126080,
   "eos_token_id": 126081
 }
@@ -430,9 +430,9 @@ Request ccf8c624-b25d-4f90-8259-0b02176a611d: GET https://huggingface.co/api/dat
 [Round 1][cache] Loaded 10 training examples
 [Round 1][cache] Generating trajectories with steps=128, target_step=64
 [Round 1][cache] Processing example 1/10 (prompt_len=94)
-[Round 1][cache] Saved trajectory to C:\Users\Gotri\Documents\tfg\LLaDA\outputs\nested_distillation\runs\run_20260504_132541\round_001_steps_64\cache\batch_0.pt
+[Round 1][cache] Saved trajectory to C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\LLaDA\outputs\nested_distillation\runs\run_20260504_132541\round_001_steps_64\cache\batch_0.pt
 [Round 1][cache] Processing example 2/10 (prompt_len=70)
-[Round 1][cache] Saved trajectory to C:\Users\Gotri\Documents\tfg\LLaDA\outputs\nested_distillation\runs\run_20260504_132541\round_001_steps_64\cache\batch_1.pt
+[Round 1][cache] Saved trajectory to C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\LLaDA\outputs\nested_distillation\runs\run_20260504_132541\round_001_steps_64\cache\batch_1.pt
 [Round 1][cache] Processing example 3/10 (prompt_len=62)
 [Round 1][cache] ERROR: Failed to generate trajectory 3: [enforce fail at inline_container.cc:603] . unexpected pos 1728 vs 1664
 C++ CapturedTraceback:
@@ -482,11 +482,11 @@ GPU verification passed: 0.008GB allocated (below threshold)
 [Round 1][train] Loading student base model: GSAI-ML/LLaDA-8B-Instruct
 Request 15d17ebf-c02e-4c78-9f08-efb446bc8119: HEAD https://huggingface.co/GSAI-ML/LLaDA-8B-Instruct/resolve/main/config.json (authenticated: True)
 Request 6bed07cf-16c2-4884-b0e1-4e33476c569b: HEAD https://huggingface.co/api/resolve-cache/models/GSAI-ML/LLaDA-8B-Instruct/08b83a6feb34df1a6011b80c3c00c7563e963b07/config.json (authenticated: True)
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\configuration_utils.py:679] 2026-05-04 13:51:36,584 >> loading configuration file config.json from cache at D:\.cache\hub\models--GSAI-ML--LLaDA-8B-Instruct\snapshots\08b83a6feb34df1a6011b80c3c00c7563e963b07\config.json
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\configuration_utils.py:679] 2026-05-04 13:51:36,584 >> loading configuration file config.json from cache at D:\.cache\hub\models--GSAI-ML--LLaDA-8B-Instruct\snapshots\08b83a6feb34df1a6011b80c3c00c7563e963b07\config.json
 Request 8d5b6b89-a54e-4908-bbcd-7176aa3cc784: HEAD https://huggingface.co/GSAI-ML/LLaDA-8B-Instruct/resolve/main/configuration_llada.py (authenticated: True)
 Request 3d124170-f090-4988-8532-e30653e1ca3d: HEAD https://huggingface.co/api/resolve-cache/models/GSAI-ML/LLaDA-8B-Instruct/08b83a6feb34df1a6011b80c3c00c7563e963b07/configuration_llada.py (authenticated: True)
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\configuration_utils.py:679] 2026-05-04 13:51:36,831 >> loading configuration file config.json from cache at D:\.cache\hub\models--GSAI-ML--LLaDA-8B-Instruct\snapshots\08b83a6feb34df1a6011b80c3c00c7563e963b07\config.json
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\configuration_utils.py:746] 2026-05-04 13:51:36,832 >> Model config LLaDAConfig {
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\configuration_utils.py:679] 2026-05-04 13:51:36,831 >> loading configuration file config.json from cache at D:\.cache\hub\models--GSAI-ML--LLaDA-8B-Instruct\snapshots\08b83a6feb34df1a6011b80c3c00c7563e963b07\config.json
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\configuration_utils.py:746] 2026-05-04 13:51:36,832 >> Model config LLaDAConfig {
   "_name_or_path": "GSAI-ML/LLaDA-8B-Instruct",
   "activation_type": "silu",
   "alibi": false,
@@ -544,33 +544,33 @@ Request 3d124170-f090-4988-8532-e30653e1ca3d: HEAD https://huggingface.co/api/re
 
 Request 853624c1-4426-4de2-acb3-99b758e8f262: HEAD https://huggingface.co/GSAI-ML/LLaDA-8B-Instruct/resolve/main/modeling_llada.py (authenticated: True)
 Request 3f7b8f8e-064c-41af-b4ad-d7a7f7ea54ff: HEAD https://huggingface.co/api/resolve-cache/models/GSAI-ML/LLaDA-8B-Instruct/08b83a6feb34df1a6011b80c3c00c7563e963b07/modeling_llada.py (authenticated: True)
-[DEBUG|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\integrations\bitsandbytes.py:519] 2026-05-04 13:51:37,094 >> Multi-backend validation successful.
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\quantizers\quantizer_bnb_4bit.py:252] 2026-05-04 13:51:37,095 >> Overriding torch_dtype=None with `torch_dtype=torch.float16` due to requirements of `bitsandbytes` to enable model loading in 8-bit or 4-bit. Pass your own torch_dtype to specify the dtype of the remaining non-linear layers or pass torch_dtype=torch.float16 to remove this warning.
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\modeling_utils.py:3937] 2026-05-04 13:51:37,096 >> loading weights file model.safetensors from cache at D:\.cache\hub\models--GSAI-ML--LLaDA-8B-Instruct\snapshots\08b83a6feb34df1a6011b80c3c00c7563e963b07\model.safetensors.index.json
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\modeling_utils.py:1670] 2026-05-04 13:51:37,106 >> Instantiating LLaDAModelLM model under default dtype torch.float16.
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\generation\configuration_utils.py:1096] 2026-05-04 13:51:37,107 >> Generate config GenerationConfig {
+[DEBUG|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\integrations\bitsandbytes.py:519] 2026-05-04 13:51:37,094 >> Multi-backend validation successful.
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\quantizers\quantizer_bnb_4bit.py:252] 2026-05-04 13:51:37,095 >> Overriding torch_dtype=None with `torch_dtype=torch.float16` due to requirements of `bitsandbytes` to enable model loading in 8-bit or 4-bit. Pass your own torch_dtype to specify the dtype of the remaining non-linear layers or pass torch_dtype=torch.float16 to remove this warning.
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\modeling_utils.py:3937] 2026-05-04 13:51:37,096 >> loading weights file model.safetensors from cache at D:\.cache\hub\models--GSAI-ML--LLaDA-8B-Instruct\snapshots\08b83a6feb34df1a6011b80c3c00c7563e963b07\model.safetensors.index.json
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\modeling_utils.py:1670] 2026-05-04 13:51:37,106 >> Instantiating LLaDAModelLM model under default dtype torch.float16.
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\generation\configuration_utils.py:1096] 2026-05-04 13:51:37,107 >> Generate config GenerationConfig {
   "eos_token_id": 126081,
   "pad_token_id": 126081,
   "use_cache": false
 }
 
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\quantizers\quantizer_bnb_4bit.py:122] 2026-05-04 13:51:37,672 >> target_dtype {target_dtype} is replaced by `CustomDtype.INT4` for 4-bit BnB quantization
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\quantizers\quantizer_bnb_4bit.py:122] 2026-05-04 13:51:37,672 >> target_dtype {target_dtype} is replaced by `CustomDtype.INT4` for 4-bit BnB quantization
 The model weights are not tied. Please use the `tie_weights` method before using the `infer_auto_device` function.
-[DEBUG|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\integrations\bitsandbytes.py:519] 2026-05-04 13:51:37,690 >> Multi-backend validation successful.
+[DEBUG|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\integrations\bitsandbytes.py:519] 2026-05-04 13:51:37,690 >> Multi-backend validation successful.
 Loading checkpoint shards: 100%|█████████████████████████████████████████████████████████| 6/6 [01:03<00:00, 10.52s/it]
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\modeling_utils.py:4800] 2026-05-04 13:52:40,851 >> All model checkpoint weights were used when initializing LLaDAModelLM.
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\modeling_utils.py:4800] 2026-05-04 13:52:40,851 >> All model checkpoint weights were used when initializing LLaDAModelLM.
 
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\modeling_utils.py:4808] 2026-05-04 13:52:40,852 >> All the weights of LLaDAModelLM were initialized from the model checkpoint at GSAI-ML/LLaDA-8B-Instruct.
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\modeling_utils.py:4808] 2026-05-04 13:52:40,852 >> All the weights of LLaDAModelLM were initialized from the model checkpoint at GSAI-ML/LLaDA-8B-Instruct.
 If your task is similar to the task the model of the checkpoint was trained on, you can already use LLaDAModelLM for predictions without further training.
 Request 2b12b1ef-703e-456f-adfb-dae12f8f09ac: HEAD https://huggingface.co/GSAI-ML/LLaDA-8B-Instruct/resolve/main/generation_config.json (authenticated: True)
 Request b1a3017f-ecd9-4276-a0b8-a5ef29ef26b8: HEAD https://huggingface.co/api/resolve-cache/models/GSAI-ML/LLaDA-8B-Instruct/08b83a6feb34df1a6011b80c3c00c7563e963b07/generation_config.json (authenticated: True)
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\generation\configuration_utils.py:1051] 2026-05-04 13:52:41,080 >> loading configuration file generation_config.json from cache at D:\.cache\hub\models--GSAI-ML--LLaDA-8B-Instruct\snapshots\08b83a6feb34df1a6011b80c3c00c7563e963b07\generation_config.json
-[INFO|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\generation\configuration_utils.py:1096] 2026-05-04 13:52:41,081 >> Generate config GenerationConfig {
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\generation\configuration_utils.py:1051] 2026-05-04 13:52:41,080 >> loading configuration file generation_config.json from cache at D:\.cache\hub\models--GSAI-ML--LLaDA-8B-Instruct\snapshots\08b83a6feb34df1a6011b80c3c00c7563e963b07\generation_config.json
+[INFO|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\generation\configuration_utils.py:1096] 2026-05-04 13:52:41,081 >> Generate config GenerationConfig {
   "bos_token_id": 126080,
   "eos_token_id": 126081
 }
 
-[WARNING|C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\transformers\modeling_utils.py:2610] 2026-05-04 13:52:41,129 >> You are using an old version of the checkpointing format that is deprecated (We will also silently ignore `gradient_checkpointing_kwargs` in case you passed it).Please update to the new format on your modeling file. To use the new format, you need to completely remove the definition of the method `_set_gradient_checkpointing` in your model.
+[WARNING|C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\transformers\modeling_utils.py:2610] 2026-05-04 13:52:41,129 >> You are using an old version of the checkpointing format that is deprecated (We will also silently ignore `gradient_checkpointing_kwargs` in case you passed it).Please update to the new format on your modeling file. To use the new format, you need to completely remove the definition of the method `_set_gradient_checkpointing` in your model.
 [base_loaded] CUDA Memory: Allocated=5.30GB, Reserved=5.55GB, Max=5.40GB
 [Round 1][train] Injecting LoRA adapters (r=8, alpha=16)
 [lora_added] CUDA Memory: Allocated=5.30GB, Reserved=5.55GB, Max=5.40GB
@@ -583,13 +583,13 @@ Exception raised from valid at C:\actions-runner\_work\pytorch\pytorch\builder\w
 C++ CapturedTraceback:
 
 Traceback (most recent call last):
-  File "C:\Users\Gotri\Documents\tfg\LLaDA\nested_distillation.py", line 412, in train_stage
+  File "C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\LLaDA\nested_distillation.py", line 412, in train_stage
     trayectoria = torch.load(archivo, weights_only=True)
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\torch\serialization.py", line 1326, in load
+  File "C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\torch\serialization.py", line 1326, in load
     with _open_zipfile_reader(opened_file) as opened_zipfile:
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Gotri\Documents\tfg\llada_env\Lib\site-packages\torch\serialization.py", line 671, in __init__
+  File "C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\llada_env\Lib\site-packages\torch\serialization.py", line 671, in __init__
     super().__init__(torch._C.PyTorchFileReader(name_or_buffer))
                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 RuntimeError: PytorchStreamReader failed reading zip archive: failed finding central directory
@@ -615,7 +615,7 @@ LEADERBOARD
 
 
 Results saved to:
-  Markdown: C:\Users\Gotri\Documents\tfg\LLaDA\outputs\nested_distillation\runs\run_20260504_132541\leaderboard.md
-  CSV:      C:\Users\Gotri\Documents\tfg\LLaDA\outputs\nested_distillation\runs\run_20260504_132541\leaderboard.csv
-  JSON:     C:\Users\Gotri\Documents\tfg\LLaDA\outputs\nested_distillation\runs\run_20260504_132541\leaderboard.json
-(llada_env) PS C:\Users\Gotri\Documents\tfg\LLaDA>
+  Markdown: C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\LLaDA\outputs\nested_distillation\runs\run_20260504_132541\leaderboard.md
+  CSV:      C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\LLaDA\outputs\nested_distillation\runs\run_20260504_132541\leaderboard.csv
+  JSON:     C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\LLaDA\outputs\nested_distillation\runs\run_20260504_132541\leaderboard.json
+(llada_env) PS C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\LLaDA>

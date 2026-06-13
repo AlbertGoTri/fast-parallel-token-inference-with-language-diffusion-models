@@ -11,7 +11,8 @@ BASE_DIR = os.environ.get("LLADA_BASE_DIR", PROJECT_ROOT)
 
 WORKSPACE_DIR = os.path.join(BASE_DIR, "workspace")
 os.makedirs(WORKSPACE_DIR, exist_ok=True)
-# Prefer explicit HF_HOME env var or config override, fallback to workspace/.cache
+# Centralize HF caches in a project-scoped directory so different experiments
+# do not interfere.
 HF_HOME = os.environ.get("HF_HOME") or os.path.join(WORKSPACE_DIR, ".cache")
 os.makedirs(HF_HOME, exist_ok=True)
 os.environ["HF_HOME"] = HF_HOME
@@ -19,10 +20,10 @@ os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 os.environ["SAFETENSORS_FAST_GPU"] = "0"
 
+# Leave headroom for concurrent Ollama judge or Windows compositor VRAM usage.
 torch.cuda.set_per_process_memory_fraction(0.85)
 
-# --- CONFIGURATION ---
-# Set to False to use the base model without LoRA (useful for comparison)
+# False lets you compare the raw 8B teacher against the distilled student on the same prompt.
 USE_LORA = True
 LORA_DIR = os.path.join(WORKSPACE_DIR, "llada_student_lora")
 
@@ -47,6 +48,8 @@ print("Tokenizer loaded.")
 
 print("Loading base model...")
 try:
+    # 6 GiB is enough for the 4-bit base model + LoRA; the rest offloads to CPU
+    # to allow larger batch sizes in generation.
     model = AutoModel.from_pretrained(
         model_id,
         quantization_config=quantization_config,
@@ -62,13 +65,14 @@ except Exception as e:
     traceback.print_exc()
     sys.exit(1)
 
-# --- LOAD LORA ADAPTERS ---
 if USE_LORA:
     if not os.path.exists(LORA_DIR):
         print(f"ERROR: LoRA weights not found at {LORA_DIR}")
         print("Run 02_train_student.py first to train the student.")
         sys.exit(1)
     print(f"Loading LoRA adapters from {LORA_DIR}...")
+    # PEFT merges adapter weights at runtime without altering base checkpoints,
+    # so switching between teacher and student is instant.
     model = PeftModel.from_pretrained(model, LORA_DIR)
     print(f"LoRA loaded. VRAM: {torch.cuda.memory_allocated(0)/1024**3:.2f} GB")
     model_label = "Student (base + LoRA)"
@@ -78,7 +82,6 @@ else:
 model.eval()
 print(f"Running as: {model_label}")
 
-# --- PROMPT ---
 prompt = "Act as a football coach. My team is losing 2-0 at halftime. What should I say to my players to motivate them for the second half?"
 conversation = [{"role": "user", "content": prompt}]
 
@@ -98,6 +101,8 @@ profiling_dir = os.path.join(WORKSPACE_DIR, "profiling")
 os.makedirs(profiling_dir, exist_ok=True)
 
 with torch.no_grad():
+    # Profiling is lightweight when record_shapes=False; the trace reveals whether
+    # the bottleneck is logits computation or memory transfers.
     with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], record_shapes=False) as prof:
         with record_function("generate_inference"):
             output = generate(
@@ -114,7 +119,6 @@ with torch.no_grad():
 response = tokenizer.decode(output[0][input_ids.shape[1]:], skip_special_tokens=True)
 print(f"\n--- Output ({model_label}) ---\n{response}")
 
-# Export profiling results
 prof.export_chrome_trace(os.path.join(profiling_dir, "run_llada_local_trace.json"))
 with open(os.path.join(profiling_dir, "run_llada_local_summary.txt"), "w") as f:
     f.write(prof.key_averages().table(sort_by="cuda_time_total", row_limit=20))

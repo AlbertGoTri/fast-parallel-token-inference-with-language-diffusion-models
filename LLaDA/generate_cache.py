@@ -22,8 +22,8 @@ def get_num_transfer_tokens(mask_index, steps):
 @torch.no_grad()
 def generate_and_cache_trajectory(model, prompt, attention_mask=None, steps=128, gen_length=128, block_length=128, target_step=0, mask_id=126336):
     """
-    Modified version that stops generation at 'target_step' and returns
-    the input state (x) and the teacher logits.
+    Truncated forward diffusion used to create distillation training pairs.
+    Stops at target_step and returns the masked input plus teacher logits.
     """
     x = torch.full((prompt.shape[0], prompt.shape[1] + gen_length), mask_id, dtype=torch.long).to(model.device)
     x[:, :prompt.shape[1]] = prompt.clone()
@@ -38,23 +38,20 @@ def generate_and_cache_trajectory(model, prompt, attention_mask=None, steps=128,
     for num_block in range(num_blocks):
         block_mask_index = (x[:, prompt.shape[1] + num_block * block_length: prompt.shape[1] + (num_block + 1) * block_length:] == mask_id)
         num_transfer_tokens = get_num_transfer_tokens(block_mask_index, steps_per_block)
-        
+
         for i in range(steps_per_block):
             mask_index = (x == mask_id)
             logits = model(x, attention_mask=attention_mask).logits
 
-            # --- CACHE MODIFICATION ---
             if i == target_step:
-                # We return:
-                # 1. 'x': The input with current masks
-                # 2. 'logits': Teacher soft-labels, cast to float16 to save disk
+                # Capture the teacher's prediction at the midpoint; the student learns to recover
+                # this distribution in fewer steps than the full diffusion trajectory.
+                # Cast logits to float16 to halve cache size; KL divergence is robust to this precision loss.
                 return x.clone(), logits.clone().to(torch.float16), attention_mask.clone() if attention_mask is not None else None
-            # --------------------------------
 
-            # Standard LLaDA unmasking logic when target_step > i
             logits_with_noise = add_gumbel_noise(logits, temperature=0.0)
             x0 = torch.argmax(logits_with_noise, dim=-1)
-            
+
             p = F.softmax(logits, dim=-1)
             x0_p = torch.squeeze(torch.gather(p, dim=-1, index=torch.unsqueeze(x0, -1)), -1)
             x0_p[:, prompt.shape[1] + (num_block + 1) * block_length:] = -np.inf

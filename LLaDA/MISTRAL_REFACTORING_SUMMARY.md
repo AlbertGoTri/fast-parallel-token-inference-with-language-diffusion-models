@@ -71,7 +71,7 @@ Script de validación que verifica:
 ### Opción 1: Automático (RECOMENDADO)
 ```powershell
 # Desde raíz de LLaDA
-cd c:\Users\Gotri\Documents\tfg\LLaDA
+cd C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\LLaDA
 .\evaluation\promptfoo\run_evaluation.ps1
 ```
 
@@ -84,7 +84,7 @@ El script:
 
 ### Opción 2: Validar primero
 ```powershell
-cd c:\Users\Gotri\Documents\tfg\LLaDA\evaluation\promptfoo
+cd C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\LLaDA\evaluation\promptfoo
 python validate_setup.py
 
 # Verificará:

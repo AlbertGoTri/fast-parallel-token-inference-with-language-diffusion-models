@@ -14,11 +14,11 @@ from transformers import AutoTokenizer, AutoModel, BitsAndBytesConfig
 from peft import PeftModel
 
 # Add LLaDA directory to path for imports
-sys.path.insert(0, r"C:\Users\Gotri\Documents\tfg\LLaDA")
+sys.path.insert(0, r"C:\Users\Gotri\Documents\fast-parallel-token-inference-with-language-diffusion-models\LLaDA")
 from generate import generate
 
 # --- CONFIGURATION ---
-os.environ["HF_HOME"] = r"D:/tfg/.cache"
+os.environ["HF_HOME"] = r"D:/fast-parallel-token-inference-with-language-diffusion-models/.cache"
 os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 os.environ["SAFETENSORS_FAST_GPU"] = "0"

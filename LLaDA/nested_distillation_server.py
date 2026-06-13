@@ -1,7 +1,4 @@
-"""
-Server management for nested distillation evaluation.
-Handles starting/stopping the LLaDA server for promptfoo evaluation.
-"""
+"""Server management for nested distillation evaluation."""
 
 import os
 import sys
@@ -14,7 +11,7 @@ from typing import Optional, Tuple
 
 
 def find_free_port(start_port: int = 5000, max_port: int = 6000) -> int:
-    """Find a free port to use."""
+    """Port 5000 may be held by a stale evaluation server from a crashed prior round."""
     for port in range(start_port, max_port):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             if s.connect_ex(('127.0.0.1', port)) != 0:
@@ -39,7 +36,11 @@ def check_server_running(port: int = 5000, timeout: float = 1.0) -> bool:
 
 
 def _find_pids_on_port(port: int) -> list[int]:
-    """Best-effort lookup of PIDs listening on a TCP port."""
+    """Best-effort lookup of PIDs listening on a TCP port.
+
+    Windows netstat output is whitespace-delimited; the PID is the last token
+    on LISTENING lines.
+    """
     pids: list[int] = []
     try:
         if sys.platform == 'win32':
@@ -71,7 +72,6 @@ def _find_pids_on_port(port: int) -> list[int]:
     except Exception:
         return []
 
-    # preserve order while deduplicating
     seen = set()
     deduped = []
     for pid in pids:
@@ -91,6 +91,8 @@ def stop_server_on_port(port: int = 5000) -> None:
     for pid in pids:
         try:
             if sys.platform == 'win32':
+                # /T kills the process tree because Python may have spawned child
+                # threads for model loading.
                 subprocess.run(
                     ["taskkill", "/PID", str(pid), "/T", "/F"],
                     capture_output=True,
@@ -102,7 +104,6 @@ def stop_server_on_port(port: int = 5000) -> None:
         except Exception:
             continue
 
-    # Give sockets a brief moment to release.
     time.sleep(1.0)
 
 
@@ -117,7 +118,6 @@ def wait_for_server(port: int = 5000, timeout: float = 120.0, interval: float = 
             print(f"Server ready in {time.time() - start_time:.1f}s")
             return True
 
-        # Print progress every 10 seconds
         if verbose and time.time() - last_print > 10:
             elapsed = time.time() - start_time
             print(f"  Still waiting... ({elapsed:.0f}s elapsed, model loading)")
@@ -140,21 +140,9 @@ def create_server_script(
     gen_length: int = 128,
     block_length: int = 32,
 ) -> str:
-    """
-    Create a temporary server script for the specific checkpoint.
-
-    Args:
-        checkpoint_dir: Path to the LoRA checkpoint
-        output_path: Path to write the server script
-        port: Port to serve on
-        steps: Number of generation steps
-        gen_length: Number of tokens to generate
-        block_length: Block size for semi-autoregressive generation
-
-    Returns:
-        Path to the created script
-    """
-    # Get absolute path to LLaDA directory (where generate.py lives)
+    """Create a temporary server script for the specific checkpoint."""
+    # The generated script must import generate.py, so we inject the LLaDA source
+    # directory into sys.path.
     llada_dir = os.path.dirname(os.path.abspath(__file__))
     checkpoint_doc_path = checkpoint_dir.replace('\\', '/')
     checkpoint_dir_posix = checkpoint_doc_path
@@ -176,15 +164,16 @@ from flask import Flask, request, jsonify
 from transformers import AutoTokenizer, AutoModel, BitsAndBytesConfig
 from peft import PeftModel
 
-# Add LLaDA directory to path for imports
+# Inject LLaDA source directory into sys.path so generate.py is importable.
 sys.path.insert(0, r"{llada_dir}")
 from generate import generate
 
-# --- CONFIGURATION ---
 os.environ["HF_HOME"] = r"{hf_home}"
 os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 os.environ["SAFETENSORS_FAST_GPU"] = "0"
+# expandable_segments:True is required on Ada Lovelace GPUs to avoid CUDA OOM
+# during long generations.
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True,max_split_size_mb:128"
 
 DEVICE = "{device}"
@@ -219,7 +208,6 @@ def resolve_base_model_path(checkpoint_path: str, fallback: str) -> str:
     # Non-directory string; assume it is a model id or path.
     return checkpoint_path
 
-# --- MODEL LOADING ---
 model_id = "GSAI-ML/LLaDA-8B-Instruct"
 ram_gb = int(psutil.virtual_memory().available / 1024**3) - 3
 base_model_path = resolve_base_model_path(CHECKPOINT_DIR, BASE_MODEL_FALLBACK)
@@ -333,7 +321,6 @@ def generate_endpoint():
         return jsonify({{"error": str(e)}}), 500
 
 if __name__ == '__main__':
-    # Suppress Flask startup messages
     import logging
     log = logging.getLogger('werkzeug')
     log.setLevel(logging.ERROR)
@@ -388,7 +375,6 @@ class ServerManager:
                 print(f"ERROR: Could not free port {self.port}")
                 return False
 
-        # Create server script
         eval_dir = self.eval_dir or os.path.join(os.path.dirname(self.checkpoint_dir), "evaluation")
         os.makedirs(eval_dir, exist_ok=True)
         self.script_path = os.path.join(eval_dir, "serve_eval.py")
@@ -414,12 +400,14 @@ class ServerManager:
             print(f"  CUDA memory fraction: {self.cuda_memory_fraction}")
         print(f"  Log file: {self.log_file}")
 
-        # Start server process with output directed to file (avoids pipe deadlock)
         try:
-            # Use CREATE_NEW_PROCESS_GROUP on Windows for proper termination
+            # CREATE_NEW_PROCESS_GROUP lets us send CTRL_BREAK_EVENT on Windows
+            # without killing the parent shell.
             creationflags = getattr(subprocess, 'CREATE_NEW_PROCESS_GROUP', 0)
 
             env = os.environ.copy()
+            # Pass the timing log path via env so the generated script does not
+            # need CLI argument parsing.
             if self.timing_log_path:
                 env["LLADA_TIMING_LOG"] = self.timing_log_path
                 print(f"  Timing log: {self.timing_log_path}")
@@ -434,15 +422,13 @@ class ServerManager:
                     env=env,
                 )
 
-            # Wait for server to be ready
             if not wait_for_server(self.port, timeout=timeout, verbose=True):
-                # Print log contents on failure
                 try:
                     with open(self.log_file, 'r') as f:
                         log_content = f.read()
                         if log_content:
                             print("Server log output:")
-                            print(log_content[-2000:])  # Last 2000 chars
+                            print(log_content[-2000:])
                 except Exception as e:
                     print(f"Could not read log file: {e}")
                 self.stop()
@@ -462,15 +448,14 @@ class ServerManager:
         print(f"Stopping LLaDA server (PID {self.process.pid})...")
 
         try:
-            # Try graceful termination first
+            # SIGTERM is usually enough on Linux; on Windows we need
+            # CTRL_BREAK_EVENT because SIGTERM is emulated and often ignored by Flask.
             if hasattr(self.process, 'send_signal'):
-                # On Windows, use CTRL_BREAK_EVENT
                 if sys.platform == 'win32':
                     self.process.send_signal(signal.CTRL_BREAK_EVENT)
                 else:
                     self.process.send_signal(signal.SIGTERM)
 
-            # Wait for termination
             try:
                 self.process.wait(timeout=10)
             except subprocess.TimeoutExpired:
@@ -489,13 +474,11 @@ class ServerManager:
         print("Server stopped")
 
     def __enter__(self):
-        """Context manager entry."""
         if not self.start():
             raise RuntimeError("Failed to start server")
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """Context manager exit."""
         self.stop()
         return False
 
@@ -514,14 +497,7 @@ def managed_server(
     gen_length: int = 128,
     block_length: int = 32,
 ):
-    """
-    Context manager for running the LLaDA server.
-
-    Usage:
-        with managed_server(checkpoint_dir, steps) as server:
-            # Server is running, run evaluations
-            run_promptfoo(...)
-    """
+    """Context manager for running the LLaDA server."""
     manager = ServerManager(
         checkpoint_dir,
         steps,
