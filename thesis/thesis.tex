@@ -277,7 +277,7 @@ While LDMs can predict all tokens in parallel, the iterative refinement requires
 \end{figure}
 
 \subsection{Current Limitations and Challenges in Discrete Diffusion}
-While models like GPT-4 have set the standard for quality, their serial nature poses a fundamental limit on latency scaling. The time complexity of generating a sequence of length $N$ is $\mathcal{O}(N)$. As context windows grow to 128k or 1M tokens, this serial dependency becomes a bottleneck that no amount of parallel compute can solve purely through hardware scaling. Techniques like \textit{Speculative Decoding} attempt to mitigate this by drafting multiple tokens at once, but they are probabilistic and their speedup is upper-bounded (typically $2\times$--$3\times$). Diffusion models, by contrast, offer a theoretical $\mathcal{O}(1)$ or $\mathcal{O}(K)$ complexity where $K$ is the number of denoising steps, independent of sequence length $N$.
+While models like GPT-5 have set the standard for quality, their serial nature poses a fundamental limit on latency scaling. The time complexity of generating a sequence of length $N$ is $\mathcal{O}(N)$. As context windows grow to 128k or 1M tokens, this serial dependency becomes a bottleneck that no amount of parallel compute can solve purely through hardware scaling. Techniques like \textit{Speculative Decoding} attempt to mitigate this by drafting multiple tokens at once, but they are probabilistic and their speedup is upper-bounded (typically $2\times$--$3\times$). Diffusion models, by contrast, offer a theoretical $\mathcal{O}(1)$ or $\mathcal{O}(K)$ complexity where $K$ is the number of denoising steps, independent of sequence length $N$.
 
 As of early 2026, research on LDMs (e.g., LLaDA, MDLM) focuses on architecture and pre-training \cite{survey2025diffusion}. \textbf{There is a significant gap in post-training acceleration} \cite{li2024accelerating}. No open-source study has comprehensively applied progressive distillation to discrete text tokens, a fact that reflects how relatively new and less understood text diffusion is compared to its image counterpart. This introduces significant challenges:
 \begin{itemize}
@@ -523,7 +523,7 @@ the central technical challenge addressed by this thesis.
 \subsection{Parameter-Efficient Fine-Tuning: LoRA}
 \label{subsec:lora}
 
-Full fine-tuning of an 8B-parameter model on a single A100 GPU is infeasible: the model
+Full fine-tuning of an 8B-parameter model on a single consumer GPU (NVIDIA RTX 2070 super) is infeasible: the model
 weights alone require $\approx$16 GB in \texttt{bfloat16}, leaving minimal headroom for
 activations and optimizer states. Low-Rank Adaptation (LoRA) \cite{hu2022lora} addresses
 this by decomposing the weight update $\Delta W$ of each linear layer into a product of
