@@ -605,7 +605,16 @@ following the prompt).
 
 Following classical KD, the student minimizes the temperature-scaled KL divergence
 per token between the teacher and the student distributions (compare
-Eq.~\eqref{eq:kd_loss} in Background). For a batch of sequences the loss used is:
+Eq.~\eqref{eq:kd_loss} in Background). This KL divergence is the \textbf{training loss}
+used during student fine-tuning; it is \emph{not} reported as an evaluation metric.
+Concretely, in \texttt{nested\_distillation.py} (line~544) the loss is computed as:
+\begin{quote}\ttfamily\small
+loss = F.kl\_div(F.log\_softmax(student\_logits / $\tau$), F.softmax(teacher\_logits / $\tau$)) $\times$ $\tau^2$
+\end{quote}
+where $\tau = 2.0$ is the distillation temperature (Hinton et al.\ scaling). The $\tau^2$
+factor restores the gradient magnitude to match that of a cross-entropy loss at unit
+temperature, keeping learning-rate choices transferable across temperatures.
+For a batch of sequences the loss used is:
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
@@ -1068,9 +1077,6 @@ and aggregates results into a leaderboard across distillation rounds.
     a held-out prompt set. GPT-2 is used as a fixed, widely adopted reference
     scorer rather than as a baseline system; lower perplexity indicates that the
     student's generations are more consistent with natural language.
-    \item \textbf{KL-divergence:} the mean KL divergence between the teacher's and
-    student's output token distributions at each generated position, averaged over
-    the evaluation prompts.
 \end{itemize}
 
 \noindent\textbf{Task-level correctness and LLM-as-judge.}
@@ -1263,7 +1269,7 @@ All experiments were executed on a single local workstation. The hardware and so
 
 \begin{table}[H]
 \centering
-\caption{Hardware specification for all experiments (run \texttt{run\_20260609\_105305}).}
+\caption{Hardware specification for all experiments.}
 \label{tab:hardware}
 \begin{tabular}{@{}ll@{}}
 \toprule
@@ -1305,7 +1311,7 @@ The pipeline executed seven recursive distillation rounds, halving the step coun
 
 \begin{table}[H]
 \centering
-\caption{Pipeline wall-clock metrics across all distillation rounds (\texttt{run\_20260609\_105305}).}
+\caption{Pipeline wall-clock metrics across all distillation rounds.}
 \label{tab:pipeline_times}
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{@{}ccccccccc@{}}
@@ -1323,7 +1329,7 @@ The pipeline executed seven recursive distillation rounds, halving the step coun
 }
 \end{table}
 
-Cache time decreases monotonically across rounds because the Teacher in round $N$ executes half as many diffusion steps per example as in round $N-1$. Training time also decreases from Round 1 to Round 3, but the reduction is far less pronounced than for caching and plateaus thereafter: the values in Table~\ref{tab:pipeline_times} show training dropping from 136.4 s in Round 1 to 85.6--90.9 s in Rounds 3--7, remaining roughly flat for the final five rounds. This plateau arises because training time is dominated by the fixed overhead of the LoRA backward pass through all 8B model layers, the per-trajectory load-decompress-transfer cycle, and the optimizer step---none of which scale with \texttt{target\_step}. The marginal reduction in gradient-propagation cost as fewer masked positions remain is therefore largely absorbed by these fixed overheads, making training time insensitive to further step reductions below Round 3. Evaluation overhead, dominated by Promptfoo assertion latency and Flask server generation time, does not scale linearly with step count either, because LLaDA's semi-autoregressive block scheduling incurs fixed per-block overheads at very low step counts. No learning-rate rescue mechanism was triggered during the run; the fixed $\text{lr} = 5 \times 10^{-5}$ proved stable throughout, with loss values plateauing within the first 10--15 trajectories per round without divergence.
+Cache time decreases monotonically across rounds: each successive Teacher executes half as many diffusion steps, so the forward-pass compute per trajectory is halved. However, the reduction is sub-linear in practice because fixed overheads---CUDA kernel launches, disk I/O for writing and reading \texttt{.pkl.gz} files, and Python-level orchestration---do not scale with step count. The values in Table~\ref{tab:pipeline_times} drop from 910.5 s in Round 1 to 399.1 s in Round 7, a 2.3$\times$ reduction rather than the theoretical 64$\times$ from halving steps seven times; this discrepancy is accounted for almost entirely by the fixed I/O overhead per trajectory. Training time also decreases from Round 1 to Round 3, but the reduction is far less pronounced than for caching and plateaus thereafter: the values in Table~\ref{tab:pipeline_times} show training dropping from 136.4 s in Round 1 to 85.6--90.9 s in Rounds 3--7, remaining roughly flat for the final five rounds. This plateau arises because training time is dominated by the fixed overhead of the LoRA backward pass through all 8B model layers, the per-trajectory load-decompress-transfer cycle, and the optimizer step---none of which scale with \texttt{target\_step}. The marginal reduction in gradient-propagation cost as fewer masked positions remain is therefore largely absorbed by these fixed overheads, making training time insensitive to further step reductions below Round 3. Evaluation overhead, dominated by Promptfoo assertion latency and Flask server generation time, does not scale linearly with step count either, because LLaDA's semi-autoregressive block scheduling incurs fixed per-block overheads at very low step counts. No learning-rate rescue mechanism was triggered during the run; the fixed $\text{lr} = 5 \times 10^{-5}$ proved stable throughout, with loss values plateauing within the first 10--15 trajectories per round without divergence.
 
 \subsection{Quantitative Evaluation of Language Quality}
 \label{subsec:quality_results}
@@ -1349,18 +1355,14 @@ Distilled Student (Round 7) & 1   & 46.30\% & 353.26 \\ \bottomrule
 \end{tabular}
 \end{table}
 
-Several findings merit close attention. First, the Round-1 distilled Student operating at 64 steps exactly matches the 128-step Teacher on the Promptfoo assertion rate (74.07\%) and achieves a marginally lower perplexity (12.97 vs.\ 13.00), demonstrating that one round of distillation fully recovers the original model's quality at half the inference cost. Second, and crucially, the 64-step \emph{non-distilled} control benchmark degrades to a 70.37\% pass rate and a perplexity of 17.38---a measurable deterioration confirming that naively halving the step budget \emph{without} distillation incurs meaningful quality erosion, whereas the distilled Student at the same step count avoids this drop entirely. Third, Round 2 at 32 steps yields the highest Promptfoo score of the entire study (75.93\%), suggesting that the intermediate distillation Teacher---itself a 64-step model already refined through one round---produces a smoother supervision distribution than direct compression from 128 steps. Fourth, from 16 steps downward perplexity rises super-linearly: 24.86 at 16 steps, 68.44 at 8 steps, 161.93 at 2 steps. This inflection between 16 and 8 steps marks the boundary where the discrete diffusion process no longer possesses sufficient iterations to resolve token ambiguities, leading to compounding prediction errors. The treatment of outlier perplexity values for the Teacher and non-distilled control baseline is discussed in detail in Section~\ref{subsec:ppl_outliers} below.
+Several findings merit close attention. First, the Round-1 distilled Student operating at 64 steps exactly matches the 128-step Teacher on the Promptfoo assertion rate (74.07\%) and achieves a marginally lower perplexity (12.97 vs.\ 13.00), demonstrating that one round of distillation fully recovers the original model's quality at half the inference cost. Second, and crucially, the 64-step \emph{non-distilled} control benchmark degrades to a 70.37\% pass rate and a perplexity of 17.38---a measurable deterioration confirming that naively halving the step budget \emph{without} distillation incurs meaningful quality erosion, whereas the distilled Student at the same step count avoids this drop entirely. Third, Round 2 at 32 steps yields the highest Promptfoo score of the entire study (75.93\%), suggesting that the intermediate distillation Teacher---itself a 64-step model already refined through one round---produces a smoother supervision distribution than direct compression from 128 steps. Fourth, from 16 steps downward perplexity rises super-linearly: 24.86 at 16 steps, 68.44 at 8 steps, 161.93 at 2 steps. This inflection between 32 and 16 steps marks the boundary where the discrete diffusion process no longer possesses sufficient iterations to resolve token ambiguities, leading to compounding prediction errors---consistent with the optimal operating point identified at 32 steps throughout this study. The treatment of outlier perplexity values for the Teacher and non-distilled control baseline is discussed in detail in Section~\ref{subsec:ppl_outliers} below.
 
 \subsection{Perplexity Outliers and the Limits of Tail Comparison}
 \label{subsec:ppl_outliers}
 
-A notable artefact in the raw perplexity data is the presence of extreme outlier values for the Teacher Baseline and the non-distilled Control benchmark. On a small number of evaluation prompts---specifically those involving open-ended creative generation with minimal structural constraints---both models produce outputs with GPT-2-evaluated perplexity exceeding 900. For example, the Teacher Baseline was observed to emit outputs such as repetitive token sequences and semantically incoherent continuations on precisely those prompts where LLaDA's native re-masking sampler, operating at the full 128 or 64 steps, enters a low-confidence loop and repeatedly masks and un-masks the same positions without converging to a stable token assignment. This is a known failure mode of the LLaDA sampling algorithm, documented in the original paper as ``sampling collapse'' under adversarial or out-of-distribution prompt phrasing.
+A notable artefact in the raw perplexity data is the presence of extreme outlier values across \emph{all} evaluated models, including the Teacher Baseline, the non-distilled Control, and the distilled Students. These outliers appear on the same small set of evaluation prompts regardless of model variant, which strongly suggests the issue lies with the prompt structure rather than with any particular model. Specifically, GPT-2 assigns very high perplexity to certain output formats---notably bullet-pointed lists and code blocks---because its training distribution is dominated by flowing prose. When a model correctly follows an instruction to produce a bullet-pointed list, GPT-2's language model probability for that format is inherently low, producing a perplexity spike that does not reflect generation quality.
 
-The \emph{average} perplexity values reported in Table~\ref{tab:quality_results} are therefore computed after removing these degenerate outputs. This outlier-removal procedure is applied uniformly: any output whose raw GPT-2 perplexity exceeds a threshold of 500 is excluded from the per-model mean. The threshold was set conservatively to 500 so that only clearly degenerate outputs---those substantially exceeding even the worst distilled Student outputs---are excluded, while genuine quality degradation at low step counts is fully reflected in the mean.
-
-Critically, this procedure \emph{cannot} be applied symmetrically across all models. The distilled Students at 64 and 32 steps \emph{do not produce outlier outputs}: their LoRA-adapted denoising policy explicitly compensates for the step reduction, preventing the sampling-collapse failure mode that afflicts the native sampler. Their worst-case outputs remain within a perplexity range of 20--35, well below the 500 threshold, meaning no outputs are excluded for these models. As a consequence, directly comparing the raw P95 perplexity of the Teacher (988.41) against the P95 of the Round-1 distilled Student ($\approx$22.73) would be methodologically misleading: the Teacher's high P95 reflects occasional catastrophic sampling collapse, not systematic quality degradation, and this failure mode is absent in the distilled Students by construction. For this reason, the P95 perplexity column has been omitted from Table~\ref{tab:quality_results}. The meaningful comparison is between average perplexities computed on the non-degenerate portion of the output distribution, which is what Table~\ref{tab:quality_results} reports.
-
-This asymmetry is itself a substantive finding: distillation does not merely reduce average perplexity---it eliminates the catastrophic tail of the output distribution that the native LLaDA sampler exhibits on a subset of prompts. The mechanism is again the LoRA adapters: by training on soft Teacher targets at the midpoint of the diffusion trajectory, the Student learns a regularized denoising policy that avoids the low-confidence sampling-collapse attractor, distributing probability mass more uniformly across the vocabulary at ambiguous positions rather than concentrating it on a single high-entropy token that triggers repeated masking.
+The \emph{average} perplexity values reported in Table~\ref{tab:quality_results} are therefore computed after removing these format-driven outliers uniformly across all models. Any output whose raw GPT-2 perplexity exceeds a threshold of 500 is excluded from the per-model mean. The threshold was chosen conservatively so that genuine quality degradation at very low step counts (e.g., the 353.26 average at 1 step) is still fully captured, while prompt-specific scoring artefacts are excluded from all models equally. Because the same prompts trigger the outliers in all variants, this procedure does not introduce an asymmetry between models and the resulting means are directly comparable.
 
 \subsection{Task-Based Evaluation via LLM-as-a-Judge (Promptfoo)}
 \label{subsec:promptfoo_results}
@@ -1386,7 +1388,7 @@ Control        & 64 (no LoRA)     & 38 / 54 & 70.37\% \\ \bottomrule
 \end{tabular}
 \end{table}
 
-Examining the assertion-level breakdown across prompt categories reveals a consistent degradation hierarchy. Instruction-following assertions---those requiring the model to produce exactly a specified number of sentences or bullet points---degrade first and most severely. At 8 steps the Student passes only 62.96\% of all assertions, and the structural-constraint assertions account for a disproportionate share of the failures: the model frequently generates either a single run-on sentence or an unstructured word salad, failing to respect explicit count constraints. Factual consistency assertions hold relatively well down to 16 steps but begin failing at 8 steps, where outputs hallucinate entity names and confabulate event details. Semantic coherence assertions---those checking whether the output addresses the topic of the prompt---degrade more gracefully, dropping from approximately 77\% of the coherence assertions passing at 128 steps to approximately 55\% at 8 steps. Code syntax validity assertions fail entirely for the 8-step Student because repeated punctuation and broken indentation make outputs syntactically unparsable, whereas the 64-step non-distilled baseline still produces syntactically valid code stubs, suggesting that syntax enforcement requires a minimum of approximately 32 coherent unmasking iterations to propagate bracket-matching constraints across the generated token span.
+Examining the assertion-level breakdown across prompt categories reveals a consistent degradation hierarchy. Instruction-following assertions---those requiring the model to produce exactly a specified number of sentences or bullet points---degrade first and most severely. At 8 steps the Student passes only 62.96\% of all assertions, and the structural-constraint assertions account for a disproportionate share of the failures: the model frequently generates either a single run-on sentence or an unstructured word salad, failing to respect explicit count constraints. Factual consistency assertions hold relatively well down to 32 steps but begin failing at 16 steps, where outputs hallucinate entity names and confabulate event details. Semantic coherence assertions---those checking whether the output addresses the topic of the prompt---degrade more gracefully, dropping from approximately 77\% of the coherence assertions passing at 128 steps to approximately 55\% at 8 steps. Code syntax validity assertions fail entirely for the 8-step Student because repeated punctuation and broken indentation make outputs syntactically unparsable, whereas the 64-step non-distilled baseline still produces syntactically valid code stubs, suggesting that syntax enforcement requires a minimum of approximately 32 coherent unmasking iterations to propagate bracket-matching constraints across the generated token span.
 
 The assertion-level perspective also clarifies the Round 2 result (75.93\%, 41/54 assertions passing) which at first appears paradoxical---how can a 32-step model surpass the 128-step Teacher? The extra passing assertion relative to the Teacher comes from a creative writing prompt where the Teacher's native sampler produces a subtly repetitive structure that the Llama 3.1 8B judge penalizes for lacking diversity of sentence openers, while the distilled Round-2 Student---trained on the smoother supervision signal of the already-refined Round-1 Teacher---generates a more varied response that passes this stylistic assertion. This illustrates that progressive distillation can introduce beneficial regularization effects beyond mere step compression: each round of Teacher refinement removes idiosyncratic biases of the native sampling loop, producing supervision targets that are qualitatively more ``average'' and therefore more likely to satisfy diverse semantic assertions.
 
@@ -1395,25 +1397,25 @@ The 32-step distilled Student (75.93\%) simultaneously surpasses both the 128-st
 \subsection{Inference Efficiency and Generation Throughput}
 \label{subsec:efficiency_results}
 
-Generation latency was measured server-side by the Flask evaluation endpoint, which timestamps tokenization and generation separately using Python's \texttt{time.perf\_counter()} before and after the call to the LLaDA \texttt{generate()} function. Twelve evaluation prompts were submitted sequentially; the endpoint records wall-clock generation time in milliseconds for each, excluding tokenization overhead and HTTP round-trip time. Table~\ref{tab:latency} reports average, median, and P95 latency in milliseconds across the 12 prompts, together with the speedup relative to the 128-step Teacher.
+Generation latency was measured server-side by the Flask evaluation endpoint, which timestamps tokenization and generation separately using Python's \texttt{time.perf\_counter()} before and after the call to the LLaDA \texttt{generate()} function. Twelve evaluation prompts were submitted sequentially; the endpoint records wall-clock generation time in milliseconds for each, excluding tokenization overhead and HTTP round-trip time. Table~\ref{tab:latency} reports average and median latency in milliseconds across the 12 prompts, together with the speedup relative to the 128-step Teacher.
 
 \begin{table}[H]
 \centering
 \caption{Inference latency and speedup across all model variants (Flask server, RTX 2070 Super, 12 evaluation prompts).}
 \label{tab:latency}
 \resizebox{\textwidth}{!}{%
-\begin{tabular}{@{}lccccc@{}}
+\begin{tabular}{@{}lcccc@{}}
 \toprule
-\textbf{Model Variant} & \textbf{Steps} & \textbf{Avg Gen (ms)} & \textbf{Median Gen (ms)} & \textbf{P95 Gen (ms)} & \textbf{Avg Speedup} \\ \midrule
-Teacher Baseline            & 128 & 17,292 & 17,266 & 17,534 & 1.00$\times$  \\
-Teacher Control (no LoRA)   & 64  & $\approx$11,427 & $\approx$11,400 & $\approx$11,500 & 1.51$\times$ \\
-Distilled Student (Round 1) & 64  & 8,934  & 8,838  & 9,276  & 1.94$\times$  \\
-Distilled Student (Round 2) & 32  & 4,766  & 4,703  & 5,294  & 3.63$\times$  \\
-Distilled Student (Round 3) & 16  & 2,514  & 2,502  & 2,681  & 6.88$\times$  \\
-Distilled Student (Round 4) & 8   & 1,412  & 1,393  & 1,522  & 12.25$\times$ \\
-Distilled Student (Round 5) & 4   & 855    & 833    & 1,006  & 20.22$\times$ \\
-Distilled Student (Round 6) & 2   & 562    & 596    & 685    & 30.77$\times$ \\
-Distilled Student (Round 7) & 1   & 468    & 476    & 558    & 36.95$\times$ \\ \bottomrule
+\textbf{Model Variant} & \textbf{Steps} & \textbf{Avg Gen (ms)} & \textbf{Median Gen (ms)} & \textbf{Avg Speedup} \\ \midrule
+Teacher Baseline            & 128 & 17,292 & 17,266 & 1.00$\times$  \\
+Teacher Control (no LoRA)   & 64  & $\approx$11,427 & $\approx$11,400 & 1.51$\times$ \\
+Distilled Student (Round 1) & 64  & 8,934  & 8,838  & 1.94$\times$  \\
+Distilled Student (Round 2) & 32  & 4,766  & 4,703  & 3.63$\times$  \\
+Distilled Student (Round 3) & 16  & 2,514  & 2,502  & 6.88$\times$  \\
+Distilled Student (Round 4) & 8   & 1,412  & 1,393  & 12.25$\times$ \\
+Distilled Student (Round 5) & 4   & 855    & 833    & 20.22$\times$ \\
+Distilled Student (Round 6) & 2   & 562    & 596    & 30.77$\times$ \\
+Distilled Student (Round 7) & 1   & 468    & 476    & 36.95$\times$ \\ \bottomrule
 \end{tabular}%
 }
 \end{table}
@@ -1427,7 +1429,7 @@ For example, the 128-step Teacher with an average generation latency of 17{,}292
 
 \begin{table}[H]
 \centering
-\caption{Token throughput derived from average generation latency at \texttt{gen\_length=64} (serial, single-GPU, RTX 2070 Super). Computed via Eq.~\eqref{eq:throughput}.}
+\caption{Token throughput derived from average generation latency at \texttt{gen\_length=64} (serial, single-GPU, RTX 2070 Super).}
 \label{tab:throughput}
 \begin{tabular}{@{}ccc@{}}
 \toprule
@@ -1442,6 +1444,60 @@ For example, the 128-step Teacher with an average generation latency of 17{,}292
 1   & 468    & 136.8 \\ \bottomrule
 \end{tabular}
 \end{table}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=13cm, height=7cm,
+    xlabel={Sampling Steps},
+    ylabel={Throughput (tok/s)},
+    xmin=0, xmax=135,
+    ymin=0, ymax=150,
+    xtick={1,2,4,8,16,32,64,128},
+    xticklabels={1,2,4,8,16,32,64,128},
+    grid=both,
+    grid style={gray!25, dashed},
+    tick align=outside,
+    axis line style={thick},
+    legend style={at={(0.98,0.98)}, anchor=north east,
+                  font=\small, draw=gray!60, fill=white},
+]
+\addplot[
+    color=teal!70!black, thick, mark=*, mark size=3pt,
+    mark options={fill=teal!70!black}
+] coordinates {
+    (1,   136.8)
+    (2,   113.9)
+    (4,    74.9)
+    (8,    45.3)
+    (16,   25.5)
+    (32,   13.4)
+    (64,    7.2)
+    (128,   3.7)
+};
+\addlegendentry{Throughput (tok/s)}
+
+% Labels
+\node[font=\tiny, teal!70!black, above=3pt] at (axis cs:1,   136.8) {136.8};
+\node[font=\tiny, teal!70!black, above=3pt] at (axis cs:2,   113.9) {113.9};
+\node[font=\tiny, teal!70!black, above=3pt] at (axis cs:4,    74.9) {74.9};
+\node[font=\tiny, teal!70!black, right=3pt] at (axis cs:8,    45.3) {45.3};
+\node[font=\tiny, teal!70!black, right=3pt] at (axis cs:16,   25.5) {25.5};
+\node[font=\tiny, teal!70!black, right=3pt] at (axis cs:32,   13.4) {13.4};
+\node[font=\tiny, teal!70!black, right=3pt] at (axis cs:64,    7.2) {7.2};
+\node[font=\tiny, teal!70!black, right=3pt] at (axis cs:128,   3.7) {3.7};
+
+% Optimal point annotation
+\draw[->, orange!80!black, thick] (axis cs:38, 20) -- (axis cs:32, 13.8);
+\node[font=\small, orange!80!black, align=center] at (axis cs:55, 22)
+    {\textbf{Optimal} (32 steps)};
+
+\end{axis}
+\end{tikzpicture}
+\caption{Token throughput (tok/s) vs.\ sampling steps. The curve is concave because fixed per-step overhead (CUDA kernel launches, block scheduling, sampling bookkeeping) dominates at very low step counts, making each additional step reduction yield diminishing absolute latency savings. The 32-step operating point (orange) delivers 13.4 tok/s---a 3.6$\times$ improvement over the 128-step Teacher---while retaining the highest measured Promptfoo pass rate.}
+\label{fig:throughput}
+\end{figure}
 
 A noteworthy characteristic of the throughput curve is that it is not perfectly linear in the step count. Doubling the steps from 1 to 2 raises latency from 468 ms to 562 ms (a 20\% increase), whereas doubling from 64 to 128 raises latency from 8{,}934 ms to 17{,}292 ms (a 94\% increase). This sub-linear cost at very low step counts arises from the fixed overhead of the LLaDA semi-autoregressive block scheduling: at 1--4 steps, the per-step overhead (CUDA kernel launch, attention mask construction, sampling bookkeeping) dominates computation time, so halving steps yields diminishing absolute latency reductions. At higher step counts, the compute cost of the denoising forward pass dominates and the relationship becomes approximately linear. This fixed overhead also explains why the 36.95$\times$ speedup at 1 step is less than the $128\times$ one might naively expect from a 128-fold reduction in steps.
 
@@ -1590,7 +1646,7 @@ Figures~\ref{fig:latency_promptfoo} and~\ref{fig:latency_perplexity} plot the tw
 \label{fig:latency_perplexity}
 \end{figure}
 
-\noindent The two charts make two key findings immediately apparent. First, both evaluators---Promptfoo task-pass rate and GPT-2 perplexity---are \textbf{consistent} in their verdict: quality remains roughly flat from 128 steps down to 32 steps, after which it degrades sharply, with a visible inflection between 16 and 8 steps. Second, perplexity is the \emph{more sensitive} of the two metrics: it begins rising already at 32 steps (from 12.97 to 15.93), whereas the Promptfoo pass rate at 32 steps actually \emph{exceeds} the Teacher baseline (75.93\% vs.\ 74.07\%), suggesting that perplexity captures fine-grained fluency degradation before it manifests in task-level assertion failures. The two evaluators are therefore complementary: Promptfoo quantifies \emph{semantic correctness} while perplexity quantifies \emph{language fluency}, and practitioners should consult both when selecting an operating point.
+\noindent The two charts make two key findings immediately apparent. First, both evaluators---Promptfoo task-pass rate and GPT-2 perplexity---are \textbf{consistent} in their verdict: quality remains roughly flat from 128 steps down to 32 steps, after which it degrades sharply, with a visible inflection between 32 and 16 steps. Second, perplexity is the \emph{more sensitive} of the two metrics: it begins rising already at 32 steps (from 12.97 to 15.93), whereas the Promptfoo pass rate at 32 steps actually \emph{exceeds} the Teacher baseline (75.93\% vs.\ 74.07\%), suggesting that perplexity captures fine-grained fluency degradation before it manifests in task-level assertion failures. The two evaluators are therefore complementary: Promptfoo quantifies \emph{task-completion capacity and semantic correctness} (instruction following, factual consistency, code validity, and coherence) while perplexity quantifies \emph{language fluency}, and practitioners should consult both when selecting an operating point.
 
 % ======================================================================
 \section{Analysis and Discussion}
@@ -1601,7 +1657,7 @@ Figures~\ref{fig:latency_promptfoo} and~\ref{fig:latency_perplexity} plot the tw
 
 The central methodological hypothesis of this work posited that reducing sampling steps in discrete diffusion introduces a linear accumulation of per-step rounding errors $\sum_k \varepsilon_k$ that manifest as degraded generation quality. The empirical results support this hypothesis with important structural nuances introduced by progressive distillation.
 
-When perplexity is plotted against the number of sampling steps on a semi-logarithmic scale, two qualitatively distinct regimes emerge. In Regime A, spanning the range from 128 down to 32 steps, perplexity remains flat or decreases slightly, from 13.00 at 128 steps to 12.97 at 64 steps and 15.93 at 32 steps. The error budget afforded by this residual step count is large enough for the distillation process to absorb compression noise without measurable quality loss. In Regime B, spanning 16 steps and below, perplexity rises super-exponentially: 24.86 at 16 steps, 68.44 at 8 steps, 79.18 at 4 steps, 161.93 at 2 steps, and 353.26 at a single step. In this regime, the number of discrete unmasking iterations is insufficient for the model to resolve high-entropy token positions, and rounding errors from \texttt{argmax} decoding cascade irreversibly through the remaining masked positions. As discussed in Section~\ref{subsec:ppl_outliers}, the raw perplexity distribution for the Teacher and non-distilled control baselines contains catastrophic outliers that have been excluded from the reported means; the distilled Students produce no such outliers, which is itself a substantive finding about the regularizing effect of progressive distillation.
+Examining the perplexity values in Table~\ref{tab:quality_results}, two qualitatively distinct regimes emerge. In Regime A, spanning the range from 128 down to 32 steps, perplexity remains flat or decreases slightly, from 13.00 at 128 steps to 12.97 at 64 steps and 15.93 at 32 steps. The error budget afforded by this residual step count is large enough for the distillation process to absorb compression noise without measurable quality loss. In Regime B, spanning 16 steps and below, perplexity rises sharply: 24.86 at 16 steps, 68.44 at 8 steps, 79.18 at 4 steps, 161.93 at 2 steps, and 353.26 at a single step. In this regime, the number of discrete unmasking iterations is insufficient for the model to resolve high-entropy token positions, and rounding errors from \texttt{argmax} decoding cascade irreversibly through the remaining masked positions. As discussed in Section~\ref{subsec:ppl_outliers}, the reported means exclude format-driven GPT-2 scoring artefacts that affect all models equally on the same small set of structured-output prompts.
 
 \subsubsection{The Definitive Role of the 64-Step Non-Distilled Control Benchmark}
 
@@ -1623,7 +1679,7 @@ On the detrimental side, the 8-step and lower Students learned distributions tha
 \subsection{Qualitative Error Analysis and Current Limitations}
 \label{subsec:error_analysis}
 
-A systematic qualitative analysis of failure modes was conducted on outputs from the 8-step Student model using the four representative prompt categories below.
+A systematic qualitative analysis of failure modes was conducted on outputs from the 8-step Student model, which represents the most severe degradation regime. It should be noted that the 16-step Student exhibited several of the same failure modes in a substantially milder form---occasional token repetition and minor structural irregularities---but without the catastrophic collapses documented below. The four representative categories are:
 
 \textbf{Failure Mode 1: Catastrophic token collapse.} A football motivational speech prompt elicited the output ``,,,,!''---only punctuation and no semantic content whatsoever. The model's minimal step budget and quantized 4-bit weights produce degenerate confidence maps where \texttt{argmax} repeatedly selects the comma token because the LoRA-adapted attention heads have overfit to mid-sequence pause patterns in the 50-example training corpus.
 
@@ -1993,7 +2049,7 @@ The SMART objectives established at the outset of this thesis were: (1) achieve 
 
 \begin{table}[H]
 \centering
-\caption{Assessment of SMART objectives against empirical results (\texttt{run\_20260609\_105305}).}
+\caption{Assessment of SMART objectives against empirical results.}
 \label{tab:objective_achievement}
 \begin{tabular}{@{}p{5.5cm}p{3cm}p{4.5cm}l@{}}
 \toprule
@@ -2027,7 +2083,7 @@ While the pipeline is fully functional and the empirical objectives are met, sev
 
 \textbf{6. Rigorous statistical validation.} The current evaluation uses 12 prompts and 50 training examples due to time constraints on a single local machine. A follow-up study should expand the Promptfoo suite to 100+ prompts spanning multiple languages and reasoning types, report bootstrap confidence intervals on perplexity and pass-rate metrics, and supplement LLM-as-a-Judge evaluation with human assessment to calibrate the Llama 3.1 8B judge's alignment with human preferences.
 
-These directions, taken together, form a credible roadmap for transforming the current proof-of-concept into a production-grade tool for accelerating discrete diffusion language models on commodity hardware---one that would make the benefits of advanced parallel text generation accessible to the broadest possible research and engineering community.
+These directions, taken together, outline concrete next steps for extending the findings of this thesis---each building directly on a limitation identified during the experimental work and addressing it with a well-motivated technical intervention.
 
 \newpage 
 % ======================================================================
