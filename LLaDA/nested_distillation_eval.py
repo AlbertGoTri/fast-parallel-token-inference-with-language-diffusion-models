@@ -13,12 +13,12 @@ import subprocess
 import torch
 
 try:
-    from evaluation.promptfoo.generate_report import generate_report as generate_promptfoo_html_report
+    from LLaDA.evaluation.promptfoo.generate_report import generate_report as generate_promptfoo_html_report
 except Exception:
     generate_promptfoo_html_report = None
 
 try:
-    from evaluation.perplexity.calculate_perplexity import generate_html_report as generate_perplexity_html_report
+    from LLaDA.evaluation.perplexity.calculate_perplexity import generate_html_report as generate_perplexity_html_report
 except Exception:
     generate_perplexity_html_report = None
 
@@ -202,7 +202,7 @@ def run_perplexity_eval(
     print(f"  Device: {device}")
 
     try:
-        from evaluation.perplexity.calculate_perplexity import (
+        from LLaDA.evaluation.perplexity.calculate_perplexity import (
             load_gpt2_model, evaluate_from_promptfoo
         )
     except ImportError:
