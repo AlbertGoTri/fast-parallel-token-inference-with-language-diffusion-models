@@ -1068,7 +1068,7 @@ def main():
     )
     parser.add_argument(
         "--config",
-        default="nested_distillation_config.yaml",
+        default="LLaDA/nested_distillation_config.yaml",
         help="Path to configuration file"
     )
     parser.add_argument(
