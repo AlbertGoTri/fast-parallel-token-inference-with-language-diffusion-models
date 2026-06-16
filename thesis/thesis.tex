@@ -2089,4 +2089,328 @@ These directions, taken together, outline concrete next steps for extending the 
 % ======================================================================
 \printbibliography
 
+% ======================================================================
+% --- ANNEXES ---
+% ======================================================================
+
+% Switch to appendix lettering (A, B, C, ...) and reset section counter
+\appendix
+\renewcommand{\thesection}{\Alph{section}}
+
+% Add a high-level "Annexes" entry to the TOC with a visible title page
+\newpage
+\thispagestyle{fancy}
+\vspace*{3cm}
+\begin{center}
+    {\LARGE\bfseries Annexes}
+\end{center}
+\addcontentsline{toc}{section}{\textbf{Annexes}}
+
+% Helper command for the annex cover page.
+% Usage: \annexcover{Label}{Title}{Config}{Key Metric}{Notes}
+\newcommand{\annexcover}[5]{%
+    \newpage
+    \thispagestyle{fancy}
+    \vspace*{3cm}
+    \begin{center}
+        {\Large\bfseries #1}\\[1.2em]
+        {\large\bfseries #2}\\[2em]
+        \begin{tabular}{@{}p{3.5cm} p{10cm}@{}}
+            \textbf{Config:}      & #3 \\[0.8em]
+            \textbf{Key Metric:}  & #4 \\[0.8em]
+            \textbf{Notes:}       & #5 \\
+        \end{tabular}
+    \end{center}
+    \vfill
+}
+
+% -------------------------------------------------------------------
+% A.1 – Promptfoo Evaluation – Teacher (128 steps)
+% -------------------------------------------------------------------
+\refstepcounter{section}
+\addcontentsline{toc}{subsection}{A.1\quad Promptfoo Evaluation Report – Teacher (128 steps)}
+\annexcover%
+    {Appendix A.1}%
+    {Promptfoo Evaluation Report – Teacher (128 steps)}%
+    {Base Teacher model: LLaDA-8B running at 128 denoising steps (no LoRA)}%
+    {Promptfoo Pass Rate: 74.07\%}%
+    {Reference baseline for all subsequent distillation rounds. All quality comparisons are made against this configuration.}
+\IfFileExists{annex_reports/promptfoo_128_teacher.pdf}{%
+    \includepdf[pages=-]{annex_reports/promptfoo_128_teacher.pdf}%
+}{%
+    \begin{center}\textbf{(annex\_reports/promptfoo\_128\_teacher.pdf not found -- omitted for build)}\end{center}%
+}
+
+% -------------------------------------------------------------------
+% A.2 – Perplexity Evaluation – Teacher (128 steps)
+% -------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{A.2\quad Perplexity Evaluation Report – Teacher (128 steps)}
+\annexcover%
+    {Appendix A.2}%
+    {Perplexity Evaluation Report – Teacher (128 steps)}%
+    {Base Teacher model: LLaDA-8B running at 128 denoising steps (no LoRA)}%
+    {Average Perplexity: 13.00}%
+    {Reference perplexity baseline. The 1.5$\times$ quality envelope target is defined as PPL $< 19.50$ relative to this value.}
+\IfFileExists{annex_reports/perplexity_128_teacher.pdf}{%
+    \includepdf[pages=-]{annex_reports/perplexity_128_teacher.pdf}%
+}{%
+    \begin{center}\textbf{(annex\_reports/perplexity\_128\_teacher.pdf not found -- omitted for build)}\end{center}%
+}
+
+% -------------------------------------------------------------------
+% A.3 – Promptfoo Evaluation – Student Round 1 (64 steps)
+% -------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{A.3\quad Promptfoo Evaluation Report – Distilled Student (64 steps)}
+\annexcover%
+    {Appendix A.3}%
+    {Promptfoo Evaluation Report – Distilled Student (64 steps)}%
+    {Distilled Student model: Round 1 of progressive distillation, 64 denoising steps with LoRA}%
+    {Promptfoo Pass Rate: 74.07\%}%
+    {First distillation round. Matches the Teacher's pass rate at $1.94\times$ the speed, confirming that distillation compensates for na\"{i}ve step reduction.}
+\IfFileExists{annex_reports/promptfoo_64.pdf}{%
+    \includepdf[pages=-]{annex_reports/promptfoo_64.pdf}%
+}{%
+    \begin{center}\textbf{(annex\_reports/promptfoo\_64.pdf not found -- omitted for build)}\end{center}%
+}
+
+% -------------------------------------------------------------------
+% A.4 – Perplexity Evaluation – Student Round 1 (64 steps)
+% -------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{A.4\quad Perplexity Evaluation Report – Distilled Student (64 steps)}
+\annexcover%
+    {Appendix A.4}%
+    {Perplexity Evaluation Report – Distilled Student (64 steps)}%
+    {Distilled Student model: Round 1 of progressive distillation, 64 denoising steps with LoRA}%
+    {Average Perplexity: 12.97}%
+    {Perplexity is within the $1.5\times$ quality envelope (target $< 19.50$). Round 1 loss stabilization observed.}
+\IfFileExists{annex_reports/perplexity_64.pdf}{%
+    \includepdf[pages=-]{annex_reports/perplexity_64.pdf}%
+}{%
+    \begin{center}\textbf{(annex\_reports/perplexity\_64.pdf not found -- omitted for build)}\end{center}%
+}
+
+% -------------------------------------------------------------------
+% A.5 – Promptfoo Evaluation – Student Round 2 (32 steps)
+% -------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{A.5\quad Promptfoo Evaluation Report – Distilled Student (32 steps)}
+\annexcover%
+    {Appendix A.5}%
+    {Promptfoo Evaluation Report – Distilled Student (32 steps)}%
+    {Distilled Student model: Round 2 of progressive distillation, 32 denoising steps with LoRA}%
+    {Promptfoo Pass Rate: 75.93\%}%
+    {Optimal quality--speed trade-off point. Highest Promptfoo score in the entire study, at $3.63\times$ the speed of the Teacher.}
+\IfFileExists{annex_reports/promptfoo_32.pdf}{%
+    \includepdf[pages=-]{annex_reports/promptfoo_32.pdf}%
+}{%
+    \begin{center}\textbf{(annex\_reports/promptfoo\_32.pdf not found -- omitted for build)}\end{center}%
+}
+
+% -------------------------------------------------------------------
+% A.6 – Perplexity Evaluation – Student Round 2 (32 steps)
+% -------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{A.6\quad Perplexity Evaluation Report – Distilled Student (32 steps)}
+\annexcover%
+    {Appendix A.6}%
+    {Perplexity Evaluation Report – Distilled Student (32 steps)}%
+    {Distilled Student model: Round 2 of progressive distillation, 32 denoising steps with LoRA}%
+    {Average Perplexity: 15.93}%
+    {Still within the $1.5\times$ quality envelope (target $< 19.50$). Slight increase from Round 1 remains well controlled.}
+\IfFileExists{annex_reports/perplexity_32.pdf}{%
+    \includepdf[pages=-]{annex_reports/perplexity_32.pdf}%
+}{%
+    \begin{center}\textbf{(annex\_reports/perplexity\_32.pdf not found -- omitted for build)}\end{center}%
+}
+
+% -------------------------------------------------------------------
+% A.7 – Promptfoo Evaluation – Student Round 3 (16 steps)
+% -------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{A.7\quad Promptfoo Evaluation Report – Distilled Student (16 steps)}
+\annexcover%
+    {Appendix A.7}%
+    {Promptfoo Evaluation Report – Distilled Student (16 steps)}%
+    {Distilled Student model: Round 3 of progressive distillation, 16 denoising steps with LoRA}%
+    {Promptfoo Pass Rate: 68.5\%}%
+    {Quality declines below the 70\% threshold defined in the SMART objectives. Marks the onset of meaningful quality degradation.}
+\IfFileExists{annex_reports/promptfoo_16.pdf}{%
+    \includepdf[pages=-]{annex_reports/promptfoo_16.pdf}%
+}{%
+    \begin{center}\textbf{(annex\_reports/promptfoo\_16.pdf not found -- omitted for build)}\end{center}%
+}
+
+% -------------------------------------------------------------------
+% A.8 – Perplexity Evaluation – Student Round 3 (16 steps)
+% -------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{A.8\quad Perplexity Evaluation Report – Distilled Student (16 steps)}
+\annexcover%
+    {Appendix A.8}%
+    {Perplexity Evaluation Report – Distilled Student (16 steps)}%
+    {Distilled Student model: Round 3 of progressive distillation, 16 denoising steps with LoRA}%
+    {Average Perplexity: 24.86}%
+    {First round to exceed the $1.5\times$ quality envelope (target $< 19.50$). Marks the transition into the super-exponential degradation regime.}
+\IfFileExists{annex_reports/perplexity_16.pdf}{%
+    \includepdf[pages=-]{annex_reports/perplexity_16.pdf}%
+}{%
+    \begin{center}\textbf{(annex\_reports/perplexity\_16.pdf not found -- omitted for build)}\end{center}%
+}
+
+% -------------------------------------------------------------------
+% A.9 – Promptfoo Evaluation – Student Round 4 (8 steps)
+% -------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{A.9\quad Promptfoo Evaluation Report – Distilled Student (8 steps)}
+\annexcover%
+    {Appendix A.9}%
+    {Promptfoo Evaluation Report – Distilled Student (8 steps)}%
+    {Distilled Student model: Round 4 of progressive distillation, 8 denoising steps with LoRA}%
+    {Promptfoo Pass Rate: 62.96\%}%
+    {Acceleration reaches $12.25\times$ but drops below the 70\% quality threshold. Defines the practical lower bound for usable distillation on this hardware.}
+\IfFileExists{annex_reports/promptfoo_8.pdf}{%
+    \includepdf[pages=-]{annex_reports/promptfoo_8.pdf}%
+}{%
+    \begin{center}\textbf{(annex\_reports/promptfoo\_8.pdf not found -- omitted for build)}\end{center}%
+}
+
+% -------------------------------------------------------------------
+% A.10 – Perplexity Evaluation – Student Round 4 (8 steps)
+% -------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{A.10\quad Perplexity Evaluation Report – Distilled Student (8 steps)}
+\annexcover%
+    {Appendix A.10}%
+    {Perplexity Evaluation Report – Distilled Student (8 steps)}%
+    {Distilled Student model: Round 4 of progressive distillation, 8 denoising steps with LoRA}%
+    {Average Perplexity: 68.44}%
+    {Deep into the super-exponential degradation regime. Qualitative failure modes (mode averaging, repetition) emerge consistently at this compression level.}
+\IfFileExists{annex_reports/perplexity_8.pdf}{%
+    \includepdf[pages=-]{annex_reports/perplexity_8.pdf}%
+}{%
+    \begin{center}\textbf{(annex\_reports/perplexity\_8.pdf not found -- omitted for build)}\end{center}%
+}
+
+% -------------------------------------------------------------------
+% A.11 – Promptfoo Evaluation – Student Round 5 (4 steps)
+% -------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{A.11\quad Promptfoo Evaluation Report – Distilled Student (4 steps)}
+\annexcover%
+    {Appendix A.11}%
+    {Promptfoo Evaluation Report – Distilled Student (4 steps)}%
+    {Distilled Student model: Round 5 of progressive distillation, 4 denoising steps with LoRA}%
+    {Promptfoo Pass Rate: 59.3\%}%
+    {Deep compression round. Pass rate drops significantly; results confirm the super-exponential quality collapse identified in Chapter 6.}
+\IfFileExists{annex_reports/promptfoo_4.pdf}{%
+    \includepdf[pages=-]{annex_reports/promptfoo_4.pdf}%
+}{%
+    \begin{center}\textbf{(annex\_reports/promptfoo\_4.pdf not found -- omitted for build)}\end{center}%
+}
+
+% -------------------------------------------------------------------
+% A.12 – Perplexity Evaluation – Student Round 5 (4 steps)
+% -------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{A.12\quad Perplexity Evaluation Report – Distilled Student (4 steps)}
+\annexcover%
+    {Appendix A.12}%
+    {Perplexity Evaluation Report – Distilled Student (4 steps)}%
+    {Distilled Student model: Round 5 of progressive distillation, 4 denoising steps with LoRA}%
+    {Average Perplexity: 79.18}%
+    {Perplexity divergence accelerates sharply; characteristic of the super-exponential collapse regime below 8 steps.}
+\IfFileExists{annex_reports/perplexity_4.pdf}{%
+    \includepdf[pages=-]{annex_reports/perplexity_4.pdf}%
+}{%
+    \begin{center}\textbf{(annex\_reports/perplexity\_4.pdf not found -- omitted for build)}\end{center}%
+}
+
+% -------------------------------------------------------------------
+% A.13 – Promptfoo Evaluation – Student Round 6 (2 steps)
+% -------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{A.13\quad Promptfoo Evaluation Report – Distilled Student (2 steps)}
+\annexcover%
+    {Appendix A.13}%
+    {Promptfoo Evaluation Report – Distilled Student (2 steps)}%
+    {Distilled Student model: Round 6 of progressive distillation, 2 denoising steps with LoRA}%
+    {Promptfoo Pass Rate: 50\%}%
+    {Near-single-step compression. Output quality severely degraded; included to document the full extent of the distillation pipeline.}
+\IfFileExists{annex_reports/promptfoo_2.pdf}{%
+    \includepdf[pages=-]{annex_reports/promptfoo_2.pdf}%
+}{%
+    \begin{center}\textbf{(annex\_reports/promptfoo\_2.pdf not found -- omitted for build)}\end{center}%
+}
+
+% -------------------------------------------------------------------
+% A.14 – Perplexity Evaluation – Student Round 6 (2 steps)
+% -------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{A.14\quad Perplexity Evaluation Report – Distilled Student (2 steps)}
+\annexcover%
+    {Appendix A.14}%
+    {Perplexity Evaluation Report – Distilled Student (2 steps)}%
+    {Distilled Student model: Round 6 of progressive distillation, 2 denoising steps with LoRA}%
+    {Average Perplexity: 161.93}%
+    {Extreme compression; perplexity is very high, confirming severe semantic degradation at 2-step generation.}
+\IfFileExists{annex_reports/perplexity_2.pdf}{%
+    \includepdf[pages=-]{annex_reports/perplexity_2.pdf}%
+}{%
+    \begin{center}\textbf{(annex\_reports/perplexity\_2.pdf not found -- omitted for build)}\end{center}%
+}
+
+% -------------------------------------------------------------------
+% A.15 – Promptfoo Evaluation – Student Round 7 (1 step)
+% -------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{A.15\quad Promptfoo Evaluation Report – Distilled Student (1 step)}
+\annexcover%
+    {Appendix A.15}%
+    {Promptfoo Evaluation Report – Distilled Student (1 step)}%
+    {Distilled Student model: Round 7 of progressive distillation, 1 denoising step with LoRA}%
+    {Promptfoo Pass Rate: 46.3\%}%
+    {Final and most aggressive distillation round. Single-step generation; documents the absolute lower bound of the pipeline.}
+\IfFileExists{annex_reports/promptfoo_1.pdf}{%
+    \includepdf[pages=-]{annex_reports/promptfoo_1.pdf}%
+}{%
+    \begin{center}\textbf{(annex\_reports/promptfoo\_1.pdf not found -- omitted for build)}\end{center}%
+}
+
+% -------------------------------------------------------------------
+% A.16 – Perplexity Evaluation – Student Round 7 (1 step)
+% -------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{A.16\quad Perplexity Evaluation Report – Distilled Student (1 step)}
+\annexcover%
+    {Appendix A.16}%
+    {Perplexity Evaluation Report – Distilled Student (1 step)}%
+    {Distilled Student model: Round 7 of progressive distillation, 1 denoising step with LoRA}%
+    {Average Perplexity: 353.26}%
+    {Single-step inference perplexity; serves as the absolute upper bound of the degradation curve across the full distillation sequence.}
+\IfFileExists{annex_reports/perplexity_1.pdf}{%
+    \includepdf[pages=-]{annex_reports/perplexity_1.pdf}%
+}{%
+    \begin{center}\textbf{(annex\_reports/perplexity\_1.pdf not found -- omitted for build)}\end{center}%
+}
+
+% -------------------------------------------------------------------
+% A.17 – Promptfoo Evaluation – Base Model without LoRA (64 steps)
+% -------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{A.17\quad Promptfoo Evaluation Report – Base Model without LoRA (64 steps)}
+\annexcover%
+    {Appendix A.17}%
+    {Promptfoo Evaluation Report – Base Model without LoRA (64 steps)}%
+    {LLaDA-8B base model (no LoRA adapter), evaluated at 64 denoising steps as a na\"{i}ve step-reduction control}%
+    {Promptfoo Pass Rate: 70.37\%}%
+    {Control experiment: na\"{i}ve step reduction from 128 to 64 without any distillation. Directly demonstrates the quality gap that LoRA-based distillation closes (compare with Appendix A.3).}
+\IfFileExists{annex_reports/base_model_64_promptfoo_report.pdf}{%
+    \includepdf[pages=-]{annex_reports/base_model_64_promptfoo_report.pdf}%
+}{%
+    \begin{center}\textbf{(annex\_reports/base\_model\_64\_promptfoo\_report.pdf not found -- omitted for build)}\end{center}%
+}
+
+% -------------------------------------------------------------------
+% A.18 – Perplexity Evaluation – Base Model without LoRA (64 steps)
+% -------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{A.18\quad Perplexity Evaluation Report – Base Model without LoRA (64 steps)}
+\annexcover%
+    {Appendix A.18}%
+    {Perplexity Evaluation Report – Base Model without LoRA (64 steps)}%
+    {LLaDA-8B base model (no LoRA adapter), evaluated at 64 denoising steps as a na\"{i}ve step-reduction control}%
+    {Average Perplexity: 17.38}%
+    {Perplexity control baseline for na\"{i}ve step reduction. Contrasted against the distilled 64-step Student (Appendix A.4, PPL 12.97) to isolate the contribution of LoRA distillation.}
+\IfFileExists{annex_reports/base_model_64_perplexity_report.pdf}{%
+    \includepdf[pages=-]{annex_reports/base_model_64_perplexity_report.pdf}%
+}{%
+    \begin{center}\textbf{(annex\_reports/base\_model\_64\_perplexity\_report.pdf not found -- omitted for build)}\end{center}%
+}
+
 \end{document}
