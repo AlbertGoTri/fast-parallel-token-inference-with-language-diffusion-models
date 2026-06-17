@@ -28,6 +28,8 @@
 \usepackage{pgfgantt}
 \usepackage{textcomp} % For the Euro symbol (\texteuro{})
 \usepackage{url}     % For \url{} in abstract
+\usepackage[colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue]{hyperref}
+\usepackage{microtype}  % Better margin handling, reduces overfull hboxes
 
 % --- CODE LISTING STYLE ---
 \lstset{
@@ -617,6 +619,7 @@ temperature, keeping learning-rate choices transferable across temperatures.
 For a batch of sequences the loss used is:
 \begin{figure}[H]
 \centering
+\scalebox{0.82}{%
 \begin{tikzpicture}[
     box/.style={draw, rectangle, rounded corners,
                 minimum width=4.8cm, minimum height=0.85cm,
@@ -683,7 +686,8 @@ For a batch of sequences the loss used is:
     -- (right_edge |- student.east)
     -- (student.east);
 
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 \caption{Knowledge Distillation Architecture}
 \end{figure}
 
@@ -1095,7 +1099,7 @@ quality baseline.
     \item \textbf{Wall-clock inference latency:} measured in tokens per second on
     a fixed hardware configuration across a standardised prompt set.
     \item \textbf{Profiling traces:} caching and training scripts export
-    Chrome-compatible profiler traces via \texttt{torch.profiler}, enabling
+    Chrome-compatible profiler traces via \texttt{torch\allowbreak.profiler}, enabling
     fine-grained per-operator analysis of the training and inference pipelines.
 \end{itemize}
 
@@ -1165,9 +1169,11 @@ quantization_config = BitsAndBytesConfig(
 )
 \end{lstlisting}
 
+\begin{sloppypar}
 The \texttt{load\_in\_4bit=True} flag compresses 16-bit weights down to 4-bit Normal Float (NF4) representations, reducing the parameter footprint of an 8B model from approximately 16 GB to approximately 4 GB. The \texttt{nf4} quantization type employs the information-theoretically optimal 4-bit data type for normally distributed weights, preserving more signal than standard FP4. Enabling \texttt{bnb\_4bit\_use\_double\_quant=True} applies a second quantization layer to the quantization constants themselves, shaving off an additional 0.5--1 GB at runtime. All dequantized matrix multiplications are performed in FP16 (\texttt{bnb\_4bit\_compute\_dtype=torch.float16}), which is natively accelerated on Turing-architecture RTX cards.
 
 PyTorch memory limits are further constrained with \texttt{max\_memory=\{0: ``6GiB'', ``cpu'': f``\{ram\_gb\}GiB''\}}, allowing the \texttt{accelerate} device map to offload embedding or attention layers to system RAM if the 6 GB GPU bound is approached.
+\end{sloppypar}
 
 \subsubsection{LoRA Configuration}
 
@@ -1196,16 +1202,16 @@ Three additional system-level constraints prevent memory fragmentation and refer
 
 \paragraph{Per-process memory cap.}
 The call
-\begin{center}
-\texttt{torch.cuda.set\_per\_process\_memory\_fraction(0.90)}
-\end{center}
+\begin{lstlisting}[language=Python]
+torch.cuda.set_per_process_memory_fraction(0.90)
+\end{lstlisting}
 limits PyTorch's CUDA caching allocator to 90\% of total device memory---approximately 7.2 GB on the RTX 2070 Super. The remaining 10\% (\(\approx\)800 MB) is reserved as a safety buffer for CUDA kernels, cuBLAS workspace, and transient allocations that bypass the PyTorch allocator entirely. Without this cap, large contiguous allocations during the LoRA backward pass can exhaust the full 8 GB pool and trigger out-of-memory (OOM) errors even when the reported allocated memory appears to leave headroom.
 
 \paragraph{CUDA allocator block size.}
 The environment variable
-\begin{center}
-\texttt{PYTORCH\_CUDA\_ALLOC\_CONF=max\_split\_size\_mb:128}
-\end{center}
+\begin{lstlisting}[language=bash]
+PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128
+\end{lstlisting}
 constrains the maximum size of contiguous memory blocks managed by the CUDA caching allocator. By default, PyTorch's allocator reserves large, monolithic blocks that it splits on demand; this strategy reduces allocation latency but causes severe fragmentation in the 8 GB pool when allocations of widely varying sizes (e.g., a 4 GB quantized model weight block alongside 64 MB logit tensors) coexist. Capping the block size at 128 MB forces finer-grained subdivision, allowing the allocator to satisfy varied request sizes without committing disproportionately large contiguous regions. The 128 MB threshold was selected empirically as the largest value that eliminates fragmentation-induced OOM errors while incurring negligible additional allocation overhead.
 
 \paragraph{Inter-stage GPU empty check.}
@@ -1692,7 +1698,28 @@ A systematic qualitative analysis of failure modes was conducted on outputs from
 By contrast, the same prompts evaluated on the 64-step non-distilled Teacher produce degraded but recognizable outputs: the football prompt yields stuttering but semantically present text, the relativity prompt produces a coherent child-friendly paragraph, and the Python prompt yields syntactically valid code with correct \texttt{try/except} blocks. This confirms that while the 8-step distilled Student wins on raw throughput, it concedes to the 64-step non-distilled baseline on tasks requiring structural precision or syntactic validity. The practical trade-off is therefore \textbf{application-dependent}: conversational interfaces tolerant of grammatical imprecision may accept the 8-step model, whereas code generation or structured-summary pipelines require at least 16--32 steps.
 
 % ======================================================================
-\section{Conclusions and Future Work}
+\section{Future Work}
+\label{sec:future_work}
+
+While the pipeline is fully functional and the empirical objectives are met, several limitations surfaced during validation that motivate concrete avenues for future research.
+
+\textbf{1. Eliminating the disk-swapping latency bottleneck.} The iterative caching mechanism is memory-safe but I/O-bound, spending 400--900 seconds per round writing and reading \texttt{pickle+gzip} trajectories. Future work could replace this format with memory-mapped Safetensors or PyTorch TensorStore, enabling zero-copy reads and faster deserialization. On systems with 12--16 GB VRAM, overlapping Teacher caching and Student training in a producer--consumer pattern could eliminate disk I/O entirely.
+
+\textbf{2. Scaling LoRA capacity on low-VRAM budgets.} The current configuration targets only \texttt{q\_proj} and \texttt{v\_proj}. Future iterations could add \texttt{k\_proj} and \texttt{o\_proj} to the target module set, doubling trainable parameters while remaining within the 8-bit optimizer budget, or explore DoRA (Weight-Decomposed Low-Rank Adaptation), which has demonstrated improved parameter efficiency over vanilla LoRA at equivalent rank.
+
+\textbf{3. Hybrid and curriculum-aware loss functions.} The current loss is pure KL divergence over the full vocabulary. Future work could augment this with a cross-entropy term on ground-truth completions, anchoring the Student to real text rather than purely to the Teacher's soft labels, or with a contrastive consistency loss that penalizes argmax divergence at the same diffusion midpoint. A perplexity-aware curriculum that dynamically adjusts \texttt{target\_step} within each round based on the Student's current perplexity would further adapt the training to individual model progress.
+
+\textbf{4. Temperature annealing and stochastic decoding.} The fixed $\tau = 2.0$ was sub-optimal for extreme-compression rounds ($\leq$8 steps). A round-dependent temperature schedule---either increasing to accommodate entropy collapse or decreasing to sharpen distributions as step counts fall---could substantially mitigate the mode-averaging artifacts documented in Chapter~6. Whether \texttt{remasking=`random'} during Teacher caching produces more robust interpolation points at very low step counts relative to the current \texttt{low\_confidence} strategy warrants systematic evaluation.
+
+\textbf{5. Scaling to larger base models and longer contexts.} The pipeline was validated on LLaDA-8B with \texttt{gen\_length=64}. Testing with generation lengths of 128 and 256 tokens would reveal whether the error-accumulation inflection point between 16 and 8 steps shifts as the sequence length increases. Multi-GPU pipeline parallelism---where one GPU holds the Teacher and another the Student---could eliminate disk swapping entirely while still fitting within the 8 GB per-card budget common in consumer workstations.
+
+\textbf{6. Rigorous statistical validation.} The current evaluation uses 12 prompts and 50 training examples due to time constraints on a single local machine. A follow-up study should expand the Promptfoo suite to 100+ prompts spanning multiple languages and reasoning types, report bootstrap confidence intervals on perplexity and pass-rate metrics, and supplement LLM-as-a-Judge evaluation with human assessment to calibrate the Llama 3.1 8B judge's alignment with human preferences.
+
+These directions, taken together, outline concrete next steps for extending the findings of this thesis---each building directly on a limitation identified during the experimental work and addressing it with a well-motivated technical intervention.
+
+\newpage
+% ======================================================================
+\section{Conclusions}
 \label{sec:conclusions}
 
 \subsection{Degree of Objective Achievement}
@@ -1719,25 +1746,12 @@ The \textbf{8-step Student} pushes acceleration to $12.25\times$ but drops the P
 
 \textbf{Engineering significance of the 8 GB achievement.} Standard reproductions of LLaDA-8B distillation reported in the literature typically assume A100 or H100 GPUs with 40--80 GB VRAM. By implementing iterative disk-swapping, 4-bit NF4 quantization, 8-bit AdamW, and gradient checkpointing, this thesis demonstrates that identical scientific outcomes---recursive teacher--student halving down to a single step---are achievable on a \textbf{\$450 consumer card} released in 2019. The total pipeline wall-clock time for seven rounds was approximately \textbf{3.5 hours}, of which evaluation dominated. This accessibility result is arguably as important as the algorithmic result, because it lowers the barrier to entry for researchers without datacenter access.
 
-\subsection{Future Research Directions}
-\label{subsec:future_work}
+\subsection{Summary}
+\label{subsec:conclusion_summary}
 
-While the pipeline is fully functional and the empirical objectives are met, several limitations surfaced during validation that motivate concrete avenues for future research.
+These experiments demonstrate the feasibility of sampling distillation in Language Diffusion Models: by training a LoRA-adapted student to reproduce the teacher's two-step soft token distributions in a single forward pass, it is possible to compress a 128-step masked-diffusion model down to 32 steps while simultaneously improving task-pass rate (75.93\% vs.\ 74.07\%) and maintaining near-teacher perplexity (15.93 vs.\ 13.00). The result is generation that is $3.63\times$ faster than the original teacher---and up to $36.95\times$ faster at single-step inference---all achieved on a consumer-grade 8 GB GPU, without access to datacenter hardware. Compared to traditional auto-regressive language models, which incur $\mathcal{O}(N)$ serial latency, the distilled LDM retains the parallel $\mathcal{O}(K)$ generation property with a drastically reduced $K$, opening a practical path toward high-throughput, low-latency text generation for resource-constrained deployments.
 
-\textbf{1. Eliminating the disk-swapping latency bottleneck.} The iterative caching mechanism is memory-safe but I/O-bound, spending 400--900 seconds per round writing and reading \texttt{pickle+gzip} trajectories. Future work could replace this format with memory-mapped Safetensors or PyTorch TensorStore, enabling zero-copy reads and faster deserialization. On systems with 12--16 GB VRAM, overlapping Teacher caching and Student training in a producer--consumer pattern could eliminate disk I/O entirely.
-
-\textbf{2. Scaling LoRA capacity on low-VRAM budgets.} The current configuration targets only \texttt{q\_proj} and \texttt{v\_proj}. Future iterations could add \texttt{k\_proj} and \texttt{o\_proj} to the target module set, doubling trainable parameters while remaining within the 8-bit optimizer budget, or explore DoRA (Weight-Decomposed Low-Rank Adaptation), which has demonstrated improved parameter efficiency over vanilla LoRA at equivalent rank.
-
-\textbf{3. Hybrid and curriculum-aware loss functions.} The current loss is pure KL divergence over the full vocabulary. Future work could augment this with a cross-entropy term on ground-truth completions, anchoring the Student to real text rather than purely to the Teacher's soft labels, or with a contrastive consistency loss that penalizes argmax divergence at the same diffusion midpoint. A perplexity-aware curriculum that dynamically adjusts \texttt{target\_step} within each round based on the Student's current perplexity would further adapt the training to individual model progress.
-
-\textbf{4. Temperature annealing and stochastic decoding.} The fixed $\tau = 2.0$ was sub-optimal for extreme-compression rounds ($\leq$8 steps). A round-dependent temperature schedule---either increasing to accommodate entropy collapse or decreasing to sharpen distributions as step counts fall---could substantially mitigate the mode-averaging artifacts documented in Chapter~6. Whether \texttt{remasking=`random'} during Teacher caching produces more robust interpolation points at very low step counts relative to the current \texttt{low\_confidence} strategy warrants systematic evaluation.
-
-\textbf{5. Scaling to larger base models and longer contexts.} The pipeline was validated on LLaDA-8B with \texttt{gen\_length=64}. Testing with generation lengths of 128 and 256 tokens would reveal whether the error-accumulation inflection point between 16 and 8 steps shifts as the sequence length increases. Multi-GPU pipeline parallelism---where one GPU holds the Teacher and another the Student---could eliminate disk swapping entirely while still fitting within the 8 GB per-card budget common in consumer workstations.
-
-\textbf{6. Rigorous statistical validation.} The current evaluation uses 12 prompts and 50 training examples due to time constraints on a single local machine. A follow-up study should expand the Promptfoo suite to 100+ prompts spanning multiple languages and reasoning types, report bootstrap confidence intervals on perplexity and pass-rate metrics, and supplement LLM-as-a-Judge evaluation with human assessment to calibrate the Llama 3.1 8B judge's alignment with human preferences.
-
-These directions, taken together, outline concrete next steps for extending the findings of this thesis---each building directly on a limitation identified during the experimental work and addressing it with a well-motivated technical intervention.
-
+% ======================================================================
 \newpage 
 % ======================================================================
 \printbibliography
