@@ -943,16 +943,22 @@ round $k$. The promotion rule is:
 \end{equation}
 where $\theta_S^{(k)}$ is the student weight snapshot at convergence of round $k$.
 In the implementation, this promotion is carried out without merging the LoRA
-adapters into the base weights: the base model checkpoint is held fixed across all
-seven rounds, and each round's trained adapter is loaded on top of it via
-\texttt{PeftModel.from\_pretrained()} at the start of the next round's caching and
-training stages, rather than via the weight-merge formula
-$W' = W + BA$. A fresh, separately initialized LoRA adapter (with $B$
-re-initialized to zero) is then attached for the new round's training, so successive
-rounds' adapters are never composed into a single merged weight matrix; each round's
-``student'' is, mechanically, the same frozen base model plus a newly trained,
-round-specific adapter, and only the choice of which adapter is loaded for inference
-or for generating the next round's teacher trajectories changes between rounds.
+adapters into the base weights, and the two pipeline stages treat the promoted
+teacher checkpoint differently. During the \emph{caching} stage for round $k+1$,
+the promoted teacher path (the previous round's base-plus-adapter checkpoint) is
+loaded via \texttt{PeftModel.from\_pretrained()} and used to generate that round's
+trajectories, rather than via the weight-merge formula $W' = W + BA$. During the
+\emph{training} stage, however, the student is always initialized from the
+original base checkpoint (\texttt{GSAI-ML/LLaDA-8B-Instruct}) with a fresh,
+separately initialized LoRA adapter (with $B$ re-initialized to zero); the
+previous round's adapter is not reloaded for training, and the promoted teacher
+path is used only by the caching stage to produce that round's supervision
+targets. Consequently, successive rounds' adapters are never composed into a
+single merged weight matrix, and they are also never chained into one another at
+training time: each round's ``student'' is, mechanically, the original frozen
+base model plus a newly trained, round-specific adapter learned from scratch
+against that round's cached teacher trajectories, not a continuation of the
+previous round's adapter weights.
 
 Table~\ref{tab:distillation_rounds} summarizes the round progression executed for this
 thesis, starting from the LLaDA teacher at $N=128$ steps and targeting $N=1$ over
@@ -1874,7 +1880,7 @@ The general objective is to implement and evaluate a \textbf{knowledge distillat
 \begin{itemize}
     \item \textbf{O1 (Theoretical Framework):} Analyze the mathematical formulation of Progressive Distillation (Images) and adapt the loss function for discrete text data by \textbf{March 15, 2026}.
     \item \textbf{O2 (Implementation):} Develop a ``Teacher-Student'' training loop in PyTorch capable of loading a pre-trained LDM and fine-tuning student weights by \textbf{April 1, 2026}.
-    \item \textbf{O3 (Distillation Training):} Train the student model on a subset of the Wikitext-2-raw-v1 dataset to reduce sampling steps from $N=64$ to $N=\{8, 4\}$.
+    \item \textbf{O3 (Distillation Training):} Train the student model on a subset of the Wikitext-2-raw-v1 dataset to recursively reduce sampling steps from $N=128$ down to $N=1$ via progressive halving across seven rounds.
     \item \textbf{O4 (Validation):} Benchmark the ``Distilled LDM'' against the ``Teacher LDM,'' measuring Speedup (×) vs.\ Quality Drop (Perplexity) by \textbf{May 20, 2026}.
 \end{itemize}
 
