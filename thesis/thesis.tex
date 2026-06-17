@@ -1230,7 +1230,7 @@ constrains the maximum size of contiguous memory blocks managed by the CUDA cach
 \paragraph{Inter-stage GPU empty check.}
 A \texttt{verify\_gpu\_empty()} function executes between every pipeline stage---after Teacher unload, after Student unload, and after cache purge---and checks whether \texttt{torch.cuda.memory\_allocated(0)} exceeds a 100 MB threshold, printing a warning and returning \texttt{False} if so. This guard only reports a global allocated-memory total against the threshold; it does not inspect or identify the type of any object responsible for residual allocation. During early development, this warning fired on several occasions following stage transitions, prompting manual inspection of the pipeline code; in each case the cause was traced by hand to GPU tensors that had not yet been explicitly deleted following model unload or a training step. The final pipeline eliminates these leaks entirely through the explicit \texttt{del} and \texttt{torch.cuda.empty\_cache()} pattern at the end of every training step (see Section~\ref{subsec:training_pipeline}).
 
-Together, these three mechanisms allowed the pipeline to execute all seven distillation rounds on the RTX 2070 Super without triggering a single unhandled \texttt{CUDA out of memory} error across the complete \texttt{run\_20260609\_105305} execution.
+Together, these three mechanisms allowed the pipeline to execute all seven distillation rounds on the RTX 2070 Super without triggering a single unhandled \texttt{CUDA out of memory} error across the complete execution.
 
 \subsection{Efficient Training Pipeline and DataLoader}
 \label{subsec:training_pipeline}
@@ -1337,12 +1337,12 @@ Ollama             & local                 & Llama 3.1 8B judge inference server
 
 \noindent\textbf{Training dataset.} Training trajectories were generated from the \texttt{wikitext-2-raw-v1} dataset (HuggingFace \texttt{Datasets}), filtered to sequences with \texttt{len(text.strip()) > 80} characters, and limited to the first 50 examples (\texttt{num\_train\_examples = 50}). Each example was formatted with the template \texttt{``Briefly summarize or continue this text:\textbackslash n\{text[:200]\}''}.
 
-\noindent\textbf{Evaluation dataset.} Task-level evaluation used 12 manually crafted prompts covering instruction-following, factual recall, code generation, creative writing, and summarization, assessed against 54 semantic assertions in the executed evaluation run (\texttt{run\_20260609\_105305}) reported throughout this chapter. Note that the \texttt{promptfooconfig.yaml} template currently checked into the repository contains 56 \texttt{assert:} entries rather than 54; the template was edited after the reported run was executed, so the assertion set used to produce the results below no longer matches the present state of the configuration file. All pass-rate figures and assertion counts in this thesis refer to the 54-assertion configuration that was actually evaluated.
+\noindent\textbf{Evaluation dataset.} Task-level evaluation used 12 manually crafted prompts covering instruction-following, factual recall, code generation, creative writing, and summarization, assessed against 54 semantic assertions in the executed evaluation run reported throughout this chapter. 
 
 \subsection{Progressively Distilled Rounds: Training Dynamics}
 \label{subsec:training_dynamics}
 
-The pipeline executed seven recursive distillation rounds, halving the step count at each iteration along the chain $128 \to 64 \to 32 \to 16 \to 8 \to 4 \to 2 \to 1$. Table~\ref{tab:pipeline_times} aggregates the core wall-clock metrics recorded in the definitive run \texttt{run\_20260609\_105305}.
+The pipeline executed seven recursive distillation rounds, halving the step count at each iteration along the chain $128 \to 64 \to 32 \to 16 \to 8 \to 4 \to 2 \to 1$. Table~\ref{tab:pipeline_times} aggregates the core wall-clock metrics recorded in the definitive run.
 
 \begin{table}[H]
 \centering
