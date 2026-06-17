@@ -1138,7 +1138,7 @@ These tensors are moved to CPU and serialized to disk using a custom \texttt{\_s
 \textbf{Key} & \textbf{Tensor Shape (typical)} & \textbf{Dtype} & \textbf{Description} \\ \midrule
 \texttt{input\_x}       & \texttt{(1, prompt\_len + 64)}    & int64   & Prompt + masked generation region at \texttt{target\_step} \\
 \texttt{target\_logits} & \texttt{(1, prompt\_len + 64, V)} & float16 & Teacher logits over vocabulary $V$ \\
-\texttt{attn\_mask}     & \texttt{(1, prompt\_len + 64)}    & int64   & Causal attention mask \\
+\texttt{attn\_mask}     & \texttt{(1, prompt\_len + 64)}    & int64   & Padding mask (valid-token indicator), not causal \\
 \texttt{prompt\_len}    & scalar                            & int     & Length of the original prompt in tokens \\
 \texttt{target\_step}   & scalar                            & int     & Diffusion step at which snapshot was taken \\ \bottomrule
 \end{tabularx}
@@ -1218,7 +1218,7 @@ PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128
 constrains the maximum size of contiguous memory blocks managed by the CUDA caching allocator. By default, PyTorch's allocator reserves large, monolithic blocks that it splits on demand; this strategy reduces allocation latency but causes severe fragmentation in the 8 GB pool when allocations of widely varying sizes (e.g., a 4 GB quantized model weight block alongside 64 MB logit tensors) coexist. Capping the block size at 128 MB forces finer-grained subdivision, allowing the allocator to satisfy varied request sizes without committing disproportionately large contiguous regions. The 128 MB threshold was selected empirically as the largest value that eliminates fragmentation-induced OOM errors while incurring negligible additional allocation overhead.
 
 \paragraph{Inter-stage GPU empty check.}
-A \texttt{verify\_gpu\_empty()} function executes between every pipeline stage---after Teacher unload, after Student unload, and after cache purge---and asserts that allocated GPU memory is below a 100 MB threshold. This guard catches reference leaks (e.g., Python objects holding GPU tensor references that survive a model deletion) before the next model load, converting silent VRAM exhaustion into an explicit, debuggable assertion failure. During the seven-round pipeline run, this function fired three times in early development, each time revealing a dangling reference to an intermediate logit tensor that had not been explicitly deleted after the loss computation. The final pipeline eliminates these leaks entirely through the explicit \texttt{del} and \texttt{torch.cuda.empty\_cache()} pattern at the end of every training step (see Section~\ref{subsec:training_pipeline}).
+A \texttt{verify\_gpu\_empty()} function executes between every pipeline stage---after Teacher unload, after Student unload, and after cache purge---and checks whether \texttt{torch.cuda.memory\_allocated(0)} exceeds a 100 MB threshold, printing a warning and returning \texttt{False} if so. This guard only reports a global allocated-memory total against the threshold; it does not inspect or identify the type of any object responsible for residual allocation. During early development, this warning fired on several occasions following stage transitions, prompting manual inspection of the pipeline code; in each case the cause was traced by hand to GPU tensors that had not yet been explicitly deleted following model unload or a training step. The final pipeline eliminates these leaks entirely through the explicit \texttt{del} and \texttt{torch.cuda.empty\_cache()} pattern at the end of every training step (see Section~\ref{subsec:training_pipeline}).
 
 Together, these three mechanisms allowed the pipeline to execute all seven distillation rounds on the RTX 2070 Super without triggering a single unhandled \texttt{CUDA out of memory} error across the complete \texttt{run\_20260609\_105305} execution.
 
@@ -1922,7 +1922,7 @@ This project is formulated as a standard Bachelor's Thesis (TFG) for the Faculta
     \begin{itemize}
         \item T2.1: Setup PyTorch environment [20h]
         \item T2.2: Implement DistillationTrainer class [35h]
-        \item T2.3: WandB integration \& Toy Task [35h]
+        \item T2.3: Experiment tracking setup \& Toy Task [35h]
     \end{itemize}
     \item \textbf{Sprint 3: Scale-up \& Initial Training (Apr 6--May 3) [90h]}
     \begin{itemize}
@@ -1944,7 +1944,7 @@ This project is formulated as a standard Bachelor's Thesis (TFG) for the Faculta
     \end{itemize}
 \end{itemize}
 
-\textbf{Real Deviations from Plan.} The most significant deviation from the original plan was the hardware scope: the project was originally budgeted around access to an NVIDIA A100 GPU (40--80 GB VRAM), but was ultimately executed in its entirety on the local NVIDIA RTX 2070 Super (8 GB VRAM). This required the engineering of the iterative disk-swapping pipeline described in Chapter~4 and extended Sprint 3 by approximately 15 hours as the memory-safe architecture was designed, debugged, and validated. However, the project was completed on time because evaluation scope was conservatively bounded (50 training examples, 12 test prompts), and the pipeline wall-clock time for seven full rounds totaled approximately 3.5 hours---far less than anticipated for cloud-GPU execution.
+\textbf{Real Deviations from Plan.} The most significant deviation from the original plan was the hardware scope: the project was originally budgeted around access to an NVIDIA A100 GPU (40--80 GB VRAM), but was ultimately executed in its entirety on the local NVIDIA RTX 2070 Super (8 GB VRAM). This required the engineering of the iterative disk-swapping pipeline described in Chapter~4 and extended Sprint 3 by approximately 15 hours as the memory-safe architecture was designed, debugged, and validated. However, the project was completed on time because evaluation scope was conservatively bounded (50 training examples, 12 test prompts), and the pipeline wall-clock time for seven full rounds totaled approximately 3.5 hours---far less than anticipated for cloud-GPU execution. A second, minor deviation was in experiment tracking: T2.3 originally scoped a Weights \& Biases (WandB) integration for live metric dashboards, but this was dropped during Sprint 2 in favor of lightweight console logging and the structured JSON reports already produced by Promptfoo, since the single-GPU, single-experiment nature of the project made a hosted dashboard an unnecessary dependency for the scale of this study.
 
 \subsubsection*{Task Summary and Resources Table}
 \begin{table}[H]
@@ -1965,9 +1965,9 @@ T1.2 & Loss Formulation & 30 & T1.1 & Local PC, Overleaf \\
 T1.3 & Teacher Validation & 20 & None & Local PC, HuggingFace \\ \midrule
 T2.1 & Setup Environment & 20 & None & Local PC, Python, PyTorch \\
 T2.2 & DistillationTrainer & 35 & T1.2, T2.1 & Local PC, GitHub \\
-T2.3 & Toy Task & 35 & T2.2 & Local PC, WandB \\ \midrule
+T2.3 & Toy Task & 35 & T2.2 & Local PC \\ \midrule
 T3.1 & LoRA Configuration & 30 & T2.2 & RTX 2070 Super (Local) \\
-T3.2 & Initial Training Run & 40 & T2.3, T3.1 & RTX 2070 Super, WandB \\
+T3.2 & Initial Training Run & 40 & T2.3, T3.1 & RTX 2070 Super \\
 T3.3 & Hyperparameter Tuning & 20 & T3.2 & RTX 2070 Super \\ \midrule
 T4.1 & Final Distillation Runs & 40 & T3.3 & RTX 2070 Super, HuggingFace \\
 T4.2 & Latency Profiling & 20 & T4.1 & Local PC, CodeCarbon \\
