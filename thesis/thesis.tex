@@ -954,12 +954,13 @@ rounds' adapters are never composed into a single merged weight matrix; each rou
 round-specific adapter, and only the choice of which adapter is loaded for inference
 or for generating the next round's teacher trajectories changes between rounds.
 
-Table~\ref{tab:distillation_rounds} summarizes the planned round progression for this
-thesis, starting from the LLaDA teacher at $N=128$ steps and targeting $N=8$.
+Table~\ref{tab:distillation_rounds} summarizes the round progression executed for this
+thesis, starting from the LLaDA teacher at $N=128$ steps and targeting $N=1$ over
+seven recursive rounds.
 
 \begin{table}[H]
 \centering
-\caption{Planned progressive distillation rounds.}
+\caption{Executed progressive distillation rounds.}
 \label{tab:distillation_rounds}
 \begin{tabular}{@{}ccccl@{}}
 \toprule
@@ -969,7 +970,10 @@ thesis, starting from the LLaDA teacher at $N=128$ steps and targeting $N=8$.
 1            & 128 & 64 & $2\times$ & First distillation \\
 2            & 64  & 32 & $4\times$ & Teacher = Round-1 student \\
 3            & 32  & 16 & $8\times$ & \\
-4            & 16  & 8  & $16\times$ & Target configuration \\ \bottomrule
+4            & 16  & 8  & $16\times$ & \\
+5            & 8   & 4  & $32\times$ & \\
+6            & 4   & 2  & $64\times$ & \\
+7            & 2   & 1  & $128\times$ & Target configuration \\ \bottomrule
 \end{tabular}
 \end{table}
 
@@ -1258,16 +1262,29 @@ for each cache_file in cache_files:
 
 \subsubsection{Mathematical Formulation of the Distillation Loss}
 
-For a single trajectory, let $G$ denote the number of generation tokens (\texttt{gen\_length}), $V$ the vocabulary size, $s_i \in \mathbb{R}^V$ the student logits at position $i$, $t_i \in \mathbb{R}^V$ the teacher logits at position $i$, and $\tau = 2.0$ the temperature. The per-position softened distributions are:
+For a single trajectory, let $B$ denote the training batch size (fixed at $B=1$ throughout this pipeline, Section~\ref{subsec:training_pipeline}), $G$ the number of generation tokens (\texttt{gen\_length}), $V$ the vocabulary size, $s_i \in \mathbb{R}^V$ the student logits at position $i$, $t_i \in \mathbb{R}^V$ the teacher logits at position $i$, and $\tau = 2.0$ the temperature. The per-position softened distributions are:
 \begin{equation}
     P_{\text{student}}(i, v) = \frac{\exp(s_i(v) / \tau)}{\sum_w \exp(s_i(w) / \tau)}, \quad
     P_{\text{teacher}}(i, v) = \frac{\exp(t_i(v) / \tau)}{\sum_w \exp(t_i(w) / \tau)}.
 \end{equation}
-The temperature-scaled KL divergence loss is then:
+The temperature-scaled KL divergence loss, as actually computed by
+\texttt{F.kl\_div(..., reduction="batchmean")} in the code above, is the
+\emph{summed} KL divergence over all generation positions and vocabulary entries,
+normalized by the batch size $B$ rather than by the number of generation tokens $G$:
 \begin{equation}
-    \mathcal{L} = \tau^2 \cdot \frac{1}{G} \sum_{i=1}^{G} \sum_{v=1}^{V}
+    \mathcal{L} = \tau^2 \cdot \frac{1}{B} \sum_{i=1}^{G} \sum_{v=1}^{V}
     P_{\text{teacher}}(i, v) \left[ \log P_{\text{teacher}}(i, v) - \log P_{\text{student}}(i, v) \right].
 \end{equation}
+Because the training regime fixes $B = 1$ trajectory per step
+(Section~\ref{subsec:training_pipeline}), this reduces in practice to the
+\emph{total} (unnormalized-by-length) KL divergence summed over all $G$ generation
+positions, rather than the per-token average that a $1/G$ normalization would give.
+Concretely, this means the loss magnitude scales linearly with \texttt{gen\_length}:
+a trajectory with twice as many generation tokens contributes roughly twice the
+loss and gradient magnitude for the same per-token divergence. This is a
+consequence of using PyTorch's \texttt{batchmean} reduction directly rather than a
+custom per-token-mean reduction, and was not compensated for via an explicit
+$1/G$ division anywhere in the training loop.
 Prompt tokens are excluded from the loss, as the Student must learn to \emph{generate}, not to reproduce the conditioning prefix. The $\tau^2$ scaling is the standard correction from the distillation literature to counteract the entropy increase induced by temperature smoothing \cite{hinton2015distilling}. Gradient clipping at \texttt{max\_grad\_norm=1.0} prevents sharp spikes when the Student distribution diverges from the Teacher in early rounds. The fixed learning rate of $5 \times 10^{-5}$ was chosen conservatively to avoid catastrophic forgetting of the base model's pre-trained knowledge.
 
 % ======================================================================
@@ -1314,7 +1331,7 @@ Ollama             & local                 & Llama 3.1 8B judge inference server
 
 \noindent\textbf{Training dataset.} Training trajectories were generated from the \texttt{wikitext-2-raw-v1} dataset (HuggingFace \texttt{Datasets}), filtered to sequences with \texttt{len(text.strip()) > 80} characters, and limited to the first 50 examples (\texttt{num\_train\_examples = 50}). Each example was formatted with the template \texttt{``Briefly summarize or continue this text:\textbackslash n\{text[:200]\}''}.
 
-\noindent\textbf{Evaluation dataset.} Task-level evaluation used 12 manually crafted prompts covering instruction-following, factual recall, code generation, creative writing, and summarization, assessed against 54 semantic assertions in total.
+\noindent\textbf{Evaluation dataset.} Task-level evaluation used 12 manually crafted prompts covering instruction-following, factual recall, code generation, creative writing, and summarization, assessed against 54 semantic assertions in the executed evaluation run (\texttt{run\_20260609\_105305}) reported throughout this chapter. Note that the \texttt{promptfooconfig.yaml} template currently checked into the repository contains 56 \texttt{assert:} entries rather than 54; the template was edited after the reported run was executed, so the assertion set used to produce the results below no longer matches the present state of the configuration file. All pass-rate figures and assertion counts in this thesis refer to the 54-assertion configuration that was actually evaluated.
 
 \subsection{Progressively Distilled Rounds: Training Dynamics}
 \label{subsec:training_dynamics}
@@ -1346,7 +1363,7 @@ Cache time decreases monotonically across rounds: each successive Teacher execut
 \subsection{Quantitative Evaluation of Language Quality}
 \label{subsec:quality_results}
 
-Table~\ref{tab:quality_results} compares the 128-step Teacher baseline, the 64-step non-distilled Teacher control benchmark, and all seven progressively distilled Students. Perplexity (PPL) is computed via a GPT-2 reference model on generated outputs; lower values indicate higher coherence with natural language. The Promptfoo pass rate is the percentage of the 54 semantic assertions evaluated by Llama 3.1 8B that returned an affirmative verdict. Average perplexity is reported with outliers removed: the Teacher and non-distilled control occasionally produce degenerate outputs (perplexity $>900$) on specific prompt types where the native LLaDA sampling schedule collapses without the compensation provided by distillation; these extreme outliers inflate the mean without reflecting typical generation quality, and are therefore excluded from the average. A dedicated discussion of this tail behaviour and the methodological rationale for outlier removal is provided in Section~\ref{subsec:ppl_outliers}.
+Table~\ref{tab:quality_results} compares the 128-step Teacher baseline, the 64-step non-distilled Teacher control benchmark, and all seven progressively distilled Students. Perplexity (PPL) is computed via a GPT-2 reference model on generated outputs; lower values indicate higher coherence with natural language. The Promptfoo pass rate is the percentage of the semantic assertions evaluated by Llama 3.1 8B that returned an affirmative verdict. Average perplexity is reported with the single highest per-model value removed before averaging: the Teacher and non-distilled control occasionally produce degenerate outputs on specific prompt types where the native LLaDA sampling schedule collapses without the compensation provided by distillation, and this single largest value would otherwise inflate the mean without reflecting typical generation quality. A dedicated discussion of this tail behaviour and the methodological rationale for outlier removal is provided in Section~\ref{subsec:ppl_outliers}.
 
 \begin{table}[H]
 \centering
@@ -1374,12 +1391,12 @@ Several findings merit close attention. First, the Round-1 distilled Student ope
 
 A notable artefact in the raw perplexity data is the presence of extreme outlier values across \emph{all} evaluated models, including the Teacher Baseline, the non-distilled Control, and the distilled Students. These outliers appear on the same small set of evaluation prompts regardless of model variant, which strongly suggests the issue lies with the prompt structure rather than with any particular model. Specifically, GPT-2 assigns very high perplexity to certain output formats---notably bullet-pointed lists and code blocks---because its training distribution is dominated by flowing prose. When a model correctly follows an instruction to produce a bullet-pointed list, GPT-2's language model probability for that format is inherently low, producing a perplexity spike that does not reflect generation quality.
 
-The \emph{average} perplexity values reported in Table~\ref{tab:quality_results} are therefore computed after removing these format-driven outliers uniformly across all models. Any output whose raw GPT-2 perplexity exceeds a threshold of 500 is excluded from the per-model mean. The threshold was chosen conservatively so that genuine quality degradation at very low step counts (e.g., the 353.26 average at 1 step) is still fully captured, while prompt-specific scoring artefacts are excluded from all models equally. Because the same prompts trigger the outliers in all variants, this procedure does not introduce an asymmetry between models and the resulting means are directly comparable.
+The \emph{average} perplexity values reported in Table~\ref{tab:quality_results} are therefore computed after removing format-driven outliers uniformly across all models. The implementation does this with a simple, unconditional rule rather than a magnitude threshold: for each model's set of per-prompt perplexity values, the single highest value is always discarded before averaging the remainder, regardless of how large or small that maximum happens to be. This rule is intentionally crude---it removes exactly one value per model irrespective of whether that value is a genuine outlier---but is applied identically across the Teacher, the non-distilled Control, and all seven distilled Students, so it does not introduce an asymmetry between models. Because the same small set of prompts (bullet-pointed lists and code blocks) reliably produces the single largest perplexity value for every model variant, in practice this rule consistently removes the format-driven artefact described above rather than a genuine quality signal, and the resulting means remain directly comparable across models.
 
 \subsection{Task-Based Evaluation via LLM-as-a-Judge (Promptfoo)}
 \label{subsec:promptfoo_results}
 
-Promptfoo evaluates each of the 12 test prompts against 4--5 semantic assertions (54 total). It is important to understand how Promptfoo aggregates results: the framework operates at the \emph{assertion} level, not the test-case level. Each assertion is independently evaluated by the judge model and returns a binary pass/fail verdict; the overall score is the fraction of assertions that pass across the entire evaluation suite. Because multiple assertions target the same prompt, a single prompt that fails one assertion but passes three others contributes a net three passes to the aggregate score. This design correctly weights prompt-level quality by the number of properties being assessed, rather than treating a single missed structural constraint as equivalent to a total failure across all properties. Consequently, the meaningful primary metric is the \textbf{assertion pass rate}, not a per-prompt pass/fail count. Assertions are batched into a single Ollama call per prompt, then cached by SHA-256 hash to avoid redundant judging. The judge model is Llama 3.1 8B, running locally via Ollama with \texttt{temperature=0}, \texttt{num\_gpu=0} (CPU-only judging to prevent GPU contention), and \texttt{num\_predict=1024}. Table~\ref{tab:promptfoo_results} reports per-round assertion counts and pass rates.
+Promptfoo evaluates each of the 12 test prompts against a handful of semantic assertions per prompt (54 in total for the executed run, as noted above). It is important to understand how Promptfoo aggregates results: the framework operates at the \emph{assertion} level, not the test-case level. Each assertion is independently evaluated by the judge model and returns a binary pass/fail verdict; the overall score is the fraction of assertions that pass across the entire evaluation suite. Because multiple assertions target the same prompt, a single prompt that fails one assertion but passes three others contributes a net three passes to the aggregate score. This design correctly weights prompt-level quality by the number of properties being assessed, rather than treating a single missed structural constraint as equivalent to a total failure across all properties. Consequently, the meaningful primary metric is the \textbf{assertion pass rate}, not a per-prompt pass/fail count. Assertions are batched into a single Ollama call per prompt, then cached by SHA-256 hash to avoid redundant judging. The judge model is Llama 3.1 8B, running locally via Ollama with \texttt{temperature=0}, \texttt{num\_gpu=0} (CPU-only judging to prevent GPU contention), and \texttt{num\_predict=1024}. Table~\ref{tab:promptfoo_results} reports per-round assertion counts and pass rates.
 
 \begin{table}[H]
 \centering
@@ -1750,7 +1767,7 @@ The \textbf{32-step distilled Student} is the optimal operating point: it is $3.
 
 The \textbf{8-step Student} pushes acceleration to $12.25\times$ but drops the Promptfoo pass rate to 62.96\% and suffers from the qualitative failure modes documented in Chapter~6. It therefore meets the acceleration target but falls short of the quality-retention threshold, defining the practical lower bound of usable distillation for this architecture on this hardware.
 
-\textbf{Engineering significance of the 8 GB achievement.} Standard reproductions of LLaDA-8B distillation reported in the literature typically assume A100 or H100 GPUs with 40--80 GB VRAM. By implementing iterative disk-swapping, 4-bit NF4 quantization, 8-bit AdamW, and gradient checkpointing, this thesis demonstrates that identical scientific outcomes---recursive teacher--student halving down to a single step---are achievable on a \textbf{\$450 consumer card} released in 2019. The total pipeline wall-clock time for seven rounds was approximately \textbf{3.5 hours}, of which evaluation dominated. This accessibility result is arguably as important as the algorithmic result, because it lowers the barrier to entry for researchers without datacenter access.
+\textbf{Engineering significance of the 8 GB achievement.} As noted in Section~\ref{sec:intro_context}, no open-source study has comprehensively applied progressive distillation to discrete text diffusion models, so there is no direct prior baseline to compare against for this specific task. However, fine-tuning and distillation work on comparably sized (7--8B parameter) language and diffusion models more broadly is typically reported on A100 or H100-class GPUs with 40--80 GB VRAM, reflecting the field's general assumption of datacenter-scale hardware. By implementing iterative disk-swapping, 4-bit NF4 quantization, 8-bit AdamW, and gradient checkpointing, this thesis demonstrates that the same recursive teacher--student halving down to a single step is achievable on a \textbf{\$450 consumer card} released in 2019. The total pipeline wall-clock time for seven rounds was approximately \textbf{3.5 hours}, of which evaluation dominated. This accessibility result is arguably as important as the algorithmic result, because it lowers the barrier to entry for researchers without datacenter access.
 
 \subsection{Summary}
 \label{subsec:conclusion_summary}
