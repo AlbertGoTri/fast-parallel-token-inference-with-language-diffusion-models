@@ -611,7 +611,8 @@ Eq.~\eqref{eq:kd_loss} in Background). This KL divergence is the \textbf{trainin
 used during student fine-tuning; it is \emph{not} reported as an evaluation metric.
 Concretely, in \texttt{nested\_distillation.py} (line~544) the loss is computed as:
 \begin{quote}\ttfamily\small
-loss = F.kl\_div(F.log\_softmax(student\_logits / $\tau$), F.softmax(teacher\_logits / $\tau$)) $\times$ $\tau^2$
+loss = F.kl\_div(F.log\_softmax(student\_logits / $\tau$), \\
+\hspace*{2em}F.softmax(teacher\_logits / $\tau$)) $\times$ $\tau^2$
 \end{quote}
 where $\tau = 2.0$ is the distillation temperature (Hinton et al.\ scaling). The $\tau^2$
 factor restores the gradient magnitude to match that of a cross-entropy loss at unit
@@ -1122,7 +1123,7 @@ The distillation pipeline requires capturing intermediate denoising states from 
 
 \subsubsection{Caching Stage}
 
-During the caching stage, the Teacher is loaded into GPU memory via \texttt{AutoModel.from\_pretrained()} with 4-bit quantization and \texttt{device\_map=``auto''}. For each training example drawn from the Wikitext-2 dataset, the \texttt{generate\_and\_cache\_trajectory()} function executes the LLaDA semi-autoregressive diffusion process up to a programmable \texttt{target\_step}, defined by default as \texttt{target\_step = teacher\_steps // 2} (i.e., step 64 for a 128-step teacher). At exactly that midpoint, the function captures a tuple comprising: \texttt{state\_x}, the partially unmasked token tensor at that diffusion timestep; \texttt{teacher\_logits}, the raw logit tensor from the Teacher's forward pass cast to \texttt{torch.float16} to conserve disk space; and \texttt{attn\_mask}, the causal attention mask for the full sequence.
+During the caching stage, the Teacher is loaded into GPU memory via \texttt{\footnotesize AutoModel.from\_pretrained()} with 4-bit quantization and \texttt{device\_map=``auto''}. For each training example drawn from the Wikitext-2 dataset, the \texttt{generate\_and\_cache\_trajectory()} function executes the LLaDA semi-autoregressive diffusion process up to a programmable \texttt{target\_step}, defined by default as \texttt{target\_step = teacher\_steps // 2} (i.e., step 64 for a 128-step teacher). At exactly that midpoint, the function captures a tuple comprising: \texttt{state\_x}, the partially unmasked token tensor at that diffusion timestep; \texttt{teacher\_logits}, the raw logit tensor from the Teacher's forward pass cast to \texttt{torch.float16} to conserve disk space; and \texttt{attn\_mask}, the causal attention mask for the full sequence.
 
 These tensors are moved to CPU and serialized to disk using a custom \texttt{\_save\_cache\_object()} helper, which converts tensors to NumPy arrays and writes them with \texttt{pickle} inside \texttt{gzip} (compression level 3) to a \texttt{.pkl.gz} file. This format was adopted after encountering PyTorch ZIP archive corruption on Windows under heavy sequential I/O when saving raw \texttt{.pt} files. Table~\ref{tab:cache_payload} documents the exact payload saved per trajectory file.
 
@@ -1141,7 +1142,7 @@ These tensors are moved to CPU and serialized to disk using a custom \texttt{\_s
 \end{tabularx}
 \end{table}
 
-After each trajectory is saved, GPU tensors are explicitly deleted and \texttt{torch.cuda.empty\_cache()} is invoked. Once the entire batch of \texttt{num\_train\_examples} is cached, the Teacher model is forcefully unloaded via an \texttt{unload\_model()} function, which moves weights to CPU, deletes the Python object, and triggers garbage collection. A validation pass then reads every \texttt{.pkl.gz} back from disk to verify integrity before training begins.
+After each trajectory is saved, GPU tensors are explicitly deleted and \texttt{\small torch.cuda.empty\_cache()} is invoked. Once the entire batch of \texttt{num\_train\_examples} is cached, the Teacher model is forcefully unloaded via an \texttt{unload\_model()} function, which moves weights to CPU, deletes the Python object, and triggers garbage collection. A validation pass then reads every \texttt{.pkl.gz} back from disk to verify integrity before training begins.
 
 The value \texttt{num\_train\_examples = 50} was arrived at empirically rather than set arbitrarily. Initial experiments used only 10 trajectories per round, which proved insufficient: the Student's output distributions were noticeably under-fitted, producing repetitive and incoherent completions that scored poorly on both perplexity and Promptfoo assertions. Increasing to 50 examples provided enough diversity in the supervision signal for the LoRA adapters to generalize beyond the specific prompt phrasings in the cache, while keeping the total caching time per round below 15 minutes on the RTX 2070 Super. Values above 50 were tested briefly but offered diminishing quality returns relative to the additional wall-clock cost, making 50 a practical midpoint between model quality and pipeline runtime.
 
