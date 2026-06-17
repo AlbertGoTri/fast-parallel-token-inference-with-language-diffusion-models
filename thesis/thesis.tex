@@ -942,17 +942,17 @@ round $k$. The promotion rule is:
     \label{eq:promotion}
 \end{equation}
 where $\theta_S^{(k)}$ is the student weight snapshot at convergence of round $k$.
-The LoRA adapters trained in round $k$ are \emph{merged} into the base weights before
-promotion, so that round $k+1$ begins with a standard dense model rather than a
-base-plus-adapter stack. This is achieved via the standard LoRA weight-merge formula:
-\begin{equation}
-    W^{(k+1)} = W_{\text{base}} + B^{(k)} A^{(k)},
-    \label{eq:lora_merge}
-\end{equation}
-where $A^{(k)}, B^{(k)}$ are the low-rank adapter matrices trained in round $k$.
-Fresh LoRA adapters (with $B$ re-initialized to zero) are then injected into the
-merged model before the next round, restoring the zero-initialization invariant
-described in Section~\ref{subsec:lora}.
+In the implementation, this promotion is carried out without merging the LoRA
+adapters into the base weights: the base model checkpoint is held fixed across all
+seven rounds, and each round's trained adapter is loaded on top of it via
+\texttt{PeftModel.from\_pretrained()} at the start of the next round's caching and
+training stages, rather than via the weight-merge formula
+$W' = W + BA$. A fresh, separately initialized LoRA adapter (with $B$
+re-initialized to zero) is then attached for the new round's training, so successive
+rounds' adapters are never composed into a single merged weight matrix; each round's
+``student'' is, mechanically, the same frozen base model plus a newly trained,
+round-specific adapter, and only the choice of which adapter is loaded for inference
+or for generating the next round's teacher trajectories changes between rounds.
 
 Table~\ref{tab:distillation_rounds} summarizes the planned round progression for this
 thesis, starting from the LLaDA teacher at $N=128$ steps and targeting $N=8$.
@@ -973,12 +973,30 @@ thesis, starting from the LLaDA teacher at $N=128$ steps and targeting $N=8$.
 \end{tabular}
 \end{table}
 
-\subsubsection{Convergence Criterion and Early Stopping}
+\subsubsection{Training Duration}
 \label{subsubsec:convergence}
 
-Each distillation round is run until one of two conditions is met. The primary
-criterion is a plateau in the token-level KL divergence between teacher and student:
+Each distillation round is run for a fixed single epoch over the cached trajectories
+for that round ($\approx$50 optimizer steps, one step per cached \texttt{.pkl.gz}
+trajectory, given the $B=1$ training regime described in
+Section~\ref{subsec:training_pipeline}). The implementation does not track a running
+KL-divergence metric during training and does not implement any early-stopping,
+plateau-detection, or learning-rate-rescue mechanism; the round simply terminates
+once the cache files have been exhausted, and the resulting student is promoted to
+teacher for the next round unconditionally. This is a deliberate simplification
+given the 8 GB VRAM and single-GPU constraints of the experimental setup: with only
+50 trajectories per round, a held-out convergence metric would have left too little
+data for training itself, and the fixed learning rate of $5\times10^{-5}$ was found
+empirically (Section~\ref{subsec:training_pipeline}) to remain stable for the full
+epoch without divergence, making an explicit stopping criterion unnecessary for the
+scale of this study.
 
+\subsubsection{Error Accumulation Across Rounds}
+\label{subsubsec:error_accumulation}
+
+Each distillation round introduces an approximation error $\epsilon_k$ between the
+student's distribution and the teacher's two-step target, defined as the mean
+token-level KL divergence over a held-out evaluation set:
 \begin{equation}
     \overline{\mathrm{KL}}_k = \frac{1}{|\mathcal{D}_{\text{eval}}|}
     \sum_{(\mathbf{x}_t,\, p_T) \,\in\, \mathcal{D}_{\text{eval}}}
@@ -986,31 +1004,16 @@ criterion is a plateau in the token-level KL divergence between teacher and stud
     D_{\mathrm{KL}}\!\left(p_T(\cdot \mid i) \;\|\; p_S(\cdot \mid i)\right).
     \label{eq:mean_kl}
 \end{equation}
+Over $K$ rounds this error accumulates, and understanding its growth is important for
+assessing the viability of aggressive compression targets (e.g., $128 \to 8$ steps,
+requiring $K=4$ rounds).
 
-Training is stopped when $\overline{\mathrm{KL}}_k$ has not decreased by more than
-$\epsilon = 0.01$ nats over a window of 200 consecutive optimizer steps. The secondary
-criterion is a hard upper bound on the total number of optimizer steps per round
-(5,000 steps in the experimental configuration), which prevents runaway training in
-cases where the student fails to converge due to a poorly calibrated learning rate.
-
-If the primary convergence criterion is met but $\overline{\mathrm{KL}}_k$ remains
-above a quality threshold $\delta_{\mathrm{KL}} = 0.5$ nats, the round is flagged
-as a partial success and the resulting student is not promoted. In that case, the
-learning rate is reduced by a factor of 0.5 and training is resumed for one additional
-window of 2,000 steps before a final promotion decision is made.
-
-\subsubsection{Error Accumulation Across Rounds}
-\label{subsubsec:error_accumulation}
-
-Each distillation round introduces an approximation error $\epsilon_k$ between the
-student's distribution and the teacher's two-step target. Over $K$ rounds this error
-accumulates, and understanding its growth is important for assessing the viability of
-aggressive compression targets (e.g., $128 \to 8$ steps, requiring $K=4$ rounds).
-
-Let $\epsilon_k = \overline{\mathrm{KL}}_k$ (the per-round KL at convergence). Under
-the assumption that successive errors are independent (which holds approximately when
-the LoRA adapters are re-initialized between rounds), the total distributional divergence
-between the original teacher and the round-$K$ student can be bounded by the triangle
+Let $\epsilon_k = \overline{\mathrm{KL}}_k$, computed post hoc rather than tracked
+online during training (Section~\ref{subsubsec:convergence}); the quantity is used
+here only as an analytical device for the error bound below. Under the assumption that successive
+errors are independent (which holds approximately when the LoRA adapters are
+re-initialized between rounds), the total distributional divergence between the
+original teacher and the round-$K$ student can be bounded by the triangle
 inequality for KL divergence in the following loose sense:
 \begin{equation}
     D_{\mathrm{KL}}\!\left(p_{T}^{(0)} \;\|\; p_{S}^{(K)}\right)
@@ -1025,15 +1028,12 @@ confident). Empirically in the image diffusion literature, the quality loss per 
 sub-linear, meaning that a four-round compression from 128 to 8 steps incurs
 substantially less than $4 \times \epsilon_1$ total degradation.
 
-\paragraph{Mitigation via temperature calibration.}
-To reduce the risk of distributional drift across rounds, the distillation temperature
-$\tau$ is adjusted at each round. Specifically, $\tau$ is increased slightly (by a
-factor of 1.1 per round) to produce softer teacher targets, which are easier for the
-student to match and result in a smaller $\epsilon_k$ at the cost of marginally lower
-sharpness in the student's output distribution. This schedule is a deliberate
-conservative choice: sharpness can be recovered at inference time by applying a low
-temperature to the student's logits, whereas large per-round errors cannot be
-corrected after training.
+As discussed further in Section~\ref{subsec:temperature_analysis}, no
+per-round temperature adjustment is used in this pipeline: the distillation
+temperature is held fixed at $\tau = 2.0$ throughout all seven rounds. A
+per-round temperature schedule that softens teacher targets in later rounds
+(thereby trading sharpness for a smaller $\epsilon_k$) is a natural mitigation
+for the error accumulation described above, and is left to future work.
 
 \subsection{LoRA Integration and Hyperparameters}
 
@@ -1099,9 +1099,11 @@ quality baseline.
 \begin{itemize}
     \item \textbf{Wall-clock inference latency:} measured in tokens per second on
     a fixed hardware configuration across a standardised prompt set.
-    \item \textbf{Profiling traces:} caching and training scripts export
-    Chrome-compatible profiler traces via \texttt{torch\allowbreak.profiler}, enabling
-    fine-grained per-operator analysis of the training and inference pipelines.
+    \item \textbf{Stage timing:} caching, training, and evaluation stages are each
+    timed end-to-end with wall-clock timestamps, yielding the per-round breakdown
+    reported in Table~\ref{tab:pipeline_times}. No operator-level profiling
+    (e.g.\ \texttt{torch.profiler} traces) was collected; timing granularity is at
+    the level of pipeline stages, not individual CUDA kernels or operators.
 \end{itemize}
 
 \noindent\textbf{Baseline.}
@@ -1123,7 +1125,7 @@ The distillation pipeline requires capturing intermediate denoising states from 
 
 \subsubsection{Caching Stage}
 
-During the caching stage, the Teacher is loaded into GPU memory via \texttt{\footnotesize AutoModel.from\_pretrained()} with 4-bit quantization and \texttt{device\_map=``auto''}. For each training example drawn from the Wikitext-2 dataset, the \texttt{generate\_and\_cache\_trajectory()} function executes the LLaDA semi-autoregressive diffusion process up to a programmable \texttt{target\_step}, defined by default as \texttt{target\_step = teacher\_steps // 2} (i.e., step 64 for a 128-step teacher). At exactly that midpoint, the function captures a tuple comprising: \texttt{state\_x}, the partially unmasked token tensor at that diffusion timestep; \texttt{teacher\_logits}, the raw logit tensor from the Teacher's forward pass cast to \texttt{torch.float16} to conserve disk space; and \texttt{attn\_mask}, the causal attention mask for the full sequence.
+During the caching stage, the Teacher is loaded into GPU memory via \texttt{\footnotesize AutoModel.from\_pretrained()} with 4-bit quantization and \texttt{device\_map=``auto''}. For each training example drawn from the Wikitext-2 dataset, the \texttt{generate\_and\_cache\_trajectory()} function executes the LLaDA semi-autoregressive diffusion process up to a programmable \texttt{target\_step}, defined by default as \texttt{target\_step = teacher\_steps // 2} (i.e., step 64 for a 128-step teacher). At exactly that midpoint, the function captures a tuple comprising: \texttt{state\_x}, the partially unmasked token tensor at that diffusion timestep; \texttt{teacher\_logits}, the raw logit tensor from the Teacher's forward pass cast to \texttt{torch.float16} to conserve disk space; and \texttt{attn\_mask}, a padding mask marking valid (non-padding) token positions for the full sequence---not a causal mask, since LLaDA's diffusion Transformer uses full bidirectional attention (Section~\ref{subsec:transformer}) and has no notion of a future-token restriction to enforce.
 
 These tensors are moved to CPU and serialized to disk using a custom \texttt{\_save\_cache\_object()} helper, which converts tensors to NumPy arrays and writes them with \texttt{pickle} inside \texttt{gzip} (compression level 3) to a \texttt{.pkl.gz} file. This format was adopted after encountering PyTorch ZIP archive corruption on Windows under heavy sequential I/O when saving raw \texttt{.pt} files. Table~\ref{tab:cache_payload} documents the exact payload saved per trajectory file.
 
@@ -1204,9 +1206,9 @@ Three additional system-level constraints prevent memory fragmentation and refer
 \paragraph{Per-process memory cap.}
 The call
 \begin{lstlisting}[language=Python]
-torch.cuda.set_per_process_memory_fraction(0.90)
+torch.cuda.set_per_process_memory_fraction(0.85)
 \end{lstlisting}
-limits PyTorch's CUDA caching allocator to 90\% of total device memory---approximately 7.2 GB on the RTX 2070 Super. The remaining 10\% (\(\approx\)800 MB) is reserved as a safety buffer for CUDA kernels, cuBLAS workspace, and transient allocations that bypass the PyTorch allocator entirely. Without this cap, large contiguous allocations during the LoRA backward pass can exhaust the full 8 GB pool and trigger out-of-memory (OOM) errors even when the reported allocated memory appears to leave headroom.
+limits PyTorch's CUDA caching allocator to 85\% of total device memory---approximately 6.8 GB on the RTX 2070 Super. The remaining 15\% (\(\approx\)1.2 GB) is reserved as a safety buffer for CUDA kernels, cuBLAS workspace, and transient allocations that bypass the PyTorch allocator entirely. Without this cap, large contiguous allocations during the LoRA backward pass can exhaust the full 8 GB pool and trigger out-of-memory (OOM) errors even when the reported allocated memory appears to leave headroom.
 
 \paragraph{CUDA allocator block size.}
 The environment variable
@@ -1236,18 +1238,21 @@ for each cache_file in cache_files:
     optimizer.zero_grad()
     with torch.autocast(device_type="cuda", dtype=torch.float16):
         student_output = student_model(input_x, attention_mask=attn_mask)
-        student_logits_gen = student_output.logits[:, prompt_len:, :]
+        student_logits     = student_output.logits[:, prompt_len:, :]
         target_logits_gen  = target_logits[:, prompt_len:, :]
         loss = F.kl_div(
-            F.log_softmax(student_logits_gen / temperature, dim=-1),
+            F.log_softmax(student_logits / temperature, dim=-1),
             F.softmax(target_logits_gen / temperature, dim=-1),
             reduction="batchmean"
         ) * (temperature ** 2)
 
     loss.backward()
-    torch.nn.utils.clip_grad_norm_(trainable_params, max_norm=1.0)
+    torch.nn.utils.clip_grad_norm_(
+        [p for p in student_model.parameters() if p.requires_grad],
+        max_norm=1.0
+    )
     optimizer.step()
-    del input_x, target_logits, student_logits_gen, loss
+    del input_x, target_logits, student_logits, loss
     torch.cuda.empty_cache()
 \end{lstlisting}
 
@@ -1336,7 +1341,7 @@ The pipeline executed seven recursive distillation rounds, halving the step coun
 }
 \end{table}
 
-Cache time decreases monotonically across rounds: each successive Teacher executes half as many diffusion steps, so the forward-pass compute per trajectory is halved. However, the reduction is sub-linear in practice because fixed overheads---CUDA kernel launches, disk I/O for writing and reading \texttt{.pkl.gz} files, and Python-level orchestration---do not scale with step count. The values in Table~\ref{tab:pipeline_times} drop from 910.5 s in Round 1 to 399.1 s in Round 7, a 2.3$\times$ reduction rather than the theoretical 64$\times$ from halving steps seven times; this discrepancy is accounted for almost entirely by the fixed I/O overhead per trajectory. Training time also decreases from Round 1 to Round 3, but the reduction is far less pronounced than for caching and plateaus thereafter: the values in Table~\ref{tab:pipeline_times} show training dropping from 136.4 s in Round 1 to 85.6--90.9 s in Rounds 3--7, remaining roughly flat for the final five rounds. This plateau arises because training time is dominated by the fixed overhead of the LoRA backward pass through all 8B model layers, the per-trajectory load-decompress-transfer cycle, and the optimizer step---none of which scale with \texttt{target\_step}. The marginal reduction in gradient-propagation cost as fewer masked positions remain is therefore largely absorbed by these fixed overheads, making training time insensitive to further step reductions below Round 3. Evaluation overhead, dominated by Promptfoo assertion latency and Flask server generation time, does not scale linearly with step count either, because LLaDA's semi-autoregressive block scheduling incurs fixed per-block overheads at very low step counts. No learning-rate rescue mechanism was triggered during the run; the fixed $\text{lr} = 5 \times 10^{-5}$ proved stable throughout, with loss values plateauing within the first 10--15 trajectories per round without divergence.
+Cache time decreases monotonically across rounds: each successive Teacher executes half as many diffusion steps, so the forward-pass compute per trajectory is halved. However, the reduction is sub-linear in practice because fixed overheads---CUDA kernel launches, disk I/O for writing and reading \texttt{.pkl.gz} files, and Python-level orchestration---do not scale with step count. The values in Table~\ref{tab:pipeline_times} drop from 910.5 s in Round 1 to 399.1 s in Round 7, a 2.3$\times$ reduction rather than the theoretical 64$\times$ from halving steps seven times; this discrepancy is accounted for almost entirely by the fixed I/O overhead per trajectory. Training time also decreases from Round 1 to Round 3, but the reduction is far less pronounced than for caching and plateaus thereafter: the values in Table~\ref{tab:pipeline_times} show training dropping from 136.4 s in Round 1 to 85.6--90.9 s in Rounds 3--7, remaining roughly flat for the final five rounds. This plateau arises because training time is dominated by the fixed overhead of the LoRA backward pass through all 8B model layers, the per-trajectory load-decompress-transfer cycle, and the optimizer step---none of which scale with \texttt{target\_step}. The marginal reduction in gradient-propagation cost as fewer masked positions remain is therefore largely absorbed by these fixed overheads, making training time insensitive to further step reductions below Round 3. Evaluation overhead, dominated by Promptfoo assertion latency and Flask server generation time, does not scale linearly with step count either, because LLaDA's semi-autoregressive block scheduling incurs fixed per-block overheads at very low step counts. As noted in Section~\ref{subsubsec:convergence}, the pipeline implements no learning-rate-rescue mechanism; the fixed $\text{lr} = 5 \times 10^{-5}$ proved stable throughout the run, with loss values plateauing within the first 10--15 trajectories per round without divergence.
 
 \subsection{Quantitative Evaluation of Language Quality}
 \label{subsec:quality_results}
