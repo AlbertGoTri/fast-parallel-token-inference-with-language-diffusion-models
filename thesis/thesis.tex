@@ -1228,7 +1228,7 @@ PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128
 constrains the maximum size of contiguous memory blocks managed by the CUDA caching allocator. By default, PyTorch's allocator reserves large, monolithic blocks that it splits on demand; this strategy reduces allocation latency but causes severe fragmentation in the 8 GB pool when allocations of widely varying sizes (e.g., a 4 GB quantized model weight block alongside 64 MB logit tensors) coexist. Capping the block size at 128 MB forces finer-grained subdivision, allowing the allocator to satisfy varied request sizes without committing disproportionately large contiguous regions. The 128 MB threshold was selected empirically as the largest value that eliminates fragmentation-induced OOM errors while incurring negligible additional allocation overhead.
 
 \paragraph{Inter-stage GPU empty check.}
-A \texttt{verify\_gpu\_empty()} function executes between every pipeline stage---after Teacher unload, after Student unload, and after cache purge---and checks whether \texttt{torch.cuda.memory\_allocated(0)} exceeds a 100 MB threshold, printing a warning and returning \texttt{False} if so. This guard only reports a global allocated-memory total against the threshold; it does not inspect or identify the type of any object responsible for residual allocation. During early development, this warning fired on several occasions following stage transitions, prompting manual inspection of the pipeline code; in each case the cause was traced by hand to GPU tensors that had not yet been explicitly deleted following model unload or a training step. The final pipeline eliminates these leaks entirely through the explicit \texttt{del} and \texttt{torch.cuda.empty\_cache()} pattern at the end of every training step (see Section~\ref{subsec:training_pipeline}).
+A \texttt{verify\_gpu\_empty()} function executes between every pipeline stage---after Teacher unload, after Student unload, and after cache purge. It checks whether the value returned by \texttt{torch.cuda.memory\_allocated(0)} exceeds a 100\,MB threshold, printing a warning and returning \texttt{False} if so. This guard only reports a global allocated-memory total against the threshold; it does not inspect or identify the type of any object responsible for residual allocation. During early development, this warning fired on several occasions following stage transitions, prompting manual inspection of the pipeline code; in each case the cause was traced by hand to GPU tensors that had not yet been explicitly deleted following model unload or a training step. The final pipeline eliminates these leaks entirely through the explicit \texttt{del} and \texttt{torch.cuda.empty\_cache()} pattern at the end of every training step (see Section~\ref{subsec:training_pipeline}).
 
 Together, these three mechanisms allowed the pipeline to execute all seven distillation rounds on the RTX 2070 Super without triggering a single unhandled \texttt{CUDA out of memory} error across the complete execution.
 
@@ -1273,10 +1273,10 @@ For a single trajectory, let $B$ denote the training batch size (fixed at $B=1$ 
     P_{\text{student}}(i, v) = \frac{\exp(s_i(v) / \tau)}{\sum_w \exp(s_i(w) / \tau)}, \quad
     P_{\text{teacher}}(i, v) = \frac{\exp(t_i(v) / \tau)}{\sum_w \exp(t_i(w) / \tau)}.
 \end{equation}
-The temperature-scaled KL divergence loss, as actually computed by
-\texttt{F.kl\_div(..., reduction="batchmean")} in the code above, is the
-\emph{summed} KL divergence over all generation positions and vocabulary entries,
-normalized by the batch size $B$ rather than by the number of generation tokens $G$:
+The temperature-scaled KL divergence loss is the \emph{summed} KL divergence
+over all generation positions and vocabulary entries, normalized by the batch size
+$B$ rather than by the number of generation tokens $G$. This is what
+\texttt{F.kl\_div} with \texttt{reduction="batchmean"} computes in the code above:
 \begin{equation}
     \mathcal{L} = \tau^2 \cdot \frac{1}{B} \sum_{i=1}^{G} \sum_{v=1}^{V}
     P_{\text{teacher}}(i, v) \left[ \log P_{\text{teacher}}(i, v) - \log P_{\text{student}}(i, v) \right].
