@@ -1692,353 +1692,6 @@ A systematic qualitative analysis of failure modes was conducted on outputs from
 By contrast, the same prompts evaluated on the 64-step non-distilled Teacher produce degraded but recognizable outputs: the football prompt yields stuttering but semantically present text, the relativity prompt produces a coherent child-friendly paragraph, and the Python prompt yields syntactically valid code with correct \texttt{try/except} blocks. This confirms that while the 8-step distilled Student wins on raw throughput, it concedes to the 64-step non-distilled baseline on tasks requiring structural precision or syntactic validity. The practical trade-off is therefore \textbf{application-dependent}: conversational interfaces tolerant of grammatical imprecision may accept the 8-step model, whereas code generation or structured-summary pipelines require at least 16--32 steps.
 
 % ======================================================================
-\section{Project Management and Feasibility}
-\label{sec:gep}
-
-\subsection{Context and Justification}
-\label{subsec:context_justification}
-
-\subsubsection{Methodological Choice: Progressive Distillation vs.\ Alternatives}
-When seeking to accelerate diffusion models, two primary strategies emerge: Consistency Models \cite{song2023consistency} and Progressive Distillation \cite{salimans2022progressive}. While Consistency Models map any point on the diffusion trajectory directly to the origin in a single step, they are notoriously difficult to adapt to discrete categorical domains like text, as they rely on enforcing boundary conditions over continuous Ordinary Differential Equations (ODEs).
-
-In contrast, \textbf{Progressive Distillation} teaches a student model to take larger, discrete jump steps (e.g., matching 2 teacher steps in 1 student step). This discrete nature makes it significantly more adaptable to the token-by-token embedding space of language models. Therefore, this technique was selected as the most viable path to bridge the gap shown in Table~\ref{tab:sota_comparison}.
-
-\begin{table}[H]
-\centering
-\caption{Comparison of Generation Paradigms and the Thesis Gap}
-\label{tab:sota_comparison}
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{@{}lccccc@{}}
-\toprule
-\textbf{Paradigm} & \textbf{Example Model} & \textbf{Generation} & \textbf{Steps (N)} & \textbf{Latency} & \textbf{Quality} \\ \midrule
-Auto-Regressive & GPT-4, LLaMA-3 & Serial & $N = \text{Length}$ & High (Linear) & SOTA \\
-Standard Diffusion & SSD-LM, LLaDA & Parallel & $50 - 100$ & Med-High & High \\
-Continuous Distillation & Stable Diffusion XL \textit{(image only)} & Parallel & $4 - 8$ & Low & High \\
-\textbf{Discrete Distillation} & \textbf{(This Thesis)} & \textbf{Parallel} & \textbf{4--8} & \textbf{Very Low} & \textbf{Target: High} \\ \bottomrule
-\end{tabular}%
-}
-\end{table}
-
-\subsubsection{Scientific Innovation}
-Unlike a standard engineering project that benchmarks existing tools, this thesis proposes a \textbf{novel adaptation of an algorithm}. If successful, it contributes a new method to the NLP community: ``Textual Progressive Distillation.''
-
-\subsubsection{Efficiency and Green AI}
-Reducing the number of inference steps linearly reduces the energy required to generate text. If we reduce steps from 64 to 8, we reduce the energy cost by approximately $8\times$. This aligns with the ``Green AI'' initiative \cite{strubell2019energy} to make Large Language Models sustainable.
-
-\subsubsection{Commercial Viability}
-For real-time applications (e.g., conversational AI), latency is the primary KPI. A parallel model running in 4--8 steps could theoretically outperform LLaMA-3 by $5\times$--$10\times$ in wall-clock speed. For a customer support chatbot generating a 200-token response, an AR model at 50 tokens/sec takes 4 seconds, while a distilled LDM at 4 steps could reduce this to 0.4 seconds---an order-of-magnitude improvement that transforms the user experience from perceptible waiting to near-instant response.
-
-\subsubsection{Economic Impact}
-Current LLM inference is prohibitively expensive. A reduction in inference steps from 50 to 5 represents a potential $10\times$ reduction in GPU compute time per query, which could make sophisticated language models viable for SMEs that cannot afford premium GPU infrastructure.
-
-\subsection{Scope and Requirements}
-\label{subsec:scope_requirements}
-
-\subsubsection{General and Specific Objectives (SMART)}
-The general objective is to implement and evaluate a \textbf{knowledge distillation technique} for Language Diffusion Models, training a ``Student'' model to compress the inference steps of a ``Teacher'' model, thereby achieving fast parallel text generation.
-\begin{itemize}
-    \item \textbf{O1 (Theoretical Framework):} Analyze the mathematical formulation of Progressive Distillation (Images) and adapt the loss function for discrete text data by \textbf{March 15, 2026}.
-    \item \textbf{O2 (Implementation):} Develop a ``Teacher-Student'' training loop in PyTorch capable of loading a pre-trained LDM and fine-tuning student weights by \textbf{April 1, 2026}.
-    \item \textbf{O3 (Distillation Training):} Train the student model on a subset of the Wikitext-2-raw-v1 dataset to reduce sampling steps from $N=64$ to $N=\{8, 4\}$.
-    \item \textbf{O4 (Validation):} Benchmark the ``Distilled LDM'' against the ``Teacher LDM,'' measuring Speedup (×) vs.\ Quality Drop (Perplexity) by \textbf{May 20, 2026}.
-\end{itemize}
-
-\subsubsection{In-Scope vs.\ Out-of-Scope}
-\textbf{In-Scope:}
-\begin{itemize}
-    \item \textbf{Algorithm Adaptation:} Porting the distillation logic (step halving) from the continuous domain to the discrete text domain.
-    \item \textbf{Model Distillation (Fine-tuning):} Performing only the distillation (fine-tuning) phase, assuming the existence of a pre-trained ``Teacher.''
-    \item \textbf{Target Models:} Open-source LDMs in the 1B--8B parameter range (e.g., MDLM, SSD-LM, LLaDA).
-    \item \textbf{Evaluation:} Comparing the distilled model against the teacher on quality metrics (PPL) and efficiency metrics (Latency).
-\end{itemize}
-
-\textbf{Out-of-Scope:}
-\begin{itemize}
-    \item \textbf{Pre-training from Scratch:} We rely on published weights.
-    \item \textbf{Novel Architectures:} We propose a new training method for existing architectures, not a new neural network design.
-    \item \textbf{Production Deployment:} The output is a scientific proof-of-concept, not a production API.
-\end{itemize}
-
-\subsubsection{Functional and Non-Functional Requirements}
-\textbf{Functional Requirements:}
-\begin{itemize}
-    \item The system must accept a text prompt as input and generate a coherent text continuation.
-    \item The distillation pipeline must load a pre-trained Teacher model and initialize a Student model with identical weights.
-    \item The training loop must implement a loss function handling discrete categorical data (KL Divergence with soft-targeting).
-\end{itemize}
-
-\textbf{Non-Functional Requirements:}
-\begin{itemize}
-    \item \textbf{Performance:} The distilled model must achieve a latency reduction of at least $4\times$ compared to the teacher.
-    \item \textbf{Quality:} Perplexity degradation must not exceed 15\% relative to the teacher.
-    \item \textbf{Resources:} The fine-tuning process must fit within a single consumer-grade GPU (NVIDIA RTX 2070 Super, 8 GB VRAM) using LoRA optimization and 4-bit quantization.
-\end{itemize}
-
-\subsection{Time Planning and Real Deviations}
-\label{subsec:time_planning}
-
-\subsubsection{Global Project Parameters and Methodology}
-This project is formulated as a standard Bachelor's Thesis (TFG) for the Facultat d'Informatica de Barcelona (FIB), corresponding to 18 ECTS credits, with a total planned workload of \textbf{540 hours}. It spans from February 10, 2026, to the expected defense on June 25, 2026 ($\approx$136 days), requiring approximately 27.5 hours per week. The project adopts an \textbf{Agile Experimental Methodology}: the work is divided into 2-week sprints, with a Sprint Review held with the Project Director at the end of each sprint to assess achieved milestones and a Sprint Retrospective to adjust subsequent planning based on empirical results.
-
-\subsubsection{Work Breakdown Structure (WBS)}
-
-\textbf{Concurrent Tasks (Cross-cutting):}
-\begin{itemize}
-    \item \textbf{PM1: GEP Course Deliverables [40h].} Drafting, formatting, and refining the Context, Planning, Budget, and Final GEP deliverables.
-    \item \textbf{PM2: Weekly Sprint Planning \& Director Meetings [20h].} Preparing agendas and reviewing progress, one hour per week over the $\approx$20-week duration.
-    \item \textbf{DOC1: State of the Art drafting [25h].} Reading selected papers and synthesizing them into the academic framework.
-    \item \textbf{DOC2: Methodology \& Experiments drafting [35h].} Documenting the code architecture, loss functions, and experimental setups; runs continuously alongside Sprints 2--4.
-    \item \textbf{DOC3: Final memory review and formatting [20h].} Proofreading, LaTeX compilation fixes, and bibliography checks.
-\end{itemize}
-
-\textbf{Sprint Breakdown:}
-\begin{itemize}
-    \item \textbf{Sprint 1: Theoretical Setup (Feb 10--Mar 8) [80h]}
-    \begin{itemize}
-        \item T1.1: Literature review on Discrete Diffusion [30h]
-        \item T1.2: Mathematical formulation of Loss Function [30h]
-        \item T1.3: Teacher model validation [20h]
-    \end{itemize}
-    \item \textbf{Sprint 2: Pipeline Implementation (Mar 9--Apr 5) [90h]}
-    \begin{itemize}
-        \item T2.1: Setup PyTorch environment [20h]
-        \item T2.2: Implement DistillationTrainer class [35h]
-        \item T2.3: WandB integration \& Toy Task [35h]
-    \end{itemize}
-    \item \textbf{Sprint 3: Scale-up \& Initial Training (Apr 6--May 3) [90h]}
-    \begin{itemize}
-        \item T3.1: LoRA configuration for 8B model [30h]
-        \item T3.2: Initial training run (N=16) \& gradient debugging [40h]
-        \item T3.3: Hyperparameter tuning [20h]
-    \end{itemize}
-    \item \textbf{Sprint 4: Advanced Training \& Benchmarks (May 4--May 31) [90h]}
-    \begin{itemize}
-        \item T4.1: Final distillation runs (N=8, N=4 steps) [40h]
-        \item T4.2: Inference latency profiling [20h]
-        \item T4.3: Quality evaluation [30h]
-    \end{itemize}
-    \item \textbf{Sprint 5: Wrap-up \& Defense (Jun 1--Jun 25) [50h]}
-    \begin{itemize}
-        \item T5.1: Final Results analysis and charting [20h]
-        \item T5.2: Presentation slide deck creation [20h]
-        \item T5.3: Oral defense rehearsal [10h]
-    \end{itemize}
-\end{itemize}
-
-\textbf{Real Deviations from Plan.} The most significant deviation from the original plan was the hardware scope: the project was originally budgeted around access to an NVIDIA A100 GPU (40--80 GB VRAM), but was ultimately executed in its entirety on the local NVIDIA RTX 2070 Super (8 GB VRAM). This required the engineering of the iterative disk-swapping pipeline described in Chapter~4 and extended Sprint 3 by approximately 15 hours as the memory-safe architecture was designed, debugged, and validated. However, the project was completed on time because evaluation scope was conservatively bounded (50 training examples, 12 test prompts), and the pipeline wall-clock time for seven full rounds totaled approximately 3.5 hours---far less than anticipated for cloud-GPU execution.
-
-\subsubsection{Task Summary and Resources Table}
-\begin{table}[H]
-\centering
-\caption{Detailed Task Summary mapped to Required Resources}
-\label{tab:tasks}
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{@{}llccl@{}}
-\toprule
-\textbf{Code} & \textbf{Descriptive Name} & \textbf{Hours} & \textbf{Dependencies} & \textbf{Specific Resources} \\ \midrule
-PM1 & GEP Deliverables & 40 & None & Local PC, LaTeX, GEP Materials \\
-PM2 & Sprint Meetings & 20 & None & Local PC, Google Meet, Director \\
-DOC1 & State of the Art Draft & 25 & T1.1 & Local PC, Mendeley, IEEE Xplore \\
-DOC2 & Methodology Draft & 35 & T3.2 & Local PC, LaTeX \\
-DOC3 & Final Review & 20 & T4.3, T5.1 & Local PC, Grammarly \\ \midrule
-T1.1 & Literature Review & 30 & None & Local PC, arXiv \\
-T1.2 & Loss Formulation & 30 & T1.1 & Local PC, Overleaf \\
-T1.3 & Teacher Validation & 20 & None & Local PC, HuggingFace \\ \midrule
-T2.1 & Setup Environment & 20 & None & Local PC, Python, PyTorch \\
-T2.2 & DistillationTrainer & 35 & T1.2, T2.1 & Local PC, GitHub \\
-T2.3 & Toy Task & 35 & T2.2 & Local PC, WandB \\ \midrule
-T3.1 & LoRA Configuration & 30 & T2.2 & RTX 2070 Super (Local) \\
-T3.2 & Initial Training Run & 40 & T2.3, T3.1 & RTX 2070 Super, WandB \\
-T3.3 & Hyperparameter Tuning & 20 & T3.2 & RTX 2070 Super \\ \midrule
-T4.1 & Final Distillation Runs & 40 & T3.3 & RTX 2070 Super, HuggingFace \\
-T4.2 & Latency Profiling & 20 & T4.1 & Local PC, CodeCarbon \\
-T4.3 & Quality Evaluation & 30 & T4.1 & Local PC, PPL/Promptfoo Scripts \\ \midrule
-T5.1 & Results Analysis & 20 & T4.2, T4.3 & Local PC, Matplotlib \\
-T5.2 & Slide Deck Creation & 20 & T5.1 & Local PC, PowerPoint/Beamer \\
-T5.3 & Defense Rehearsal & 10 & T5.2 & Local PC, Project Director \\ \bottomrule
-\end{tabular}%
-}
-\end{table}
-
-\subsubsection{Agile Gantt Chart}
-\begin{figure}[H]
-    \centering
-    \begin{ganttchart}[
-        vgrid={*4{draw=none}, *1{dotted}},
-        hgrid,
-        expand chart=\textwidth,
-        y unit title=0.45cm,
-        y unit chart=0.35cm,
-        bar/.append style={fill=blue!30, draw=blue!60},
-        bar height=0.6,
-        group right shift=0,
-        group top shift=0.7,
-        group height=.3,
-        group/.append style={fill=black!80}
-    ]{1}{20}
-    \gantttitle{Feb}{3}
-    \gantttitle{March}{4}
-    \gantttitle{April}{4}
-    \gantttitle{May}{5}
-    \gantttitle{June}{4} \\
-    \gantttitlelist{1,...,20}{1} \\
-
-    \ganttgroup{Concurrent (Agile)}{1}{20} \\
-    \ganttbar{PM1 \& PM2}{1}{20} \\
-    \ganttbar{DOC1, DOC2, DOC3}{2}{19} \\
-
-    \ganttgroup{SP1: Theory \& Setup}{1}{4} \\
-    \ganttbar[bar/.append style={fill=green!30}]{T1.1: Literature Review}{1}{2} \\
-    \ganttbar[bar/.append style={fill=green!30}]{T1.2: Loss Formulation}{2}{3} \\
-    \ganttbar[bar/.append style={fill=green!30}]{T1.3: Teacher Validation}{3}{4} \\
-
-    \ganttgroup{SP2: Pipeline Dev}{5}{8} \\
-    \ganttbar[bar/.append style={fill=green!30}]{T2.1: Setup Environment}{5}{5} \\
-    \ganttbar[bar/.append style={fill=green!30}]{T2.2: DistillationTrainer}{6}{7} \\
-    \ganttbar[bar/.append style={fill=green!30}]{T2.3: Toy Task}{7}{8} \\
-
-    \ganttgroup{SP3: Initial Training}{9}{12} \\
-    \ganttbar[bar/.append style={fill=orange!40}]{T3.1: LoRA Configuration}{9}{10} \\
-    \ganttbar[bar/.append style={fill=orange!40}]{T3.2: Initial Training Run}{10}{11} \\
-    \ganttbar[bar/.append style={fill=orange!40}]{T3.3: Hyperparameter Tuning}{12}{12} \\
-
-    \ganttgroup{SP4: Final Runs \& Benchmarks}{13}{16} \\
-    \ganttbar[bar/.append style={fill=orange!40}]{T4.1: Final Distillation Runs}{13}{14} \\
-    \ganttbar[bar/.append style={fill=orange!40}]{T4.2: Latency Profiling}{15}{15} \\
-    \ganttbar[bar/.append style={fill=orange!40}]{T4.3: Quality Evaluation}{15}{16} \\
-
-    \ganttgroup{SP5: Wrap-up}{17}{19} \\
-    \ganttbar[bar/.append style={fill=purple!30}]{T5.1: Results Analysis}{17}{17} \\
-    \ganttbar[bar/.append style={fill=purple!30}]{T5.2: Slide Deck Creation}{18}{18} \\
-    \ganttbar[bar/.append style={fill=purple!30}]{T5.3: Defense Rehearsal}{19}{19} \\
-
-    \ganttmilestone{Thesis Defense}{20}
-    \end{ganttchart}
-    \caption{Granular Agile Gantt Chart mapping sub-tasks 1:1 to the WBS. \textit{Source: Compiled by the author.}}
-    \label{fig:detailed_gantt}
-\end{figure}
-
-\subsubsection{Risk Management \& Alternative Plans}
-As required by project management standards, ``Plan B'' tasks have been defined for critical risks, ensuring the project concludes on schedule by June 25 regardless of the materialized scenario.
-
-\textbf{Risk 1: Severe VRAM Limitations.} If the GPU cannot fit the 8B model even with LoRA: \textit{Plan B (ALT-T3.1)}: switch to a smaller Teacher model (1.5B or 3B parameter diffusion model). Time impact: approximately 15 hours to download, integrate, and validate the new model, absorbed by restricting evaluation to Wikitext-2-raw-v1 only.
-
-\textbf{Risk 2: Distillation Training Instability.} If the Student's loss diverges or suffers mode collapse: \textit{Plan B (ALT-T3.2)}: revert to feature-matching MSE loss on hidden states, which is more stable but yields slightly lower generation quality. Time impact: 20 hours to rewrite the loss and restart the run, recovered by limiting the final distillation chain to $N=8$ steps only. This pivot would additionally require approximately 2 hours of ad-hoc technical consultation with the Thesis Director.
-
-\subsection{Financial Budget and Economic Viability}
-\label{subsec:budget}
-
-This section details the economic planning required to execute the thesis, adhering to the 540-hour workload. Cost estimations include a standard 1.35 multiplier for Social Security contributions, referencing average gross salaries for Junior IT roles in Spain (Data: Glassdoor \& InfoJobs, 2025).
-
-\subsubsection{Identification of Costs and Staff Estimates}
-
-\begin{table}[H]
-\centering
-\caption{Highly Granular Staff Costs Broken Down by Individual Gantt Chart Task}
-\label{tab:hr_budget}
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{@{}llcccc@{}}
-\toprule
-\textbf{Task Code} & \textbf{Assigned Role} & \textbf{Hours} & \textbf{Gross Rate} & \textbf{Rate w/ SS ($\times$1.35)} & \textbf{Total Cost (\texteuro{})} \\ \midrule
-PM1 & Project Manager & 40 & 25.00 \texteuro{}/h & 33.75 \texteuro{}/h & 1,350.00 \\
-PM2 & Project Manager & 20 & 25.00 \texteuro{}/h & 33.75 \texteuro{}/h & 675.00 \\
-DOC1 & AI Researcher & 25 & 20.00 \texteuro{}/h & 27.00 \texteuro{}/h & 675.00 \\
-DOC2 & AI Researcher & 35 & 20.00 \texteuro{}/h & 27.00 \texteuro{}/h & 945.00 \\
-DOC3 & AI Researcher & 20 & 20.00 \texteuro{}/h & 27.00 \texteuro{}/h & 540.00 \\
-T1.1 & AI Researcher & 30 & 20.00 \texteuro{}/h & 27.00 \texteuro{}/h & 810.00 \\
-T1.2 & AI Researcher & 30 & 20.00 \texteuro{}/h & 27.00 \texteuro{}/h & 810.00 \\
-T1.3 & ML Engineer & 20 & 15.00 \texteuro{}/h & 20.25 \texteuro{}/h & 405.00 \\
-T2.1 & ML Engineer & 20 & 15.00 \texteuro{}/h & 20.25 \texteuro{}/h & 405.00 \\
-T2.2 & ML Engineer & 35 & 15.00 \texteuro{}/h & 20.25 \texteuro{}/h & 708.75 \\
-T2.3 & ML Engineer & 35 & 15.00 \texteuro{}/h & 20.25 \texteuro{}/h & 708.75 \\
-T3.1 & ML Engineer & 30 & 15.00 \texteuro{}/h & 20.25 \texteuro{}/h & 607.50 \\
-T3.2 & ML Engineer & 40 & 15.00 \texteuro{}/h & 20.25 \texteuro{}/h & 810.00 \\
-T3.3 & ML Engineer & 20 & 15.00 \texteuro{}/h & 20.25 \texteuro{}/h & 405.00 \\
-T4.1 & ML Engineer & 40 & 15.00 \texteuro{}/h & 20.25 \texteuro{}/h & 810.00 \\
-T4.2 & ML Engineer & 20 & 15.00 \texteuro{}/h & 20.25 \texteuro{}/h & 405.00 \\
-T4.3 & AI Researcher & 30 & 20.00 \texteuro{}/h & 27.00 \texteuro{}/h & 810.00 \\
-T5.1 & AI Researcher & 20 & 20.00 \texteuro{}/h & 27.00 \texteuro{}/h & 540.00 \\
-T5.2 & Project Manager & 20 & 25.00 \texteuro{}/h & 33.75 \texteuro{}/h & 675.00 \\
-T5.3 & Project Manager & 10 & 25.00 \texteuro{}/h & 33.75 \texteuro{}/h & 337.50 \\ \midrule
-\textbf{Total Staff Cost} & & \textbf{540} & & & \textbf{13,432.50} \\ \bottomrule
-\end{tabular}%
-}
-\end{table}
-
-\subsubsection{General Costs and Amortization}
-General costs include hardware, software, and operational expenses. Hardware amortization is calculated over a standard 4-year (1,460 days) useful life, prorated for the 4.5 months ($\approx$136 days) of the project duration.
-\begin{itemize}
-    \item \textbf{Hardware (Local PC):} Valued at 1,500 \texteuro{}. Amortization: $1,500 \times (136 / 1460) = 139.72$ \texteuro{}.
-    \item \textbf{Hardware (Cloud GPU):} Rental of an NVIDIA A100 GPU for 100 hours of training at an estimated 2.50 \texteuro{}/h. This is a direct consumption cost: $250.00$ \texteuro{}. \textit{Note: The final pipeline was executed locally on the RTX 2070 Super; this line item reflects the originally budgeted contingency cost.}
-    \item \textbf{Software Licenses:} PyTorch, HuggingFace, and standard IDEs are open-source. GitHub Pro and Overleaf are covered via University Student Packs (0.00 \texteuro{}).
-    \item \textbf{Operational Costs:} Electricity ($540\text{h} \times 0.5\text{ kW} \times 0.20\text{ \texteuro{}/kWh} = 54.00$ \texteuro{}) and workspace/internet overhead estimated at 150.00 \texteuro{}.
-\end{itemize}
-\textbf{Total General Costs: 593.72 \texteuro{}}
-
-\subsubsection{Contingencies and Incidentals}
-To ensure financial robustness, indirect costs are calculated based on standard IT risk margins and the specific risk matrix defined previously.
-\begin{itemize}
-    \item \textbf{Contingency Margin:} A standard margin of \textbf{15\%} of the cumulative direct costs (14,026.22 \texteuro{}) is applied to cover unforeseen general project delays, yielding a contingency reserve of \textbf{2,103.93 \texteuro{}}.
-    \item \textbf{Incidentals:} Calculated based on specific risks, weighted by their probability:
-    \begin{itemize}
-        \item \textit{Risk 1 (VRAM limitations):} 15 extra hours of ML Engineer time (303.75 \texteuro{}). Estimated probability: 30\%. Expected cost = 91.12 \texteuro{}.
-        \item \textit{Risk 2 (Training Instability):} 20 extra hours of ML Engineer time (405.00 \texteuro{}). Estimated probability: 40\%. Expected cost = 162.00 \texteuro{}.
-    \end{itemize}
-\end{itemize}
-
-\subsubsection{Total Budget Summary}
-\begin{table}[H]
-\centering
-\caption{Total Project Budget Summary}
-\label{tab:total_budget}
-\begin{tabular}{@{}lr@{}}
-\toprule
-\textbf{Concept} & \textbf{Amount (\texteuro{})} \\ \midrule
-\textbf{Direct Costs} & \textbf{14,026.22} \\
-\hspace{0.5cm} Human Resources & 13,432.50 \\
-\hspace{0.5cm} General Costs & 593.72 \\ \midrule
-\textbf{Indirect Costs} & \textbf{2,357.05} \\
-\hspace{0.5cm} Contingency Margin (15\%) & 2,103.93 \\
-\hspace{0.5cm} Incidentals (Risk-weighted) & 253.12 \\ \midrule
-\textbf{Total Project Budget} & \textbf{16,383.27} \\ \bottomrule
-\end{tabular}
-\end{table}
-
-\subsubsection{Management Control}
-Financial indicators are monitored at the end of every Agile Sprint. If the Cost Performance Index ($CPI = EV/AC$) drops below 0.90 at any sprint review, non-critical validation tasks will be descoped to re-align the budget dynamically without requiring additional funding.
-
-\subsection{Sustainability Report}
-\label{subsec:sustainability}
-
-\subsubsection{Self-Assessment Summary}
-Prior to completing the sustainability questionnaire, understanding of sustainability in software engineering was largely limited to hardware power consumption. The self-assessment revealed a significant blind spot: the socioeconomic implications of democratizing Artificial Intelligence and the full lifecycle costs of training Large Language Models had not been fully considered.
-
-\textbf{Strengths:} A major strength identified is the project's inherent alignment with ``Green AI'' principles; by focusing on Knowledge Distillation, the core objective is inherently sustainable (reducing inference compute). This alignment was subsequently reinforced empirically: the complete seven-round distillation pipeline ran in approximately 3.5 hours on a \$450 consumer GPU, demonstrating that the research could be reproduced at negligible carbon cost relative to datacenter-scale baselines.
-
-\textbf{Weaknesses:} A weakness is the lack of a formal carbon-tracking protocol during the model training phase. Moving forward, integrating tools like \texttt{CodeCarbon} into the pipeline would measure actual CO$_2$ emissions of the distillation process itself, ensuring that the environmental cost of Student training does not outweigh inference benefits.
-
-\subsubsection{Economic Dimension}
-\begin{itemize}
-    \item \textbf{Reflection on Estimated Cost:} The estimated project cost of $\approx$16,383 \texteuro{} is highly competitive when viewed as an R\&D investment. Developing a custom accelerated Language Diffusion Model from scratch would cost exponentially more.
-    \item \textbf{State of the Art (Current Solutions):} Deploying LLMs in production is currently prohibitively expensive for small and medium enterprises, with inference for autoregressive models scaling linearly with token length and requiring massive GPU clusters running 24/7.
-    \item \textbf{Improvement:} By reducing inference steps from $>50$ down to $<10$, this distillation technique drastically cuts server time per query, lowering the economic barrier to entry for SMEs.
-\end{itemize}
-
-\subsubsection{Environmental Dimension}
-\begin{itemize}
-    \item \textbf{Project Impact \& Minimization:} The project avoids training from scratch, instead reusing pre-trained weights via LoRA, which reduces trainable parameters by over 99\% and substantially reduces training energy. The use of 4-bit quantization further reduces the energy footprint of both inference and training.
-    \item \textbf{State of the Art (Current Solutions):} Standard AR models and non-distilled LDMs are environmentally taxing due to the massive energy draw of data centers executing long, sequential generation passes.
-    \item \textbf{Improvement:} This solution directly addresses the carbon footprint of AI inference. Requiring 80\% fewer computational steps to generate the same text reduces the energy consumed per query proportionally, directly contributing to a lower global carbon footprint for AI services.
-\end{itemize}
-
-\subsubsection{Social Dimension}
-\begin{itemize}
-    \item \textbf{Personal Growth:} This project required mastery of state-of-the-art Deep Learning concepts (Diffusion, PyTorch, Distillation) and bridging the gap between theoretical mathematics and practical IT deployment.
-    \item \textbf{State of the Art \& Real Need:} The power of cutting-edge AI is currently concentrated in the hands of a few technology corporations that can afford the requisite hardware. There is a genuine societal need to democratize this technology.
-    \item \textbf{Improvement:} By demonstrating that seven rounds of progressive distillation on a 8B-parameter LDM can be executed to completion on a \$450 consumer GPU released in 2019, this project directly contributes to making advanced NLP tools accessible to independent researchers, educators, and underfunded institutions, thereby improving equity in the technological landscape.
-\end{itemize}
-
-% ======================================================================
 \section{Conclusions and Future Work}
 \label{sec:conclusions}
 
@@ -2125,12 +1778,401 @@ These directions, taken together, outline concrete next steps for extending the 
 }
 
 % -------------------------------------------------------------------
-% A.1 – Promptfoo Evaluation – Teacher (128 steps)
+% Annex: Chapter 7 – Project Management and Feasibility
 % -------------------------------------------------------------------
 \refstepcounter{section}
-\addcontentsline{toc}{subsection}{A.1\quad Promptfoo Evaluation Report – Teacher (128 steps)}
+\addcontentsline{toc}{section}{A.1\quad Project Management and Feasibility}
+
+\newpage
+\thispagestyle{fancy}
+\vspace*{3cm}
+\begin{center}
+    {\LARGE\bfseries Project Management and Feasibility}
+\end{center}
+\label{sec:gep}
+
+\subsection*{Context and Justification}
+\addcontentsline{toc}{subsection}{A.1.1\quad Context and Justification}
+\label{subsec:context_justification}
+
+\subsubsection*{Methodological Choice: Progressive Distillation vs.\ Alternatives}
+When seeking to accelerate diffusion models, two primary strategies emerge: Consistency Models \cite{song2023consistency} and Progressive Distillation \cite{salimans2022progressive}. While Consistency Models map any point on the diffusion trajectory directly to the origin in a single step, they are notoriously difficult to adapt to discrete categorical domains like text, as they rely on enforcing boundary conditions over continuous Ordinary Differential Equations (ODEs).
+
+In contrast, \textbf{Progressive Distillation} teaches a student model to take larger, discrete jump steps (e.g., matching 2 teacher steps in 1 student step). This discrete nature makes it significantly more adaptable to the token-by-token embedding space of language models. Therefore, this technique was selected as the most viable path to bridge the gap shown in Table~\ref{tab:sota_comparison}.
+
+\begin{table}[H]
+\centering
+\caption{Comparison of Generation Paradigms and the Thesis Gap}
+\label{tab:sota_comparison}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+\textbf{Paradigm} & \textbf{Example Model} & \textbf{Generation} & \textbf{Steps (N)} & \textbf{Latency} & \textbf{Quality} \\ \midrule
+Auto-Regressive & GPT-4, LLaMA-3 & Serial & $N = \text{Length}$ & High (Linear) & SOTA \\
+Standard Diffusion & SSD-LM, LLaDA & Parallel & $50 - 100$ & Med-High & High \\
+Continuous Distillation & Stable Diffusion XL \textit{(image only)} & Parallel & $4 - 8$ & Low & High \\
+\textbf{Discrete Distillation} & \textbf{(This Thesis)} & \textbf{Parallel} & \textbf{4--8} & \textbf{Very Low} & \textbf{Target: High} \\ \bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\subsubsection*{Scientific Innovation}
+Unlike a standard engineering project that benchmarks existing tools, this thesis proposes a \textbf{novel adaptation of an algorithm}. If successful, it contributes a new method to the NLP community: ``Textual Progressive Distillation.''
+
+\subsubsection*{Efficiency and Green AI}
+Reducing the number of inference steps linearly reduces the energy required to generate text. If we reduce steps from 64 to 8, we reduce the energy cost by approximately $8\times$. This aligns with the ``Green AI'' initiative \cite{strubell2019energy} to make Large Language Models sustainable.
+
+\subsubsection*{Commercial Viability}
+For real-time applications (e.g., conversational AI), latency is the primary KPI. A parallel model running in 4--8 steps could theoretically outperform LLaMA-3 by $5\times$--$10\times$ in wall-clock speed. For a customer support chatbot generating a 200-token response, an AR model at 50 tokens/sec takes 4 seconds, while a distilled LDM at 4 steps could reduce this to 0.4 seconds---an order-of-magnitude improvement that transforms the user experience from perceptible waiting to near-instant response.
+
+\subsubsection*{Economic Impact}
+Current LLM inference is prohibitively expensive. A reduction in inference steps from 50 to 5 represents a potential $10\times$ reduction in GPU compute time per query, which could make sophisticated language models viable for SMEs that cannot afford premium GPU infrastructure.
+
+\subsection*{Scope and Requirements}
+\addcontentsline{toc}{subsection}{A.1.2\quad Scope and Requirements}
+\label{subsec:scope_requirements}
+
+\subsubsection*{General and Specific Objectives (SMART)}
+The general objective is to implement and evaluate a \textbf{knowledge distillation technique} for Language Diffusion Models, training a ``Student'' model to compress the inference steps of a ``Teacher'' model, thereby achieving fast parallel text generation.
+\begin{itemize}
+    \item \textbf{O1 (Theoretical Framework):} Analyze the mathematical formulation of Progressive Distillation (Images) and adapt the loss function for discrete text data by \textbf{March 15, 2026}.
+    \item \textbf{O2 (Implementation):} Develop a ``Teacher-Student'' training loop in PyTorch capable of loading a pre-trained LDM and fine-tuning student weights by \textbf{April 1, 2026}.
+    \item \textbf{O3 (Distillation Training):} Train the student model on a subset of the Wikitext-2-raw-v1 dataset to reduce sampling steps from $N=64$ to $N=\{8, 4\}$.
+    \item \textbf{O4 (Validation):} Benchmark the ``Distilled LDM'' against the ``Teacher LDM,'' measuring Speedup (×) vs.\ Quality Drop (Perplexity) by \textbf{May 20, 2026}.
+\end{itemize}
+
+\subsubsection*{In-Scope vs.\ Out-of-Scope}
+\textbf{In-Scope:}
+\begin{itemize}
+    \item \textbf{Algorithm Adaptation:} Porting the distillation logic (step halving) from the continuous domain to the discrete text domain.
+    \item \textbf{Model Distillation (Fine-tuning):} Performing only the distillation (fine-tuning) phase, assuming the existence of a pre-trained ``Teacher.''
+    \item \textbf{Target Models:} Open-source LDMs in the 1B--8B parameter range (e.g., MDLM, SSD-LM, LLaDA).
+    \item \textbf{Evaluation:} Comparing the distilled model against the teacher on quality metrics (PPL) and efficiency metrics (Latency).
+\end{itemize}
+
+\textbf{Out-of-Scope:}
+\begin{itemize}
+    \item \textbf{Pre-training from Scratch:} We rely on published weights.
+    \item \textbf{Novel Architectures:} We propose a new training method for existing architectures, not a new neural network design.
+    \item \textbf{Production Deployment:} The output is a scientific proof-of-concept, not a production API.
+\end{itemize}
+
+\subsubsection*{Functional and Non-Functional Requirements}
+\textbf{Functional Requirements:}
+\begin{itemize}
+    \item The system must accept a text prompt as input and generate a coherent text continuation.
+    \item The distillation pipeline must load a pre-trained Teacher model and initialize a Student model with identical weights.
+    \item The training loop must implement a loss function handling discrete categorical data (KL Divergence with soft-targeting).
+\end{itemize}
+
+\textbf{Non-Functional Requirements:}
+\begin{itemize}
+    \item \textbf{Performance:} The distilled model must achieve a latency reduction of at least $4\times$ compared to the teacher.
+    \item \textbf{Quality:} Perplexity degradation must not exceed 15\% relative to the teacher.
+    \item \textbf{Resources:} The fine-tuning process must fit within a single consumer-grade GPU (NVIDIA RTX 2070 Super, 8 GB VRAM) using LoRA optimization and 4-bit quantization.
+\end{itemize}
+
+\subsection*{Time Planning and Real Deviations}
+\addcontentsline{toc}{subsection}{A.1.3\quad Time Planning and Real Deviations}
+\label{subsec:time_planning}
+
+\subsubsection*{Global Project Parameters and Methodology}
+This project is formulated as a standard Bachelor's Thesis (TFG) for the Facultat d'Informatica de Barcelona (FIB), corresponding to 18 ECTS credits, with a total planned workload of \textbf{540 hours}. It spans from February 10, 2026, to the expected defense on June 25, 2026 ($\approx$136 days), requiring approximately 27.5 hours per week. The project adopts an \textbf{Agile Experimental Methodology}: the work is divided into 2-week sprints, with a Sprint Review held with the Project Director at the end of each sprint to assess achieved milestones and a Sprint Retrospective to adjust subsequent planning based on empirical results.
+
+\subsubsection*{Work Breakdown Structure (WBS)}
+
+\textbf{Concurrent Tasks (Cross-cutting):}
+\begin{itemize}
+    \item \textbf{PM1: GEP Course Deliverables [40h].} Drafting, formatting, and refining the Context, Planning, Budget, and Final GEP deliverables.
+    \item \textbf{PM2: Weekly Sprint Planning \& Director Meetings [20h].} Preparing agendas and reviewing progress, one hour per week over the $\approx$20-week duration.
+    \item \textbf{DOC1: State of the Art drafting [25h].} Reading selected papers and synthesizing them into the academic framework.
+    \item \textbf{DOC2: Methodology \& Experiments drafting [35h].} Documenting the code architecture, loss functions, and experimental setups; runs continuously alongside Sprints 2--4.
+    \item \textbf{DOC3: Final memory review and formatting [20h].} Proofreading, LaTeX compilation fixes, and bibliography checks.
+\end{itemize}
+
+\textbf{Sprint Breakdown:}
+\begin{itemize}
+    \item \textbf{Sprint 1: Theoretical Setup (Feb 10--Mar 8) [80h]}
+    \begin{itemize}
+        \item T1.1: Literature review on Discrete Diffusion [30h]
+        \item T1.2: Mathematical formulation of Loss Function [30h]
+        \item T1.3: Teacher model validation [20h]
+    \end{itemize}
+    \item \textbf{Sprint 2: Pipeline Implementation (Mar 9--Apr 5) [90h]}
+    \begin{itemize}
+        \item T2.1: Setup PyTorch environment [20h]
+        \item T2.2: Implement DistillationTrainer class [35h]
+        \item T2.3: WandB integration \& Toy Task [35h]
+    \end{itemize}
+    \item \textbf{Sprint 3: Scale-up \& Initial Training (Apr 6--May 3) [90h]}
+    \begin{itemize}
+        \item T3.1: LoRA configuration for 8B model [30h]
+        \item T3.2: Initial training run (N=16) \& gradient debugging [40h]
+        \item T3.3: Hyperparameter tuning [20h]
+    \end{itemize}
+    \item \textbf{Sprint 4: Advanced Training \& Benchmarks (May 4--May 31) [90h]}
+    \begin{itemize}
+        \item T4.1: Final distillation runs (N=8, N=4 steps) [40h]
+        \item T4.2: Inference latency profiling [20h]
+        \item T4.3: Quality evaluation [30h]
+    \end{itemize}
+    \item \textbf{Sprint 5: Wrap-up \& Defense (Jun 1--Jun 25) [50h]}
+    \begin{itemize}
+        \item T5.1: Final Results analysis and charting [20h]
+        \item T5.2: Presentation slide deck creation [20h]
+        \item T5.3: Oral defense rehearsal [10h]
+    \end{itemize}
+\end{itemize}
+
+\textbf{Real Deviations from Plan.} The most significant deviation from the original plan was the hardware scope: the project was originally budgeted around access to an NVIDIA A100 GPU (40--80 GB VRAM), but was ultimately executed in its entirety on the local NVIDIA RTX 2070 Super (8 GB VRAM). This required the engineering of the iterative disk-swapping pipeline described in Chapter~4 and extended Sprint 3 by approximately 15 hours as the memory-safe architecture was designed, debugged, and validated. However, the project was completed on time because evaluation scope was conservatively bounded (50 training examples, 12 test prompts), and the pipeline wall-clock time for seven full rounds totaled approximately 3.5 hours---far less than anticipated for cloud-GPU execution.
+
+\subsubsection*{Task Summary and Resources Table}
+\begin{table}[H]
+\centering
+\caption{Detailed Task Summary mapped to Required Resources}
+\label{tab:tasks}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}llccl@{}}
+\toprule
+\textbf{Code} & \textbf{Descriptive Name} & \textbf{Hours} & \textbf{Dependencies} & \textbf{Specific Resources} \\ \midrule
+PM1 & GEP Deliverables & 40 & None & Local PC, LaTeX, GEP Materials \\
+PM2 & Sprint Meetings & 20 & None & Local PC, Google Meet, Director \\
+DOC1 & State of the Art Draft & 25 & T1.1 & Local PC, Mendeley, IEEE Xplore \\
+DOC2 & Methodology Draft & 35 & T3.2 & Local PC, LaTeX \\
+DOC3 & Final Review & 20 & T4.3, T5.1 & Local PC, Grammarly \\ \midrule
+T1.1 & Literature Review & 30 & None & Local PC, arXiv \\
+T1.2 & Loss Formulation & 30 & T1.1 & Local PC, Overleaf \\
+T1.3 & Teacher Validation & 20 & None & Local PC, HuggingFace \\ \midrule
+T2.1 & Setup Environment & 20 & None & Local PC, Python, PyTorch \\
+T2.2 & DistillationTrainer & 35 & T1.2, T2.1 & Local PC, GitHub \\
+T2.3 & Toy Task & 35 & T2.2 & Local PC, WandB \\ \midrule
+T3.1 & LoRA Configuration & 30 & T2.2 & RTX 2070 Super (Local) \\
+T3.2 & Initial Training Run & 40 & T2.3, T3.1 & RTX 2070 Super, WandB \\
+T3.3 & Hyperparameter Tuning & 20 & T3.2 & RTX 2070 Super \\ \midrule
+T4.1 & Final Distillation Runs & 40 & T3.3 & RTX 2070 Super, HuggingFace \\
+T4.2 & Latency Profiling & 20 & T4.1 & Local PC, CodeCarbon \\
+T4.3 & Quality Evaluation & 30 & T4.1 & Local PC, PPL/Promptfoo Scripts \\ \midrule
+T5.1 & Results Analysis & 20 & T4.2, T4.3 & Local PC, Matplotlib \\
+T5.2 & Slide Deck Creation & 20 & T5.1 & Local PC, PowerPoint/Beamer \\
+T5.3 & Defense Rehearsal & 10 & T5.2 & Local PC, Project Director \\ \bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\subsubsection*{Agile Gantt Chart}
+\begin{figure}[H]
+    \centering
+    \begin{ganttchart}[
+        vgrid={*4{draw=none}, *1{dotted}},
+        hgrid,
+        expand chart=\textwidth,
+        y unit title=0.45cm,
+        y unit chart=0.35cm,
+        bar/.append style={fill=blue!30, draw=blue!60},
+        bar height=0.6,
+        group right shift=0,
+        group top shift=0.7,
+        group height=.3,
+        group/.append style={fill=black!80}
+    ]{1}{20}
+    \gantttitle{Feb}{3}
+    \gantttitle{March}{4}
+    \gantttitle{April}{4}
+    \gantttitle{May}{5}
+    \gantttitle{June}{4} \\
+    \gantttitlelist{1,...,20}{1} \\
+
+    \ganttgroup{Concurrent (Agile)}{1}{20} \\
+    \ganttbar{PM1 \& PM2}{1}{20} \\
+    \ganttbar{DOC1, DOC2, DOC3}{2}{19} \\
+
+    \ganttgroup{SP1: Theory \& Setup}{1}{4} \\
+    \ganttbar[bar/.append style={fill=green!30}]{T1.1: Literature Review}{1}{2} \\
+    \ganttbar[bar/.append style={fill=green!30}]{T1.2: Loss Formulation}{2}{3} \\
+    \ganttbar[bar/.append style={fill=green!30}]{T1.3: Teacher Validation}{3}{4} \\
+
+    \ganttgroup{SP2: Pipeline Dev}{5}{8} \\
+    \ganttbar[bar/.append style={fill=green!30}]{T2.1: Setup Environment}{5}{5} \\
+    \ganttbar[bar/.append style={fill=green!30}]{T2.2: DistillationTrainer}{6}{7} \\
+    \ganttbar[bar/.append style={fill=green!30}]{T2.3: Toy Task}{7}{8} \\
+
+    \ganttgroup{SP3: Initial Training}{9}{12} \\
+    \ganttbar[bar/.append style={fill=orange!40}]{T3.1: LoRA Configuration}{9}{10} \\
+    \ganttbar[bar/.append style={fill=orange!40}]{T3.2: Initial Training Run}{10}{11} \\
+    \ganttbar[bar/.append style={fill=orange!40}]{T3.3: Hyperparameter Tuning}{12}{12} \\
+
+    \ganttgroup{SP4: Final Runs \& Benchmarks}{13}{16} \\
+    \ganttbar[bar/.append style={fill=orange!40}]{T4.1: Final Distillation Runs}{13}{14} \\
+    \ganttbar[bar/.append style={fill=orange!40}]{T4.2: Latency Profiling}{15}{15} \\
+    \ganttbar[bar/.append style={fill=orange!40}]{T4.3: Quality Evaluation}{15}{16} \\
+
+    \ganttgroup{SP5: Wrap-up}{17}{19} \\
+    \ganttbar[bar/.append style={fill=purple!30}]{T5.1: Results Analysis}{17}{17} \\
+    \ganttbar[bar/.append style={fill=purple!30}]{T5.2: Slide Deck Creation}{18}{18} \\
+    \ganttbar[bar/.append style={fill=purple!30}]{T5.3: Defense Rehearsal}{19}{19} \\
+
+    \ganttmilestone{Thesis Defense}{20}
+    \end{ganttchart}
+    \caption{Granular Agile Gantt Chart mapping sub-tasks 1:1 to the WBS. \textit{Source: Compiled by the author.}}
+    \label{fig:detailed_gantt}
+\end{figure}
+
+\subsubsection*{Risk Management \& Alternative Plans}
+As required by project management standards, ``Plan B'' tasks have been defined for critical risks, ensuring the project concludes on schedule by June 25 regardless of the materialized scenario.
+
+\textbf{Risk 1: Severe VRAM Limitations.} If the GPU cannot fit the 8B model even with LoRA: \textit{Plan B (ALT-T3.1)}: switch to a smaller Teacher model (1.5B or 3B parameter diffusion model). Time impact: approximately 15 hours to download, integrate, and validate the new model, absorbed by restricting evaluation to Wikitext-2-raw-v1 only.
+
+\textbf{Risk 2: Distillation Training Instability.} If the Student's loss diverges or suffers mode collapse: \textit{Plan B (ALT-T3.2)}: revert to feature-matching MSE loss on hidden states, which is more stable but yields slightly lower generation quality. Time impact: 20 hours to rewrite the loss and restart the run, recovered by limiting the final distillation chain to $N=8$ steps only. This pivot would additionally require approximately 2 hours of ad-hoc technical consultation with the Thesis Director.
+
+\subsection*{Financial Budget and Economic Viability}
+\addcontentsline{toc}{subsection}{A.1.4\quad Financial Budget and Economic Viability}
+\label{subsec:budget}
+
+This section details the economic planning required to execute the thesis, adhering to the 540-hour workload. Cost estimations include a standard 1.35 multiplier for Social Security contributions, referencing average gross salaries for Junior IT roles in Spain (Data: Glassdoor \& InfoJobs, 2025).
+
+\subsubsection*{Identification of Costs and Staff Estimates}
+
+\begin{table}[H]
+\centering
+\caption{Highly Granular Staff Costs Broken Down by Individual Gantt Chart Task}
+\label{tab:hr_budget}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}llcccc@{}}
+\toprule
+\textbf{Task Code} & \textbf{Assigned Role} & \textbf{Hours} & \textbf{Gross Rate} & \textbf{Rate w/ SS ($\times$1.35)} & \textbf{Total Cost (\texteuro{})} \\ \midrule
+PM1 & Project Manager & 40 & 25.00 \texteuro{}/h & 33.75 \texteuro{}/h & 1,350.00 \\
+PM2 & Project Manager & 20 & 25.00 \texteuro{}/h & 33.75 \texteuro{}/h & 675.00 \\
+DOC1 & AI Researcher & 25 & 20.00 \texteuro{}/h & 27.00 \texteuro{}/h & 675.00 \\
+DOC2 & AI Researcher & 35 & 20.00 \texteuro{}/h & 27.00 \texteuro{}/h & 945.00 \\
+DOC3 & AI Researcher & 20 & 20.00 \texteuro{}/h & 27.00 \texteuro{}/h & 540.00 \\
+T1.1 & AI Researcher & 30 & 20.00 \texteuro{}/h & 27.00 \texteuro{}/h & 810.00 \\
+T1.2 & AI Researcher & 30 & 20.00 \texteuro{}/h & 27.00 \texteuro{}/h & 810.00 \\
+T1.3 & ML Engineer & 20 & 15.00 \texteuro{}/h & 20.25 \texteuro{}/h & 405.00 \\
+T2.1 & ML Engineer & 20 & 15.00 \texteuro{}/h & 20.25 \texteuro{}/h & 405.00 \\
+T2.2 & ML Engineer & 35 & 15.00 \texteuro{}/h & 20.25 \texteuro{}/h & 708.75 \\
+T2.3 & ML Engineer & 35 & 15.00 \texteuro{}/h & 20.25 \texteuro{}/h & 708.75 \\
+T3.1 & ML Engineer & 30 & 15.00 \texteuro{}/h & 20.25 \texteuro{}/h & 607.50 \\
+T3.2 & ML Engineer & 40 & 15.00 \texteuro{}/h & 20.25 \texteuro{}/h & 810.00 \\
+T3.3 & ML Engineer & 20 & 15.00 \texteuro{}/h & 20.25 \texteuro{}/h & 405.00 \\
+T4.1 & ML Engineer & 40 & 15.00 \texteuro{}/h & 20.25 \texteuro{}/h & 810.00 \\
+T4.2 & ML Engineer & 20 & 15.00 \texteuro{}/h & 20.25 \texteuro{}/h & 405.00 \\
+T4.3 & AI Researcher & 30 & 20.00 \texteuro{}/h & 27.00 \texteuro{}/h & 810.00 \\
+T5.1 & AI Researcher & 20 & 20.00 \texteuro{}/h & 27.00 \texteuro{}/h & 540.00 \\
+T5.2 & Project Manager & 20 & 25.00 \texteuro{}/h & 33.75 \texteuro{}/h & 675.00 \\
+T5.3 & Project Manager & 10 & 25.00 \texteuro{}/h & 33.75 \texteuro{}/h & 337.50 \\ \midrule
+\textbf{Total Staff Cost} & & \textbf{540} & & & \textbf{13,432.50} \\ \bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\subsubsection*{General Costs and Amortization}
+General costs include hardware, software, and operational expenses. Hardware amortization is calculated over a standard 4-year (1,460 days) useful life, prorated for the 4.5 months ($\approx$136 days) of the project duration.
+\begin{itemize}
+    \item \textbf{Hardware (Local PC):} Valued at 1,500 \texteuro{}. Amortization: $1,500 \times (136 / 1460) = 139.72$ \texteuro{}.
+    \item \textbf{Hardware (Cloud GPU):} Rental of an NVIDIA A100 GPU for 100 hours of training at an estimated 2.50 \texteuro{}/h. This is a direct consumption cost: $250.00$ \texteuro{}. \textit{Note: The final pipeline was executed locally on the RTX 2070 Super; this line item reflects the originally budgeted contingency cost.}
+    \item \textbf{Software Licenses:} PyTorch, HuggingFace, and standard IDEs are open-source. GitHub Pro and Overleaf are covered via University Student Packs (0.00 \texteuro{}).
+    \item \textbf{Operational Costs:} Electricity ($540\text{h} \times 0.5\text{ kW} \times 0.20\text{ \texteuro{}/kWh} = 54.00$ \texteuro{}) and workspace/internet overhead estimated at 150.00 \texteuro{}.
+\end{itemize}
+\textbf{Total General Costs: 593.72 \texteuro{}}
+
+\subsubsection*{Contingencies and Incidentals}
+To ensure financial robustness, indirect costs are calculated based on standard IT risk margins and the specific risk matrix defined previously.
+\begin{itemize}
+    \item \textbf{Contingency Margin:} A standard margin of \textbf{15\%} of the cumulative direct costs (14,026.22 \texteuro{}) is applied to cover unforeseen general project delays, yielding a contingency reserve of \textbf{2,103.93 \texteuro{}}.
+    \item \textbf{Incidentals:} Calculated based on specific risks, weighted by their probability:
+    \begin{itemize}
+        \item \textit{Risk 1 (VRAM limitations):} 15 extra hours of ML Engineer time (303.75 \texteuro{}). Estimated probability: 30\%. Expected cost = 91.12 \texteuro{}.
+        \item \textit{Risk 2 (Training Instability):} 20 extra hours of ML Engineer time (405.00 \texteuro{}). Estimated probability: 40\%. Expected cost = 162.00 \texteuro{}.
+    \end{itemize}
+\end{itemize}
+
+\subsubsection*{Total Budget Summary}
+\begin{table}[H]
+\centering
+\caption{Total Project Budget Summary}
+\label{tab:total_budget}
+\begin{tabular}{@{}lr@{}}
+\toprule
+\textbf{Concept} & \textbf{Amount (\texteuro{})} \\ \midrule
+\textbf{Direct Costs} & \textbf{14,026.22} \\
+\hspace{0.5cm} Human Resources & 13,432.50 \\
+\hspace{0.5cm} General Costs & 593.72 \\ \midrule
+\textbf{Indirect Costs} & \textbf{2,357.05} \\
+\hspace{0.5cm} Contingency Margin (15\%) & 2,103.93 \\
+\hspace{0.5cm} Incidentals (Risk-weighted) & 253.12 \\ \midrule
+\textbf{Total Project Budget} & \textbf{16,383.27} \\ \bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection*{Management Control}
+Financial indicators are monitored at the end of every Agile Sprint. If the Cost Performance Index ($CPI = EV/AC$) drops below 0.90 at any sprint review, non-critical validation tasks will be descoped to re-align the budget dynamically without requiring additional funding.
+
+\subsection*{Sustainability Report}
+\addcontentsline{toc}{subsection}{A.1.5\quad Sustainability Report}
+\label{subsec:sustainability}
+
+\subsubsection*{Self-Assessment Summary}
+Prior to completing the sustainability questionnaire, understanding of sustainability in software engineering was largely limited to hardware power consumption. The self-assessment revealed a significant blind spot: the socioeconomic implications of democratizing Artificial Intelligence and the full lifecycle costs of training Large Language Models had not been fully considered.
+
+\textbf{Strengths:} A major strength identified is the project's inherent alignment with ``Green AI'' principles; by focusing on Knowledge Distillation, the core objective is inherently sustainable (reducing inference compute). This alignment was subsequently reinforced empirically: the complete seven-round distillation pipeline ran in approximately 3.5 hours on a \$450 consumer GPU, demonstrating that the research could be reproduced at negligible carbon cost relative to datacenter-scale baselines.
+
+\textbf{Weaknesses:} A weakness is the lack of a formal carbon-tracking protocol during the model training phase. Moving forward, integrating tools like \texttt{CodeCarbon} into the pipeline would measure actual CO$_2$ emissions of the distillation process itself, ensuring that the environmental cost of Student training does not outweigh inference benefits.
+
+\subsubsection*{Economic Dimension}
+\begin{itemize}
+    \item \textbf{Reflection on Estimated Cost:} The estimated project cost of $\approx$16,383 \texteuro{} is highly competitive when viewed as an R\&D investment. Developing a custom accelerated Language Diffusion Model from scratch would cost exponentially more.
+    \item \textbf{State of the Art (Current Solutions):} Deploying LLMs in production is currently prohibitively expensive for small and medium enterprises, with inference for autoregressive models scaling linearly with token length and requiring massive GPU clusters running 24/7.
+    \item \textbf{Improvement:} By reducing inference steps from $>50$ down to $<10$, this distillation technique drastically cuts server time per query, lowering the economic barrier to entry for SMEs.
+\end{itemize}
+
+\subsubsection*{Environmental Dimension}
+\begin{itemize}
+    \item \textbf{Project Impact \& Minimization:} The project avoids training from scratch, instead reusing pre-trained weights via LoRA, which reduces trainable parameters by over 99\% and substantially reduces training energy. The use of 4-bit quantization further reduces the energy footprint of both inference and training.
+    \item \textbf{State of the Art (Current Solutions):} Standard AR models and non-distilled LDMs are environmentally taxing due to the massive energy draw of data centers executing long, sequential generation passes.
+    \item \textbf{Improvement:} This solution directly addresses the carbon footprint of AI inference. Requiring 80\% fewer computational steps to generate the same text reduces the energy consumed per query proportionally, directly contributing to a lower global carbon footprint for AI services.
+\end{itemize}
+
+\subsubsection*{Social Dimension}
+\begin{itemize}
+    \item \textbf{Personal Growth:} This project required mastery of state-of-the-art Deep Learning concepts (Diffusion, PyTorch, Distillation) and bridging the gap between theoretical mathematics and practical IT deployment.
+    \item \textbf{State of the Art \& Real Need:} The power of cutting-edge AI is currently concentrated in the hands of a few technology corporations that can afford the requisite hardware. There is a genuine societal need to democratize this technology.
+    \item \textbf{Improvement:} By demonstrating that seven rounds of progressive distillation on a 8B-parameter LDM can be executed to completion on a \$450 consumer GPU released in 2019, this project directly contributes to making advanced NLP tools accessible to independent researchers, educators, and underfunded institutions, thereby improving equity in the technological landscape.
+\end{itemize}
+
+% -------------------------------------------------------------------
+% A.2 – Model Evaluation Reports (group cover page)
+% -------------------------------------------------------------------
+\newpage
+\thispagestyle{fancy}
+\refstepcounter{section}
+\addcontentsline{toc}{section}{A.2\quad Model Evaluation Reports}
+\label{sec:annex_reports}
+\vspace*{3cm}
+\begin{center}
+    {\Large\bfseries Annex A.2}\\[1.2em]
+    {\large\bfseries Model Evaluation Reports}\\[2.5em]
+    \begin{minipage}{0.82\textwidth}
+        \normalsize
+        This annex compiles the full evaluation reports generated across every distillation round of the progressive knowledge-distillation pipeline.
+        For each round, two reports are included:
+        \begin{itemize}
+            \item \textbf{Promptfoo Evaluation Report} --- measures functional quality through prompt-based test suites, reporting pass rates on structured tasks (text generation, question answering, and code generation).
+            \item \textbf{Perplexity Evaluation Report} --- measures language-modelling quality by computing token-level perplexity on the test set.
+        \end{itemize}
+        \vspace{0.8em}
+        The reports are ordered chronologically by distillation round, from the non-distilled 128-step Teacher baseline down to the final 1-step Student, followed by the non-distilled base model without LoRA as an additional reference point.
+        Together they provide the empirical evidence for all quality--efficiency trade-off claims made in the main body of the thesis.
+    \end{minipage}
+\end{center}
+\vfill
+
+% -------------------------------------------------------------------
+% A.2.1 – Promptfoo Evaluation – Teacher (128 steps)
+% -------------------------------------------------------------------
+\refstepcounter{section}
+\addcontentsline{toc}{subsection}{A.2.1\quad Promptfoo Evaluation Report – Teacher (128 steps)}
 \annexcover%
-    {Appendix A.1}%
+    {Appendix A.2.1}%
     {Promptfoo Evaluation Report – Teacher (128 steps)}%
     {Base Teacher model: LLaDA-8B running at 128 denoising steps (no LoRA)}%
     {Promptfoo Pass Rate: 74.07\%}%
@@ -2142,11 +2184,11 @@ These directions, taken together, outline concrete next steps for extending the 
 }
 
 % -------------------------------------------------------------------
-% A.2 – Perplexity Evaluation – Teacher (128 steps)
+% A.2.2 – Perplexity Evaluation – Teacher (128 steps)
 % -------------------------------------------------------------------
-\addcontentsline{toc}{subsection}{A.2\quad Perplexity Evaluation Report – Teacher (128 steps)}
+\addcontentsline{toc}{subsection}{A.2.2\quad Perplexity Evaluation Report – Teacher (128 steps)}
 \annexcover%
-    {Appendix A.2}%
+    {Appendix A.2.2}%
     {Perplexity Evaluation Report – Teacher (128 steps)}%
     {Base Teacher model: LLaDA-8B running at 128 denoising steps (no LoRA)}%
     {Average Perplexity: 13.00}%
@@ -2158,11 +2200,11 @@ These directions, taken together, outline concrete next steps for extending the 
 }
 
 % -------------------------------------------------------------------
-% A.3 – Promptfoo Evaluation – Student Round 1 (64 steps)
+% A.2.3 – Promptfoo Evaluation – Student Round 1 (64 steps)
 % -------------------------------------------------------------------
-\addcontentsline{toc}{subsection}{A.3\quad Promptfoo Evaluation Report – Distilled Student (64 steps)}
+\addcontentsline{toc}{subsection}{A.2.3\quad Promptfoo Evaluation Report – Distilled Student (64 steps)}
 \annexcover%
-    {Appendix A.3}%
+    {Appendix A.2.3}%
     {Promptfoo Evaluation Report – Distilled Student (64 steps)}%
     {Distilled Student model: Round 1 of progressive distillation, 64 denoising steps with LoRA}%
     {Promptfoo Pass Rate: 74.07\%}%
@@ -2174,11 +2216,11 @@ These directions, taken together, outline concrete next steps for extending the 
 }
 
 % -------------------------------------------------------------------
-% A.4 – Perplexity Evaluation – Student Round 1 (64 steps)
+% A.2.4 – Perplexity Evaluation – Student Round 1 (64 steps)
 % -------------------------------------------------------------------
-\addcontentsline{toc}{subsection}{A.4\quad Perplexity Evaluation Report – Distilled Student (64 steps)}
+\addcontentsline{toc}{subsection}{A.2.4\quad Perplexity Evaluation Report – Distilled Student (64 steps)}
 \annexcover%
-    {Appendix A.4}%
+    {Appendix A.2.4}%
     {Perplexity Evaluation Report – Distilled Student (64 steps)}%
     {Distilled Student model: Round 1 of progressive distillation, 64 denoising steps with LoRA}%
     {Average Perplexity: 12.97}%
@@ -2190,11 +2232,11 @@ These directions, taken together, outline concrete next steps for extending the 
 }
 
 % -------------------------------------------------------------------
-% A.5 – Promptfoo Evaluation – Student Round 2 (32 steps)
+% A.2.5 – Promptfoo Evaluation – Student Round 2 (32 steps)
 % -------------------------------------------------------------------
-\addcontentsline{toc}{subsection}{A.5\quad Promptfoo Evaluation Report – Distilled Student (32 steps)}
+\addcontentsline{toc}{subsection}{A.2.5\quad Promptfoo Evaluation Report – Distilled Student (32 steps)}
 \annexcover%
-    {Appendix A.5}%
+    {Appendix A.2.5}%
     {Promptfoo Evaluation Report – Distilled Student (32 steps)}%
     {Distilled Student model: Round 2 of progressive distillation, 32 denoising steps with LoRA}%
     {Promptfoo Pass Rate: 75.93\%}%
@@ -2206,11 +2248,11 @@ These directions, taken together, outline concrete next steps for extending the 
 }
 
 % -------------------------------------------------------------------
-% A.6 – Perplexity Evaluation – Student Round 2 (32 steps)
+% A.2.6 – Perplexity Evaluation – Student Round 2 (32 steps)
 % -------------------------------------------------------------------
-\addcontentsline{toc}{subsection}{A.6\quad Perplexity Evaluation Report – Distilled Student (32 steps)}
+\addcontentsline{toc}{subsection}{A.2.6\quad Perplexity Evaluation Report – Distilled Student (32 steps)}
 \annexcover%
-    {Appendix A.6}%
+    {Appendix A.2.6}%
     {Perplexity Evaluation Report – Distilled Student (32 steps)}%
     {Distilled Student model: Round 2 of progressive distillation, 32 denoising steps with LoRA}%
     {Average Perplexity: 15.93}%
@@ -2222,11 +2264,11 @@ These directions, taken together, outline concrete next steps for extending the 
 }
 
 % -------------------------------------------------------------------
-% A.7 – Promptfoo Evaluation – Student Round 3 (16 steps)
+% A.2.7 – Promptfoo Evaluation – Student Round 3 (16 steps)
 % -------------------------------------------------------------------
-\addcontentsline{toc}{subsection}{A.7\quad Promptfoo Evaluation Report – Distilled Student (16 steps)}
+\addcontentsline{toc}{subsection}{A.2.7\quad Promptfoo Evaluation Report – Distilled Student (16 steps)}
 \annexcover%
-    {Appendix A.7}%
+    {Appendix A.2.7}%
     {Promptfoo Evaluation Report – Distilled Student (16 steps)}%
     {Distilled Student model: Round 3 of progressive distillation, 16 denoising steps with LoRA}%
     {Promptfoo Pass Rate: 68.5\%}%
@@ -2238,11 +2280,11 @@ These directions, taken together, outline concrete next steps for extending the 
 }
 
 % -------------------------------------------------------------------
-% A.8 – Perplexity Evaluation – Student Round 3 (16 steps)
+% A.2.8 – Perplexity Evaluation – Student Round 3 (16 steps)
 % -------------------------------------------------------------------
-\addcontentsline{toc}{subsection}{A.8\quad Perplexity Evaluation Report – Distilled Student (16 steps)}
+\addcontentsline{toc}{subsection}{A.2.8\quad Perplexity Evaluation Report – Distilled Student (16 steps)}
 \annexcover%
-    {Appendix A.8}%
+    {Appendix A.2.8}%
     {Perplexity Evaluation Report – Distilled Student (16 steps)}%
     {Distilled Student model: Round 3 of progressive distillation, 16 denoising steps with LoRA}%
     {Average Perplexity: 24.86}%
@@ -2254,11 +2296,11 @@ These directions, taken together, outline concrete next steps for extending the 
 }
 
 % -------------------------------------------------------------------
-% A.9 – Promptfoo Evaluation – Student Round 4 (8 steps)
+% A.2.9 – Promptfoo Evaluation – Student Round 4 (8 steps)
 % -------------------------------------------------------------------
-\addcontentsline{toc}{subsection}{A.9\quad Promptfoo Evaluation Report – Distilled Student (8 steps)}
+\addcontentsline{toc}{subsection}{A.2.9\quad Promptfoo Evaluation Report – Distilled Student (8 steps)}
 \annexcover%
-    {Appendix A.9}%
+    {Appendix A.2.9}%
     {Promptfoo Evaluation Report – Distilled Student (8 steps)}%
     {Distilled Student model: Round 4 of progressive distillation, 8 denoising steps with LoRA}%
     {Promptfoo Pass Rate: 62.96\%}%
@@ -2270,11 +2312,11 @@ These directions, taken together, outline concrete next steps for extending the 
 }
 
 % -------------------------------------------------------------------
-% A.10 – Perplexity Evaluation – Student Round 4 (8 steps)
+% A.2.10 – Perplexity Evaluation – Student Round 4 (8 steps)
 % -------------------------------------------------------------------
-\addcontentsline{toc}{subsection}{A.10\quad Perplexity Evaluation Report – Distilled Student (8 steps)}
+\addcontentsline{toc}{subsection}{A.2.10\quad Perplexity Evaluation Report – Distilled Student (8 steps)}
 \annexcover%
-    {Appendix A.10}%
+    {Appendix A.2.10}%
     {Perplexity Evaluation Report – Distilled Student (8 steps)}%
     {Distilled Student model: Round 4 of progressive distillation, 8 denoising steps with LoRA}%
     {Average Perplexity: 68.44}%
@@ -2286,11 +2328,11 @@ These directions, taken together, outline concrete next steps for extending the 
 }
 
 % -------------------------------------------------------------------
-% A.11 – Promptfoo Evaluation – Student Round 5 (4 steps)
+% A.2.11 – Promptfoo Evaluation – Student Round 5 (4 steps)
 % -------------------------------------------------------------------
-\addcontentsline{toc}{subsection}{A.11\quad Promptfoo Evaluation Report – Distilled Student (4 steps)}
+\addcontentsline{toc}{subsection}{A.2.11\quad Promptfoo Evaluation Report – Distilled Student (4 steps)}
 \annexcover%
-    {Appendix A.11}%
+    {Appendix A.2.11}%
     {Promptfoo Evaluation Report – Distilled Student (4 steps)}%
     {Distilled Student model: Round 5 of progressive distillation, 4 denoising steps with LoRA}%
     {Promptfoo Pass Rate: 59.3\%}%
@@ -2302,11 +2344,11 @@ These directions, taken together, outline concrete next steps for extending the 
 }
 
 % -------------------------------------------------------------------
-% A.12 – Perplexity Evaluation – Student Round 5 (4 steps)
+% A.2.12 – Perplexity Evaluation – Student Round 5 (4 steps)
 % -------------------------------------------------------------------
-\addcontentsline{toc}{subsection}{A.12\quad Perplexity Evaluation Report – Distilled Student (4 steps)}
+\addcontentsline{toc}{subsection}{A.2.12\quad Perplexity Evaluation Report – Distilled Student (4 steps)}
 \annexcover%
-    {Appendix A.12}%
+    {Appendix A.2.12}%
     {Perplexity Evaluation Report – Distilled Student (4 steps)}%
     {Distilled Student model: Round 5 of progressive distillation, 4 denoising steps with LoRA}%
     {Average Perplexity: 79.18}%
@@ -2318,11 +2360,11 @@ These directions, taken together, outline concrete next steps for extending the 
 }
 
 % -------------------------------------------------------------------
-% A.13 – Promptfoo Evaluation – Student Round 6 (2 steps)
+% A.2.13 – Promptfoo Evaluation – Student Round 6 (2 steps)
 % -------------------------------------------------------------------
-\addcontentsline{toc}{subsection}{A.13\quad Promptfoo Evaluation Report – Distilled Student (2 steps)}
+\addcontentsline{toc}{subsection}{A.2.13\quad Promptfoo Evaluation Report – Distilled Student (2 steps)}
 \annexcover%
-    {Appendix A.13}%
+    {Appendix A.2.13}%
     {Promptfoo Evaluation Report – Distilled Student (2 steps)}%
     {Distilled Student model: Round 6 of progressive distillation, 2 denoising steps with LoRA}%
     {Promptfoo Pass Rate: 50\%}%
@@ -2334,11 +2376,11 @@ These directions, taken together, outline concrete next steps for extending the 
 }
 
 % -------------------------------------------------------------------
-% A.14 – Perplexity Evaluation – Student Round 6 (2 steps)
+% A.2.14 – Perplexity Evaluation – Student Round 6 (2 steps)
 % -------------------------------------------------------------------
-\addcontentsline{toc}{subsection}{A.14\quad Perplexity Evaluation Report – Distilled Student (2 steps)}
+\addcontentsline{toc}{subsection}{A.2.14\quad Perplexity Evaluation Report – Distilled Student (2 steps)}
 \annexcover%
-    {Appendix A.14}%
+    {Appendix A.2.14}%
     {Perplexity Evaluation Report – Distilled Student (2 steps)}%
     {Distilled Student model: Round 6 of progressive distillation, 2 denoising steps with LoRA}%
     {Average Perplexity: 161.93}%
@@ -2350,11 +2392,11 @@ These directions, taken together, outline concrete next steps for extending the 
 }
 
 % -------------------------------------------------------------------
-% A.15 – Promptfoo Evaluation – Student Round 7 (1 step)
+% A.2.15 – Promptfoo Evaluation – Student Round 7 (1 step)
 % -------------------------------------------------------------------
-\addcontentsline{toc}{subsection}{A.15\quad Promptfoo Evaluation Report – Distilled Student (1 step)}
+\addcontentsline{toc}{subsection}{A.2.15\quad Promptfoo Evaluation Report – Distilled Student (1 step)}
 \annexcover%
-    {Appendix A.15}%
+    {Appendix A.2.15}%
     {Promptfoo Evaluation Report – Distilled Student (1 step)}%
     {Distilled Student model: Round 7 of progressive distillation, 1 denoising step with LoRA}%
     {Promptfoo Pass Rate: 46.3\%}%
@@ -2366,11 +2408,11 @@ These directions, taken together, outline concrete next steps for extending the 
 }
 
 % -------------------------------------------------------------------
-% A.16 – Perplexity Evaluation – Student Round 7 (1 step)
+% A.2.16 – Perplexity Evaluation – Student Round 7 (1 step)
 % -------------------------------------------------------------------
-\addcontentsline{toc}{subsection}{A.16\quad Perplexity Evaluation Report – Distilled Student (1 step)}
+\addcontentsline{toc}{subsection}{A.2.16\quad Perplexity Evaluation Report – Distilled Student (1 step)}
 \annexcover%
-    {Appendix A.16}%
+    {Appendix A.2.16}%
     {Perplexity Evaluation Report – Distilled Student (1 step)}%
     {Distilled Student model: Round 7 of progressive distillation, 1 denoising step with LoRA}%
     {Average Perplexity: 353.26}%
@@ -2382,11 +2424,11 @@ These directions, taken together, outline concrete next steps for extending the 
 }
 
 % -------------------------------------------------------------------
-% A.17 – Promptfoo Evaluation – Base Model without LoRA (64 steps)
+% A.2.17 – Promptfoo Evaluation – Base Model without LoRA (64 steps)
 % -------------------------------------------------------------------
-\addcontentsline{toc}{subsection}{A.17\quad Promptfoo Evaluation Report – Base Model without LoRA (64 steps)}
+\addcontentsline{toc}{subsection}{A.2.17\quad Promptfoo Evaluation Report – Base Model without LoRA (64 steps)}
 \annexcover%
-    {Appendix A.17}%
+    {Appendix A.2.17}%
     {Promptfoo Evaluation Report – Base Model without LoRA (64 steps)}%
     {LLaDA-8B base model (no LoRA adapter), evaluated at 64 denoising steps as a na\"{i}ve step-reduction control}%
     {Promptfoo Pass Rate: 70.37\%}%
@@ -2398,11 +2440,11 @@ These directions, taken together, outline concrete next steps for extending the 
 }
 
 % -------------------------------------------------------------------
-% A.18 – Perplexity Evaluation – Base Model without LoRA (64 steps)
+% A.2.18 – Perplexity Evaluation – Base Model without LoRA (64 steps)
 % -------------------------------------------------------------------
-\addcontentsline{toc}{subsection}{A.18\quad Perplexity Evaluation Report – Base Model without LoRA (64 steps)}
+\addcontentsline{toc}{subsection}{A.2.18\quad Perplexity Evaluation Report – Base Model without LoRA (64 steps)}
 \annexcover%
-    {Appendix A.18}%
+    {Appendix A.2.18}%
     {Perplexity Evaluation Report – Base Model without LoRA (64 steps)}%
     {LLaDA-8B base model (no LoRA adapter), evaluated at 64 denoising steps as a na\"{i}ve step-reduction control}%
     {Average Perplexity: 17.38}%
