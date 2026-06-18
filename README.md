@@ -1,4 +1,4 @@
-# Progressive Distillation for Language Diffusion Models
+# FAST PARALLEL TOKEN INFERENCE WITH LANGUAGE DIFFUSION MODELS
 
 **Bachelor's Thesis (TFG)**  
 Author: Albert GoTri
@@ -10,8 +10,6 @@ This repository contains the complete source code, trained adapter checkpoints, 
 The central contribution is a full end-to-end distillation pipeline that compresses the inference step count of **LLaDA-8B-Instruct** from 128 denoising steps down to a single step through seven recursive teacher–student distillation rounds. The entire pipeline runs entirely on a single consumer GPU with 8 GB VRAM.
 
 The core technical challenge is the absence of a continuous interpolation space in the discrete setting: unlike image diffusion, where the teacher’s two-step output is a real-valued vector usable as a regression target, text tokens are categorical. This work resolves the challenge by formulating distillation as a **KL divergence minimization** over the teacher's soft vocabulary distributions, cached offline from intermediate denoising trajectories, and paired with parameter-efficient **LoRA fine-tuning** to keep the pipeline within consumer VRAM constraints.
-
-> **Paper:** A paper based on this work is expected in 2027. The link will be added here once it is published.
 
 ## Results
 
@@ -188,21 +186,3 @@ python nested_distillation_server.py
 └── figures/                            # Reproduced result figures
 ```
 
-## Citation
-
-If you find this work useful, please consider citing the thesis. The paper will be linked here once published (expected 2027).
-
-```bibtex
-@mastersthesis{gotri2025progressive,
-  title={Progressive Distillation for Language Diffusion Models},
-  author={GoTri, Albert},
-  year={2025},
-  type={Bachelor's Thesis},
-  institution={TBD},
-  url={https://github.com/AlbertGoTri/fast-parallel-token-inference-with-language-diffusion-models}
-}
-```
-
-## Acknowledgments
-
-This thesis builds upon the **LLaDA-8B-Instruct** model by GSAI-ML and the **Progressive Distillation** framework originally introduced by Salimans & Ho for continuous diffusion models.
