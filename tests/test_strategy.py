@@ -5,7 +5,7 @@ from types import SimpleNamespace
 import pytest
 import torch
 
-from LLaDA.distill import get_strategy, ProgressiveHalvingStrategy
+from LLaDA.distill import get_strategy, ProgressiveHalvingStrategy, SDTTStrategy
 
 
 def test_registry_returns_progressive_halving():
@@ -58,3 +58,27 @@ def test_compute_loss_positive_for_different_logits():
     target = torch.randn(1, 5, 32)
     loss = ProgressiveHalvingStrategy().compute_loss(student, target, temperature=2.0)
     assert float(loss) > 0.0
+
+
+def test_sdtt_registered_and_named():
+    s = get_strategy("sdtt")
+    assert isinstance(s, SDTTStrategy)
+    assert s.name == "sdtt"
+
+
+@pytest.mark.parametrize("teacher", [128, 64, 8, 2])
+def test_sdtt_shares_schedule_with_progressive(teacher):
+    # SDTT differs only in build_target; schedule/target-step must match progressive halving
+    # so the two methods are directly comparable.
+    sdtt, prog = get_strategy("sdtt"), get_strategy("progressive_halving")
+    assert sdtt.next_student_steps(teacher, 1) == prog.next_student_steps(teacher, 1)
+    assert sdtt.cache_target_step(teacher) == prog.cache_target_step(teacher)
+
+
+def test_sdtt_shares_kl_loss_with_progressive():
+    torch.manual_seed(0)
+    student = torch.randn(1, 4, 16)
+    target = torch.randn(1, 4, 16)
+    sdtt_loss = float(get_strategy("sdtt").compute_loss(student, target, temperature=2.0))
+    prog_loss = float(get_strategy("progressive_halving").compute_loss(student, target, temperature=2.0))
+    assert sdtt_loss == pytest.approx(prog_loss)
