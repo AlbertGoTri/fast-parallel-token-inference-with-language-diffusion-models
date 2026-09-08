@@ -61,8 +61,10 @@ evaluation:
     # Only used when device is cuda
     cuda_memory_fraction: 0.85
     # Max wait for eval server /health to become ready.
-    # CPU model loading can be much slower than GPU.
-    startup_timeout_seconds: 900
+    # CPU model loading can be much slower than GPU. Raised to 1800s because
+    # per-round GPU contention on an 8GB card can slow the 8B model load well
+    # past the ~350s a cold load normally takes.
+    startup_timeout_seconds: 1800
   # Promptfoo configuration
   promptfoo:
     config_path: "evaluation/promptfoo/promptfooconfig.yaml"

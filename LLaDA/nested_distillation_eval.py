@@ -23,6 +23,36 @@ except Exception:
     generate_perplexity_html_report = None
 
 
+# Pin the promptfoo version so the eval never resolves "latest" over the network.
+# Bare `npx promptfoo` chases the newest published release and re-installs it on
+# every run, which can hang indefinitely; a locally-installed pinned binary runs
+# offline. See package.json at the repo root.
+PROMPTFOO_VERSION = "0.121.15"
+
+
+def _promptfoo_command() -> str:
+    """Resolve the promptfoo launcher, preferring the local pinned install.
+
+    Falls back to a version-pinned npx invocation (never bare `npx promptfoo`,
+    which would download the latest release at eval time).
+    """
+    repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    local_bin = os.path.join(repo_root, "node_modules", ".bin", "promptfoo")
+    win_bin = local_bin + ".cmd"
+    if os.name == "nt" and os.path.exists(win_bin):
+        return f'"{win_bin}"'
+    if os.path.exists(local_bin):
+        return f'"{local_bin}"'
+    # No local install: pin the version so npx uses/creates a stable cache entry
+    # instead of re-resolving latest every run.
+    print(
+        "WARNING: local promptfoo not found in node_modules; falling back to "
+        f"'npx promptfoo@{PROMPTFOO_VERSION}'. Run `npm install` at the repo root "
+        "to avoid slow/hanging network installs at eval time."
+    )
+    return f"npx promptfoo@{PROMPTFOO_VERSION}"
+
+
 def run_promptfoo_eval(
     config_path: str,
     output_path: str,
@@ -48,7 +78,7 @@ def run_promptfoo_eval(
 
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
-    cmd = f'npx promptfoo eval -c "{config_path}" -o "{output_path}"'
+    cmd = f'{_promptfoo_command()} eval -c "{config_path}" -o "{output_path}"'
 
     print(f"  Working dir: {working_dir}")
     print(f"  Command: {cmd}")

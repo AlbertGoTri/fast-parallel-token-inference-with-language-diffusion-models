@@ -1,0 +1,9 @@
+{
+  "name": "fast-parallel-token-inference-eval",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pinned local promptfoo install for the distillation evaluation stage. Installed into node_modules so the eval invokes a fixed version offline instead of resolving 'npx promptfoo' (latest) over the network on every run.",
+  "dependencies": {
+    "promptfoo": "0.121.15"
+  }
+}
