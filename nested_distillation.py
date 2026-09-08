@@ -1005,6 +1005,23 @@ def calculate_max_rounds(strategy: DistillationStrategy, initial_steps: int, min
     return rounds
 
 
+def resolve_max_rounds(
+    strategy: DistillationStrategy,
+    current_round: int,
+    current_teacher_steps: int,
+    min_steps: int,
+) -> int:
+    """Total reduction-ladder length, accounting for rounds already completed.
+
+    On resume we've completed ``current_round`` rounds and the teacher sits at a
+    reduced step budget, so the total ladder length is completed + remaining. For a
+    fresh run (current_round=0, current_teacher_steps=initial_steps) this reduces to
+    the full ladder. Computing it from the reduced step count alone truncates the
+    final rounds of a resumed run (e.g. the 1-step round).
+    """
+    return current_round + calculate_max_rounds(strategy, current_teacher_steps, min_steps)
+
+
 def print_dry_run(config: Dict[str, Any], strategy: DistillationStrategy) -> None:
     """Print planned rounds without training."""
     initial_steps = config['teacher']['initial_steps']
@@ -1228,15 +1245,10 @@ def main():
         if not input("Continue anyway? (y/N): ").lower().startswith('y'):
             return
 
-    # max_rounds is the TOTAL length of the reduction ladder. On resume we've
-    # already completed state.current_round rounds and the teacher sits at a
-    # reduced step budget, so the total is (completed + rounds still remaining).
-    # For a fresh run current_round=0 and current_teacher_steps=initial_steps, so
-    # this reduces to the full ladder. The old code recomputed max_rounds from the
-    # reduced step count alone while start_round was offset by completed rounds,
-    # which truncated the final rounds of a resumed run (e.g. the 1-step round).
-    max_rounds = state.current_round + calculate_max_rounds(
-        strategy, state.current_teacher_steps, min_steps
+    # Total ladder length, correct for both fresh and resumed runs. Extracted into
+    # resolve_max_rounds so the resume schedule is unit-tested, not an inline formula.
+    max_rounds = resolve_max_rounds(
+        strategy, state.current_round, state.current_teacher_steps, min_steps
     )
     logger = ProgressLogger(max_rounds)
 

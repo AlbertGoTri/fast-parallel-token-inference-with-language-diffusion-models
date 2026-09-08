@@ -1,0 +1,4 @@
+# Development/test dependencies (not needed to run the pipeline).
+#   pip install -r requirements-dev.txt
+#   python -m pytest
+pytest>=7.0
