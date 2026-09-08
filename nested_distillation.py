@@ -1228,7 +1228,16 @@ def main():
         if not input("Continue anyway? (y/N): ").lower().startswith('y'):
             return
 
-    max_rounds = calculate_max_rounds(strategy, initial_steps, min_steps)
+    # max_rounds is the TOTAL length of the reduction ladder. On resume we've
+    # already completed state.current_round rounds and the teacher sits at a
+    # reduced step budget, so the total is (completed + rounds still remaining).
+    # For a fresh run current_round=0 and current_teacher_steps=initial_steps, so
+    # this reduces to the full ladder. The old code recomputed max_rounds from the
+    # reduced step count alone while start_round was offset by completed rounds,
+    # which truncated the final rounds of a resumed run (e.g. the 1-step round).
+    max_rounds = state.current_round + calculate_max_rounds(
+        strategy, state.current_teacher_steps, min_steps
+    )
     logger = ProgressLogger(max_rounds)
 
     print("\n" + "=" * 70)
