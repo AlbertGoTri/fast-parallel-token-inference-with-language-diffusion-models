@@ -1,0 +1,84 @@
+# SMOKE-TEST configuration - fast end-to-end validation of the pipeline.
+# Identical to nested_distillation_config.yaml except: initial_steps=4 (2 rounds)
+# and num_train_examples=2, so a full cache->train->eval cycle finishes quickly.
+# Not for producing real results.
+
+experiment:
+  name: "nested_distillation_smoke"
+  description: "Fast smoke test of the distillation pipeline"
+
+teacher:
+  model_path: "GSAI-ML/LLaDA-8B-Instruct"
+  initial_steps: 4        # smoke: was 128 -> 2 rounds (4->2->1)
+  target_step: 2
+
+student:
+  gen_length: 64
+  block_length: 64
+  dataset_name: "wikitext"
+  dataset_config: "wikitext-2-raw-v1"
+  dataset_split: "train"
+  num_train_examples: 2   # smoke: was 50
+  min_text_length: 80
+  lora:
+    r: 16
+    alpha: 32
+    target_modules: ["q_proj", "v_proj"]
+    dropout: 0.05
+  temperature: 2.0
+  learning_rate: 5e-5
+  max_grad_norm: 1.0
+
+schedule:
+  min_steps: 1
+  strategy: "halve"
+
+evaluation:
+  promptfoo_threshold: 0.0
+  eval_steps: 0
+  server:
+    device: "cuda"
+    cuda_memory_fraction: 0.85
+    startup_timeout_seconds: 900
+  promptfoo:
+    config_path: "evaluation/promptfoo/promptfooconfig.yaml"
+    provider_path: "evaluation/promptfoo/llada_api_provider.py"
+    timeout_ms: 7200000
+    max_concurrency: 1
+    judge_num_predict: 1024
+    judge_num_gpu: 0
+  perplexity:
+    reference_model: "gpt2"
+    device: "cpu"
+
+execution:
+  sequential: true
+  memory_cleanup: true
+  verify_gpu_empty: true
+  num_workers: 0
+  seed: 42
+
+checkpointing:
+  resume_enabled: true
+  force_rerun: false
+  keep_history: true
+
+paths:
+  base_output_dir: "../workspace/LLaDA_outputs/nested_distillation_smoke"
+  cache_dir: "../workspace/LLaDA_outputs/nested_distillation_smoke/cache"
+  checkpoint_dir: "../workspace/LLaDA_outputs/nested_distillation_smoke/checkpoints"
+  eval_dir: "../workspace/LLaDA_outputs/nested_distillation_smoke/evaluation"
+  leaderboard:
+    markdown: "../workspace/LLaDA_outputs/nested_distillation_smoke/leaderboard.md"
+    csv: "../workspace/LLaDA_outputs/nested_distillation_smoke/leaderboard.csv"
+    json: "../workspace/LLaDA_outputs/nested_distillation_smoke/leaderboard.json"
+  state_file: "../workspace/LLaDA_outputs/nested_distillation_smoke/state.json"
+
+system:
+  hf_home: "D:/fast-parallel-token-inference-with-language-diffusion-models/.cache"
+  cuda_memory_fraction: 0.85
+  quantization:
+    load_in_4bit: true
+    compute_dtype: "float16"
+    quant_type: "nf4"
+    use_double_quant: true

@@ -44,6 +44,7 @@ from LLaDA.nested_distillation_eval import (
 from LLaDA.nested_distillation_server import (
     managed_server, check_server_running, wait_for_server
 )
+from LLaDA.distill import get_strategy, DistillationStrategy
 
 
 def _save_cache_object(obj: Dict[str, Any], path: str) -> None:
@@ -211,7 +212,8 @@ def cache_stage(
     teacher_steps: int,
     target_step: int,
     cache_dir: str,
-    logger: ProgressLogger
+    logger: ProgressLogger,
+    strategy: DistillationStrategy,
 ) -> bool:
     """Stage 1: Generate teacher trajectories for current round.
 
@@ -227,7 +229,6 @@ def cache_stage(
     try:
         from transformers import AutoTokenizer, AutoModel, BitsAndBytesConfig
         from datasets import load_dataset
-        from LLaDA.generate_cache import generate_and_cache_trajectory
     except ImportError as e:
         logger.log(f"ERROR: Failed to import required modules: {e}")
         return False
@@ -325,13 +326,13 @@ def cache_stage(
             logger.log(f"Processing example {i+1}/{len(texts)} (prompt_len={prompt_len})")
 
             try:
-                state_x, teacher_logits, attn_mask = generate_and_cache_trajectory(
+                state_x, teacher_logits, attn_mask = strategy.build_target(
                     model,
                     input_ids,
-                    steps=teacher_steps,
+                    teacher_steps=teacher_steps,
+                    target_step=target_step,
                     gen_length=student_config['gen_length'],
                     block_length=student_config['block_length'],
-                    target_step=target_step,
                 )
 
                 file_path = os.path.join(cache_dir, f"batch_{i}.pkl.gz")
@@ -394,7 +395,8 @@ def train_stage(
     cache_dir: str,
     checkpoint_dir: str,
     student_steps: int,
-    logger: ProgressLogger
+    logger: ProgressLogger,
+    strategy: DistillationStrategy,
 ) -> bool:
     """Stage 2: Train student model on cached trajectories."""
     logger.start_stage("train")
@@ -539,13 +541,11 @@ def train_stage(
                     student_logits_gen = student_logits[:, prompt_len:, :]
                     target_logits_gen = target_logits[:, prompt_len:, :]
 
-                    # Scaling by T^2 preserves gradient magnitude across
-                    # temperatures, as in standard distillation (Hinton et al.).
-                    loss = torch.nn.functional.kl_div(
-                        torch.nn.functional.log_softmax(student_logits_gen / temperature, dim=-1),
-                        torch.nn.functional.softmax(target_logits_gen / temperature, dim=-1),
-                        reduction="batchmean"
-                    ) * (temperature ** 2)
+                    loss = strategy.compute_loss(
+                        student_logits_gen,
+                        target_logits_gen,
+                        temperature=temperature,
+                    )
 
                 loss.backward()
                 # Clip at max_grad_norm because 4-bit LoRA training is sensitive to
@@ -597,6 +597,7 @@ def run_single_round(
     output_dirs: Dict[str, str],
     logger: ProgressLogger,
     thresholds: EvaluationThresholds,
+    strategy: DistillationStrategy,
     use_external_server: bool = False,
     previous_result: Optional[RoundResult] = None,
 ) -> Optional[RoundResult]:
@@ -607,13 +608,15 @@ def run_single_round(
     """
     logger.start_round(round_num, student_steps)
 
-    # Strict halving guarantees the student sees exactly half the teacher's
-    # diffusion steps, which is the core assumption of the nested schedule.
+    # The strategy defines how many steps the student gets; validate the caller
+    # passed a consistent value (halving is the core assumption of the nested schedule).
     try:
-        expected_student_steps = max(config['schedule']['min_steps'], teacher_steps // 2)
+        expected_student_steps = strategy.next_student_steps(
+            teacher_steps, config['schedule']['min_steps']
+        )
         if student_steps != expected_student_steps:
             raise ValueError(
-                f"Step halving validation failed: Teacher={teacher_steps}, Student={student_steps}, Expected={expected_student_steps}"
+                f"Step schedule validation failed: Teacher={teacher_steps}, Student={student_steps}, Expected={expected_student_steps}"
             )
     except ValueError as e:
         logger.log(f"ERROR: Step validation failed: {e}")
@@ -622,14 +625,13 @@ def run_single_round(
     logger.log(f"Teacher: {teacher_steps} steps | Student: {student_steps} steps")
     logger.log(f"Teacher path: {teacher_path}")
 
-    # Midpoint caching exposes the teacher when roughly 50% of tokens are still
-    # masked; earlier steps are too noisy, later steps too easy.
-    target_step = teacher_steps // 2
+    # The strategy chooses which trajectory step exposes the teacher for caching.
+    target_step = strategy.cache_target_step(teacher_steps)
 
     # Stage 1: Cache teacher trajectories
     cache_dir = output_dirs['cache']
     t0_cache = time.time()
-    if not cache_stage(config, round_num, teacher_path, teacher_steps, target_step, cache_dir, logger):
+    if not cache_stage(config, round_num, teacher_path, teacher_steps, target_step, cache_dir, logger, strategy):
         logger.log("ERROR: Cache stage failed")
         return None
     cache_duration = time.time() - t0_cache
@@ -637,7 +639,7 @@ def run_single_round(
     # Stage 2: Train student
     checkpoint_dir = output_dirs['checkpoint']
     t0_train = time.time()
-    if not train_stage(config, round_num, cache_dir, checkpoint_dir, student_steps, logger):
+    if not train_stage(config, round_num, cache_dir, checkpoint_dir, student_steps, logger, strategy):
         logger.log("ERROR: Train stage failed")
         return None
     train_duration = time.time() - t0_train
@@ -993,21 +995,21 @@ def update_leaderboard(results: list, paths: Dict[str, str]) -> None:
         f.write('\n'.join(md_lines))
 
 
-def calculate_max_rounds(initial_steps: int, min_steps: int) -> int:
-    """Calculate the maximum number of halving rounds possible."""
+def calculate_max_rounds(strategy: DistillationStrategy, initial_steps: int, min_steps: int) -> int:
+    """Calculate the maximum number of reduction rounds possible for this strategy."""
     rounds = 0
     steps = initial_steps
     while steps > min_steps:
-        steps = max(min_steps, steps // 2)
+        steps = strategy.next_student_steps(steps, min_steps)
         rounds += 1
     return rounds
 
 
-def print_dry_run(config: Dict[str, Any]) -> None:
+def print_dry_run(config: Dict[str, Any], strategy: DistillationStrategy) -> None:
     """Print planned rounds without training."""
     initial_steps = config['teacher']['initial_steps']
     min_steps = config['schedule']['min_steps']
-    max_rounds = calculate_max_rounds(initial_steps, min_steps)
+    max_rounds = calculate_max_rounds(strategy, initial_steps, min_steps)
 
     print("\n" + "=" * 70)
     print("DRY RUN - Planned Rounds")
@@ -1015,14 +1017,14 @@ def print_dry_run(config: Dict[str, Any]) -> None:
 
     teacher_steps = initial_steps
     for round_num in range(1, max_rounds + 1):
-        student_steps = max(min_steps, teacher_steps // 2)
+        student_steps = strategy.next_student_steps(teacher_steps, min_steps)
         if student_steps < min_steps:
             break
 
         print(f"Round {round_num}:")
         print(f"  Teacher: {teacher_steps} steps")
         print(f"  Student: {student_steps} steps (target)")
-        print(f"  Target step for caching: {teacher_steps // 2}")
+        print(f"  Target step for caching: {strategy.cache_target_step(teacher_steps)}")
         print()
 
         teacher_steps = student_steps
@@ -1103,10 +1105,20 @@ def main():
         help="Use an externally-managed server (serve_llada.py) instead of starting a new one per round"
     )
 
+    parser.add_argument(
+        "--strategy",
+        default=None,
+        help="Distillation strategy to use (overrides config schedule.strategy)"
+    )
+
     args = parser.parse_args()
 
     print(f"Loading configuration from {args.config}")
     config = load_yaml_config(args.config)
+
+    strategy_name = args.strategy or config.get('schedule', {}).get('strategy', 'progressive_halving')
+    strategy = get_strategy(strategy_name)
+    print(f"Distillation strategy: {strategy.name}")
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
     config_dir = os.path.dirname(os.path.abspath(args.config))
@@ -1164,7 +1176,7 @@ def main():
         return
 
     if args.dry_run:
-        print_dry_run(config)
+        print_dry_run(config, strategy)
         return
 
     set_seed(config['execution']['seed'])
@@ -1216,7 +1228,7 @@ def main():
         if not input("Continue anyway? (y/N): ").lower().startswith('y'):
             return
 
-    max_rounds = calculate_max_rounds(initial_steps, min_steps)
+    max_rounds = calculate_max_rounds(strategy, initial_steps, min_steps)
     logger = ProgressLogger(max_rounds)
 
     print("\n" + "=" * 70)
@@ -1265,7 +1277,7 @@ def main():
     start_round = state.current_round + 1 if args.resume else 1
 
     for round_num in range(start_round, max_rounds + 1):
-        student_steps = max(min_steps, teacher_steps // 2)
+        student_steps = strategy.next_student_steps(teacher_steps, min_steps)
 
         if student_steps < min_steps:
             print(f"\nReached minimum steps ({min_steps}). Stopping.")
@@ -1297,6 +1309,7 @@ def main():
             output_dirs,
             logger,
             thresholds,
+            strategy,
             use_external_server=args.use_external_server,
             previous_result=previous_result,
         )
@@ -1318,9 +1331,12 @@ def main():
                     enriched['student_steps'] = result.student_steps
                     f.write(json.dumps(enriched) + '\n')
 
+        # The strategy decides which checkpoint/step budget becomes the next teacher.
+        next_teacher = strategy.promote_teacher(result)
+
         state.current_round = round_num
-        state.current_teacher_path = result.checkpoint_dir
-        state.current_teacher_steps = student_steps
+        state.current_teacher_path = next_teacher.path
+        state.current_teacher_steps = next_teacher.steps
         state.completed_rounds.append(round_num)
         state_manager.save(state)
 
@@ -1333,8 +1349,8 @@ def main():
         if not result.passed:
             print(f"\nPromptfoo assertion score {result.promptfoo_percent:.1f}% recorded for reporting only.")
 
-        teacher_steps = student_steps
-        current_teacher_path = result.checkpoint_dir
+        teacher_steps = next_teacher.steps
+        current_teacher_path = next_teacher.path
 
         if config['execution']['memory_cleanup']:
             cleanup_gpu_memory()
