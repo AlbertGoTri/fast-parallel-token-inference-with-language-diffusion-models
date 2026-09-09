@@ -66,3 +66,98 @@ def generate_and_cache_trajectory(model, prompt, attention_mask=None, steps=128,
             x[transfer_index] = x0[transfer_index]
 
     return x, None, None
+
+
+def _select_transfer(x, logits, num_transfer, block_end, mask_id):
+    """Pick which masked positions to denoise this step (top-k by teacher confidence).
+
+    Mirrors the selection rule inside generate_and_cache_trajectory. ``num_transfer`` is the
+    per-row token budget for this step (shape [B]). Returns (transfer_index[bool B,L], x0).
+    """
+    mask_index = (x == mask_id)
+    x0 = torch.argmax(add_gumbel_noise(logits, temperature=0.0), dim=-1)
+    p = F.softmax(logits, dim=-1)
+    x0_p = torch.squeeze(torch.gather(p, dim=-1, index=torch.unsqueeze(x0, -1)), -1)
+    x0_p[:, block_end:] = -np.inf
+    x0 = torch.where(mask_index, x0, x)
+    confidence = torch.where(mask_index, x0_p, -np.inf)
+    transfer_index = torch.zeros_like(x0, dtype=torch.bool, device=x0.device)
+    for j in range(confidence.shape[0]):
+        _, select_index = torch.topk(confidence[j], k=num_transfer[j])
+        transfer_index[j, select_index] = True
+    return transfer_index, x0
+
+
+@torch.no_grad()
+def generate_sdtt_target(model, prompt, attention_mask=None, steps=128, gen_length=128,
+                         block_length=128, start_step=0, k=2, mask_id=126336):
+    """Build an SDTT distillation pair (Deschenaux & Gulcehre, ICLR 2025).
+
+    The student learns to reproduce, in a single step, the distribution the teacher reaches
+    after ``k`` denoising steps. We run the teacher denoising to ``start_step`` (the same
+    partially-masked midpoint state progressive halving caches), snapshot it as the student
+    input ``x_t``, then roll the teacher ``k`` steps forward. The returned target gives each
+    generated position the teacher's distribution at the step it was denoised, and any
+    still-masked position the last rollout step's distribution -- i.e. "the log-probabilities
+    that lead to a token being denoised, concatenated with the last-step log-probabilities
+    for tokens that remain masked."
+
+    Shape/return contract is identical to generate_and_cache_trajectory, so the caching and
+    training stages and the KL loss consume it unchanged.
+
+    NOTE: assumes ``start_step`` falls in the first block (true for the single-block configs
+    used here); ``k`` is clamped so the rollout never runs past the block's step budget.
+    """
+    x = torch.full((prompt.shape[0], prompt.shape[1] + gen_length), mask_id, dtype=torch.long).to(model.device)
+    x[:, :prompt.shape[1]] = prompt.clone()
+
+    if attention_mask is not None:
+        attention_mask = torch.cat(
+            [attention_mask, torch.ones((prompt.shape[0], gen_length), dtype=attention_mask.dtype, device=model.device)],
+            dim=-1,
+        )
+
+    num_blocks = gen_length // block_length
+    steps_per_block = steps // num_blocks
+
+    for num_block in range(num_blocks):
+        block_end = prompt.shape[1] + (num_block + 1) * block_length
+        block_mask_index = (x[:, prompt.shape[1] + num_block * block_length: block_end] == mask_id)
+        num_transfer_tokens = get_num_transfer_tokens(block_mask_index, steps_per_block)
+
+        for i in range(steps_per_block):
+            logits = model(x, attention_mask=attention_mask).logits
+
+            if i == start_step:
+                # Snapshot the student input, then roll the teacher k steps forward and record
+                # the teacher distribution that denoises each position.
+                x_t = x.clone()
+                target_logits = logits.clone()          # base target: teacher distribution at x_t
+                last_logits = logits
+                k_eff = min(k, steps_per_block - i)
+                for r in range(k_eff):
+                    if r > 0:
+                        logits = model(x, attention_mask=attention_mask).logits
+                    transfer_index, x0 = _select_transfer(
+                        x, logits, num_transfer_tokens[:, i + r], block_end, mask_id
+                    )
+                    # Teacher distribution that led to these tokens being denoised.
+                    target_logits[transfer_index] = logits[transfer_index]
+                    x[transfer_index] = x0[transfer_index]
+                    last_logits = logits
+                # Still-masked positions take the last rollout step's distribution.
+                still_masked = (x == mask_id)
+                target_logits[still_masked] = last_logits[still_masked]
+                return (
+                    x_t,
+                    target_logits.to(torch.float16),
+                    attention_mask.clone() if attention_mask is not None else None,
+                )
+
+            # Normal denoising step, advancing toward start_step.
+            transfer_index, x0 = _select_transfer(
+                x, logits, num_transfer_tokens[:, i], block_end, mask_id
+            )
+            x[transfer_index] = x0[transfer_index]
+
+    return x, None, None

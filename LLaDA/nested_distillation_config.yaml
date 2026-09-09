@@ -43,7 +43,13 @@ student:
 schedule:
   # Minimum steps allowed before stopping
   min_steps: 1
-  # Step schedule for this experiment
+  # Distillation strategy. Valid values:
+  #   "halve" / "progressive_halving" - student matches the teacher's instantaneous
+  #                                     midpoint logits (default).
+  #   "sdtt"                          - student matches the teacher's 2-step-ahead
+  #                                     denoising distribution (Self-Distillation Through
+  #                                     Time, Deschenaux & Gulcehre, ICLR 2025).
+  # Overridable at the CLI with --strategy.
   strategy: "halve"
 
 # Evaluation settings
