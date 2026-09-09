@@ -5,7 +5,7 @@ from types import SimpleNamespace
 import pytest
 import torch
 
-from LLaDA.distill import get_strategy, ProgressiveHalvingStrategy, SDTTStrategy
+from LLaDA.distill import get_strategy, ProgressiveHalvingStrategy, SDTTStrategy, DUOStrategy
 
 
 def test_registry_returns_progressive_halving():
@@ -82,3 +82,25 @@ def test_sdtt_shares_kl_loss_with_progressive():
     sdtt_loss = float(get_strategy("sdtt").compute_loss(student, target, temperature=2.0))
     prog_loss = float(get_strategy("progressive_halving").compute_loss(student, target, temperature=2.0))
     assert sdtt_loss == pytest.approx(prog_loss)
+
+
+def test_duo_registered_and_named():
+    s = get_strategy("duo")
+    assert isinstance(s, DUOStrategy)
+    assert s.name == "duo"
+
+
+@pytest.mark.parametrize("teacher", [128, 64, 8, 2])
+def test_duo_shares_schedule_with_progressive(teacher):
+    duo, prog = get_strategy("duo"), get_strategy("progressive_halving")
+    assert duo.next_student_steps(teacher, 1) == prog.next_student_steps(teacher, 1)
+    assert duo.cache_target_step(teacher) == prog.cache_target_step(teacher)
+
+
+def test_duo_shares_kl_loss_with_progressive():
+    torch.manual_seed(0)
+    student = torch.randn(1, 4, 16)
+    target = torch.randn(1, 4, 16)
+    duo_loss = float(get_strategy("duo").compute_loss(student, target, temperature=2.0))
+    prog_loss = float(get_strategy("progressive_halving").compute_loss(student, target, temperature=2.0))
+    assert duo_loss == pytest.approx(prog_loss)

@@ -89,18 +89,23 @@ def _select_transfer(x, logits, num_transfer, block_end, mask_id):
 
 
 @torch.no_grad()
-def generate_sdtt_target(model, prompt, attention_mask=None, steps=128, gen_length=128,
-                         block_length=128, start_step=0, k=2, mask_id=126336):
-    """Build an SDTT distillation pair (Deschenaux & Gulcehre, ICLR 2025).
+def generate_rollout_target(model, prompt, attention_mask=None, steps=128, gen_length=128,
+                            block_length=128, start_step=0, k=2, mask_id=126336):
+    """Roll the teacher forward from a midpoint snapshot and assemble a per-position target.
 
-    The student learns to reproduce, in a single step, the distribution the teacher reaches
-    after ``k`` denoising steps. We run the teacher denoising to ``start_step`` (the same
-    partially-masked midpoint state progressive halving caches), snapshot it as the student
-    input ``x_t``, then roll the teacher ``k`` steps forward. The returned target gives each
-    generated position the teacher's distribution at the step it was denoised, and any
-    still-masked position the last rollout step's distribution -- i.e. "the log-probabilities
-    that lead to a token being denoised, concatenated with the last-step log-probabilities
-    for tokens that remain masked."
+    Runs the teacher denoising to ``start_step`` (the same partially-masked midpoint state
+    progressive halving caches), snapshots it as the student input ``x_t``, then rolls the
+    teacher forward and records, for each generated position, the teacher distribution at the
+    step it was denoised. Any position still masked at the end takes the last rollout step's
+    distribution.
+
+    The rollout horizon ``k`` selects the distillation method:
+      * ``k=2``    -> SDTT: match the teacher's 2-step-ahead distribution
+                     (Deschenaux & Gulcehre, ICLR 2025).
+      * ``k=None`` -> DUO / consistency: roll all the way to x0, so the student learns to jump
+                     straight to the teacher's fully-denoised output (The Diffusion Duality,
+                     Sahoo et al., ICML 2025, adapted to masked diffusion). No positions remain
+                     masked, so the still-masked fallback is a no-op.
 
     Shape/return contract is identical to generate_and_cache_trajectory, so the caching and
     training stages and the KL loss consume it unchanged.
@@ -134,7 +139,8 @@ def generate_sdtt_target(model, prompt, attention_mask=None, steps=128, gen_leng
                 x_t = x.clone()
                 target_logits = logits.clone()          # base target: teacher distribution at x_t
                 last_logits = logits
-                k_eff = min(k, steps_per_block - i)
+                # k=None -> roll to the end of the block (DUO/consistency); else k steps (SDTT).
+                k_eff = (steps_per_block - i) if k is None else min(k, steps_per_block - i)
                 for r in range(k_eff):
                     if r > 0:
                         logits = model(x, attention_mask=attention_mask).logits
@@ -161,3 +167,7 @@ def generate_sdtt_target(model, prompt, attention_mask=None, steps=128, gen_leng
             x[transfer_index] = x0[transfer_index]
 
     return x, None, None
+
+
+# Backward-compatible alias: SDTT is the k=2 rollout.
+generate_sdtt_target = generate_rollout_target

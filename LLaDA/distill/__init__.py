@@ -8,6 +8,7 @@ selects one by name via ``get_strategy`` (config ``schedule.strategy`` or the
 from .base import DistillationStrategy, TeacherState
 from .progressive_halving import ProgressiveHalvingStrategy
 from .sdtt import SDTTStrategy
+from .duo import DUOStrategy
 
 # "halve" is the historical config value for the original behavior; keep it as an
 # alias so existing config files select the same strategy they always have.
@@ -15,6 +16,7 @@ _STRATEGIES = {
     ProgressiveHalvingStrategy.name: ProgressiveHalvingStrategy,
     "halve": ProgressiveHalvingStrategy,
     SDTTStrategy.name: SDTTStrategy,
+    DUOStrategy.name: DUOStrategy,
 }
 
 
@@ -34,5 +36,6 @@ __all__ = [
     "TeacherState",
     "ProgressiveHalvingStrategy",
     "SDTTStrategy",
+    "DUOStrategy",
     "get_strategy",
 ]

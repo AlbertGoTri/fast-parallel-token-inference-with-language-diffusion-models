@@ -49,6 +49,9 @@ schedule:
   #   "sdtt"                          - student matches the teacher's 2-step-ahead
   #                                     denoising distribution (Self-Distillation Through
   #                                     Time, Deschenaux & Gulcehre, ICLR 2025).
+  #   "duo"                           - student matches the teacher's full x0 denoising
+  #                                     (consistency; The Diffusion Duality, Sahoo et al.,
+  #                                     ICML 2025, adapted to masked diffusion).
   # Overridable at the CLI with --strategy.
   strategy: "halve"
 

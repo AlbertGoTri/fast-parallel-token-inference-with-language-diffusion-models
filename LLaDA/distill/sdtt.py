@@ -12,7 +12,7 @@ cleanest possible ablation.
 """
 
 from .progressive_halving import ProgressiveHalvingStrategy
-from ..generate_cache import generate_sdtt_target
+from ..generate_cache import generate_rollout_target
 
 
 class SDTTStrategy(ProgressiveHalvingStrategy):
@@ -25,7 +25,7 @@ class SDTTStrategy(ProgressiveHalvingStrategy):
     def build_target(self, model, input_ids, *, teacher_steps, target_step, gen_length, block_length):
         # target_step is the midpoint (inherited cache_target_step) -- the same partially
         # masked state progressive halving snapshots; SDTT rolls K steps forward from there.
-        return generate_sdtt_target(
+        return generate_rollout_target(
             model,
             input_ids,
             steps=teacher_steps,
