@@ -74,11 +74,13 @@ def _load_cache_object(path: str) -> Dict[str, Any]:
     return result
 
 
-def _resolve_run_dir(base_output_dir: str, args: argparse.Namespace) -> str:
+def _resolve_run_dir(base_output_dir: str, args: argparse.Namespace,
+                     strategy_name: Optional[str] = None) -> str:
     """Resolve the active run directory for this invocation.
 
     Timestamped run directories keep distillation experiments reproducible and
-    prevent resume ambiguity.
+    prevent resume ambiguity. New run dirs are tagged with the distillation strategy
+    (e.g. run_sdtt_20260909_094415) so halving and SDTT runs are easy to tell apart.
     """
     base_output_dir = os.path.abspath(base_output_dir)
     latest_run_file = os.path.join(base_output_dir, "latest_run.txt")
@@ -102,7 +104,13 @@ def _resolve_run_dir(base_output_dir: str, args: argparse.Namespace) -> str:
 
     runs_root = os.path.join(base_output_dir, "runs")
     ensure_dir(runs_root)
-    run_name = datetime.now().strftime("run_%Y%m%d_%H%M%S")
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    if strategy_name:
+        # Prefix with the strategy so runs group by method; keep it filesystem-safe.
+        safe = "".join(c if (c.isalnum() or c in "-_") else "_" for c in strategy_name)
+        run_name = f"run_{safe}_{timestamp}"
+    else:
+        run_name = f"run_{timestamp}"
     run_dir = os.path.join(runs_root, run_name)
     ensure_dir(run_dir)
 
@@ -1166,7 +1174,7 @@ def main():
     config_paths = config['paths']
     legacy_base_output_dir = config_paths['base_output_dir']
     ensure_dir(legacy_base_output_dir)
-    run_dir = _resolve_run_dir(legacy_base_output_dir, args)
+    run_dir = _resolve_run_dir(legacy_base_output_dir, args, strategy.name)
     paths = _build_run_scoped_paths(config_paths, run_dir)
     ensure_dir(paths['base_output_dir'])
     print(f"Run directory: {paths['base_output_dir']}")
