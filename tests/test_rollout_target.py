@@ -1,16 +1,18 @@
-"""SDTT target construction (generate_sdtt_target) — assembly logic, no GPU/8B needed.
+"""Rollout target construction (generate_rollout_target) — assembly logic, no GPU/8B needed.
+
+Covers both horizons: SDTT (k=2) and DUO/consistency (k=None, roll to x0).
 
 Uses a fake model whose logits are constant per call (so the produced target can be traced
 back to the model call that generated it) with a tiny position-dependent bump so the argmax
-token and the confidence ordering are deterministic (higher position -> higher confidence,
-so the highest-index masked position is denoised first).
+token and the confidence ordering are deterministic (higher position -> higher confidence, so
+the highest-index masked position is denoised first).
 """
 
 from types import SimpleNamespace
 
 import torch
 
-from LLaDA.generate_cache import generate_sdtt_target
+from LLaDA.generate_cache import generate_rollout_target
 
 MASK_ID = 7
 VOCAB = 8
@@ -38,7 +40,7 @@ def _prompt():
 
 
 def test_target_shapes_and_contract():
-    x_t, target, attn = generate_sdtt_target(
+    x_t, target, attn = generate_rollout_target(
         _FakeModel(), _prompt(), attention_mask=None,
         steps=6, gen_length=6, block_length=6, start_step=3, k=2, mask_id=MASK_ID,
     )
@@ -49,7 +51,7 @@ def test_target_shapes_and_contract():
 
 
 def test_midpoint_state_is_partially_denoised():
-    x_t, _, _ = generate_sdtt_target(
+    x_t, _, _ = generate_rollout_target(
         _FakeModel(), _prompt(),
         steps=6, gen_length=6, block_length=6, start_step=3, k=2, mask_id=MASK_ID,
     )
@@ -58,11 +60,10 @@ def test_midpoint_state_is_partially_denoised():
     assert (x_t[0, 5:8] != MASK_ID).all()   # positions 5,6,7 already denoised
 
 
-def test_target_provenance_reflects_two_step_rollout():
-    """Each position's target should come from the step it was denoised; still-masked
-    positions from the last rollout step. Provenance = the model-call index, read from a
-    non-argmax channel."""
-    x_t, target, _ = generate_sdtt_target(
+def test_sdtt_provenance_reflects_two_step_rollout():
+    """SDTT (k=2): each position's target comes from the step it was denoised; still-masked
+    positions from the last rollout step. Provenance = the model-call index."""
+    x_t, target, _ = generate_rollout_target(
         _FakeModel(), _prompt(),
         steps=6, gen_length=6, block_length=6, start_step=3, k=2, mask_id=MASK_ID,
     )
@@ -74,14 +75,29 @@ def test_target_provenance_reflects_two_step_rollout():
     assert prov[4].item() == 3                           # rollout r=0 uses the x_t logits
     assert prov[3].item() == 4                           # rollout r=1 -> 2-step-ahead target
     assert prov[2].item() == 4                           # still masked -> last rollout step
+    assert (prov == 4).any()                             # target is NOT just the midpoint snapshot
 
-    # The whole point of SDTT: the target is NOT just the midpoint snapshot (all 3s).
-    assert (prov == 4).any()
+
+def test_duo_rolls_all_the_way_to_x0():
+    """DUO (k=None): roll to the end -> every position is denoised (no still-masked fallback),
+    and the target reaches further than SDTT (an extra rollout step)."""
+    x_t, target, _ = generate_rollout_target(
+        _FakeModel(), _prompt(),
+        steps=6, gen_length=6, block_length=6, start_step=3, k=None, mask_id=MASK_ID,
+    )
+    prov = target[0, :, 1].round().to(torch.int64)
+
+    # Rollout uses calls 3 (r=0 -> pos4), 4 (r=1 -> pos3), 5 (r=2 -> pos2). All masked positions
+    # get denoised, so nothing falls back to a "still masked" default.
+    assert prov[4].item() == 3
+    assert prov[3].item() == 4
+    assert prov[2].item() == 5   # DUO rolls one step further than SDTT (which left pos2 at 4)
+    assert (prov == 5).any()     # reached the final rollout step -> x0
 
 
 def test_k_is_clamped_near_trajectory_end():
     # start_step=5 leaves only one step in a 6-step trajectory; k=2 must clamp to 1.
-    x_t, target, _ = generate_sdtt_target(
+    x_t, target, _ = generate_rollout_target(
         _FakeModel(), _prompt(),
         steps=6, gen_length=6, block_length=6, start_step=5, k=2, mask_id=MASK_ID,
     )
@@ -93,7 +109,7 @@ def test_k_is_clamped_near_trajectory_end():
 
 def test_attention_mask_is_extended_and_returned():
     attn_in = torch.ones((1, 2), dtype=torch.long)
-    _, _, attn_out = generate_sdtt_target(
+    _, _, attn_out = generate_rollout_target(
         _FakeModel(), _prompt(), attention_mask=attn_in,
         steps=6, gen_length=6, block_length=6, start_step=3, k=2, mask_id=MASK_ID,
     )
