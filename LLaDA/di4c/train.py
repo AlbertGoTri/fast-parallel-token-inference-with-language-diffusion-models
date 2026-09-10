@@ -86,6 +86,9 @@ def di4c_train_step(model, state, x, block_end, n_lambda, consistency_weight):
     """
     mask_t = (x == MASK_ID)
     B = x.shape[0]
+    # Normalize the consistency loss per predicted token so it sits on the same scale as the
+    # per-position distillation KL (otherwise the sequence-sum NLL ~100 dwarfs distil ~0.01).
+    num_masked = mask_t.sum().clamp(min=1)
     lam = torch.rand(n_lambda, B, device=x.device)
 
     # teacher single-step (no grad; shared base with adapters+lambda off)
@@ -113,7 +116,7 @@ def di4c_train_step(model, state, x, block_end, n_lambda, consistency_weight):
             seq_logp.append(_seq_logprob(model(x).logits, x_s, mask_t))
         seq_logp = torch.stack(seq_logp)                              # [N, B]
         weights = torch.softmax(seq_logp, dim=0)                      # [N, B]
-        consis_val = (-(torch.logsumexp(seq_logp, dim=0) - math.log(n_lambda))).mean().item()
+        consis_val = (-(torch.logsumexp(seq_logp, dim=0) - math.log(n_lambda))).mean().item() / num_masked.item()
 
     # Reclaim the caching allocator's leftovers from the no-grad weight forwards before the
     # gradient loop, to reduce fragmentation on the tight 8GB budget.
@@ -125,7 +128,7 @@ def di4c_train_step(model, state, x, block_end, n_lambda, consistency_weight):
         set_lambda(state, lam[i])
         logits = model(x).logits
         slp = _seq_logprob(logits, x_s, mask_t)                       # [B], carries grad
-        loss_i = consistency_weight * (-(weights[i] * slp).sum() / B)
+        loss_i = consistency_weight * (-(weights[i] * slp).sum() / B) / num_masked
         if i == 0:
             d = distillation_loss(logits.float(), teacher_logits.float(), mask=mask_t)
             loss_i = loss_i + d
