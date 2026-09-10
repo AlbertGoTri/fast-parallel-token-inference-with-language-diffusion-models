@@ -12,11 +12,13 @@ phases.
 """
 
 from .model import LambdaConditioner, wrap_lambda_conditioned, set_lambda
-from .losses import distillation_loss
+from .losses import distillation_loss, mixture_log_prob, consistency_loss
 
 __all__ = [
     "LambdaConditioner",
     "wrap_lambda_conditioned",
     "set_lambda",
     "distillation_loss",
+    "mixture_log_prob",
+    "consistency_loss",
 ]
