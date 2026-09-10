@@ -33,13 +33,15 @@ from LLaDA.di4c.losses import distillation_loss, mixture_log_prob
 MASK_ID = 126336
 
 
-def _load_model(config):
+def _load_model(config, mem_fraction):
     from transformers import AutoTokenizer, AutoModel, BitsAndBytesConfig
     from peft import get_peft_model, LoraConfig
     import psutil
 
     os.environ["HF_HOME"] = os.path.expanduser(config["system"]["hf_home"])
-    torch.cuda.set_per_process_memory_fraction(config["system"]["cuda_memory_fraction"])
+    # Di4C training runs standalone (no concurrent Ollama/eval), so use more of the GPU than the
+    # eval-time default (config's cuda_memory_fraction, ~0.85). Overridable via --mem-fraction.
+    torch.cuda.set_per_process_memory_fraction(mem_fraction)
     q = config["system"]["quantization"]
     quant = BitsAndBytesConfig(
         load_in_4bit=q["load_in_4bit"],
@@ -113,6 +115,10 @@ def di4c_train_step(model, state, x, block_end, n_lambda, consistency_weight):
         weights = torch.softmax(seq_logp, dim=0)                      # [N, B]
         consis_val = (-(torch.logsumexp(seq_logp, dim=0) - math.log(n_lambda))).mean().item()
 
+    # Reclaim the caching allocator's leftovers from the no-grad weight forwards before the
+    # gradient loop, to reduce fragmentation on the tight 8GB budget.
+    torch.cuda.empty_cache()
+
     # accumulate gradients one lambda at a time (single graph alive); distillation on i=0
     distil_val = 0.0
     for i in range(n_lambda):
@@ -136,12 +142,14 @@ def main():
     parser.add_argument("--n-lambda", type=int, default=2)
     parser.add_argument("--consistency-weight", type=float, default=1.0)
     parser.add_argument("--lr", type=float, default=1e-4)
+    parser.add_argument("--mem-fraction", type=float, default=0.92,
+                        help="GPU memory fraction (training runs without Ollama, so > eval's 0.85)")
     args = parser.parse_args()
 
     from datasets import load_dataset
 
     config = load_yaml_config(args.config)
-    tok, model, state = _load_model(config)
+    tok, model, state = _load_model(config, args.mem_fraction)
     model.train()
 
     sc = config["student"]
