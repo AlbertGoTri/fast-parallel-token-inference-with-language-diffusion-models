@@ -5,7 +5,9 @@ from types import SimpleNamespace
 import pytest
 import torch
 
-from LLaDA.distill import get_strategy, ProgressiveHalvingStrategy, SDTTStrategy, DUOStrategy
+from LLaDA.distill import (
+    get_strategy, ProgressiveHalvingStrategy, SDTTStrategy, DUOStrategy, Di4CStrategy,
+)
 
 
 def test_registry_returns_progressive_halving():
@@ -104,3 +106,23 @@ def test_duo_shares_kl_loss_with_progressive():
     duo_loss = float(get_strategy("duo").compute_loss(student, target, temperature=2.0))
     prog_loss = float(get_strategy("progressive_halving").compute_loss(student, target, temperature=2.0))
     assert duo_loss == pytest.approx(prog_loss)
+
+
+def test_di4c_registered_and_named():
+    s = get_strategy("di4c")
+    assert isinstance(s, Di4CStrategy)
+    assert s.name == "di4c"
+
+
+def test_only_di4c_uses_custom_training():
+    # The orchestrator guard is `getattr(strategy, "custom_training", False)`. Di4C opts in;
+    # every other strategy must NOT, so they keep the unchanged cache -> train path.
+    assert getattr(get_strategy("di4c"), "custom_training", False) is True
+    for name in ("halve", "progressive_halving", "sdtt", "duo"):
+        assert getattr(get_strategy(name), "custom_training", False) is False
+
+
+def test_di4c_build_target_raises():
+    with pytest.raises(NotImplementedError):
+        get_strategy("di4c").build_target(None, None, teacher_steps=8, target_step=4,
+                                          gen_length=8, block_length=8)

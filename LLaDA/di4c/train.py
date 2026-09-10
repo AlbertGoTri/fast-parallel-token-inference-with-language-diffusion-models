@@ -135,35 +135,34 @@ def di4c_train_step(model, state, x, block_end, n_lambda, consistency_weight):
     return distil_val, consis_val
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Di4C training loop")
-    parser.add_argument("--config", default="LLaDA/smoke_config.yaml")
-    parser.add_argument("--checkpoint", default="workspace/di4c_checkpoint")
-    parser.add_argument("--n-lambda", type=int, default=2)
-    parser.add_argument("--consistency-weight", type=float, default=1.0)
-    parser.add_argument("--lr", type=float, default=1e-4)
-    parser.add_argument("--mem-fraction", type=float, default=0.92,
-                        help="GPU memory fraction (training runs without Ollama, so > eval's 0.85)")
-    args = parser.parse_args()
+def run_di4c_training(config, checkpoint, n_lambda=2, consistency_weight=1.0, lr=1e-4,
+                      mem_fraction=0.92, logger=None):
+    """Train a Di4C student and save LoRA + lambda-conditioner to ``checkpoint``.
 
+    Callable from the pipeline (Di4CStrategy.train_round) or the CLI (main). Returns True on
+    success. Frees the GPU on exit so the eval stage that follows can start its own server.
+    """
+    import gc
     from datasets import load_dataset
 
-    config = load_yaml_config(args.config)
-    tok, model, state = _load_model(config, args.mem_fraction)
+    def _log(msg):
+        (logger.log if logger is not None else print)(msg)
+
+    tok, model, state = _load_model(config, mem_fraction)
     model.train()
 
     sc = config["student"]
     gen_len, block_len = sc["gen_length"], sc["block_length"]
     dataset = load_dataset(sc["dataset_name"], sc["dataset_config"], split=sc["dataset_split"])
     texts = [t for t in dataset["text"] if len(t.strip()) > sc["min_text_length"]][:sc["num_train_examples"]]
-    print(f"[di4c-train] {len(texts)} examples | n_lambda={args.n_lambda}")
+    _log(f"[di4c-train] {len(texts)} examples | n_lambda={n_lambda}")
 
     trainable = [p for p in model.parameters() if p.requires_grad]
     try:
         import bitsandbytes as bnb
-        opt = bnb.optim.AdamW8bit(trainable, lr=args.lr)
+        opt = bnb.optim.AdamW8bit(trainable, lr=lr)
     except Exception:
-        opt = torch.optim.AdamW(trainable, lr=args.lr)
+        opt = torch.optim.AdamW(trainable, lr=lr)
     max_grad_norm = config["student"]["max_grad_norm"]
 
     for i, text in enumerate(texts):
@@ -175,16 +174,38 @@ def main():
         block_end = plen + block_len
 
         opt.zero_grad()
-        ld, lc = di4c_train_step(model, state, x, block_end, args.n_lambda, args.consistency_weight)
+        ld, lc = di4c_train_step(model, state, x, block_end, n_lambda, consistency_weight)
         torch.nn.utils.clip_grad_norm_(trainable, max_norm=max_grad_norm)
         opt.step()
         vram = torch.cuda.max_memory_allocated() / 1024**3
-        print(f"[di4c-train] {i+1}/{len(texts)} | distil {ld:.4f} | consis {lc:.4f} | peakVRAM {vram:.2f}GB")
+        _log(f"[di4c-train] {i+1}/{len(texts)} | distil {ld:.4f} | consis {lc:.4f} | peakVRAM {vram:.2f}GB")
 
-    ensure_dir(args.checkpoint)
-    model.save_pretrained(args.checkpoint)
-    torch.save(model._lambda_conditioner.state_dict(), os.path.join(args.checkpoint, "lambda_conditioner.pt"))
-    print(f"[di4c-train] saved LoRA + lambda-conditioner to {args.checkpoint}")
+    ensure_dir(checkpoint)
+    model.save_pretrained(checkpoint)
+    torch.save(model._lambda_conditioner.state_dict(), os.path.join(checkpoint, "lambda_conditioner.pt"))
+    _log(f"[di4c-train] saved LoRA + lambda-conditioner to {checkpoint}")
+
+    del model, opt
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+    return True
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Di4C training loop")
+    parser.add_argument("--config", default="LLaDA/smoke_config.yaml")
+    parser.add_argument("--checkpoint", default="workspace/di4c_checkpoint")
+    parser.add_argument("--n-lambda", type=int, default=2)
+    parser.add_argument("--consistency-weight", type=float, default=1.0)
+    parser.add_argument("--lr", type=float, default=1e-4)
+    parser.add_argument("--mem-fraction", type=float, default=0.92,
+                        help="GPU memory fraction (training runs without Ollama, so > eval's 0.85)")
+    args = parser.parse_args()
+    config = load_yaml_config(args.config)
+    run_di4c_training(config, args.checkpoint, n_lambda=args.n_lambda,
+                      consistency_weight=args.consistency_weight, lr=args.lr,
+                      mem_fraction=args.mem_fraction)
 
 
 if __name__ == "__main__":

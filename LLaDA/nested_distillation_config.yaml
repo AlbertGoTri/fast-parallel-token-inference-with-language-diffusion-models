@@ -52,6 +52,11 @@ schedule:
   #   "duo"                           - student matches the teacher's full x0 denoising
   #                                     (consistency; The Diffusion Duality, Sahoo et al.,
   #                                     ICML 2025, adapted to masked diffusion).
+  #   "di4c"                          - mixture-model correlation distillation (Distillation
+  #                                     of Discrete Diffusion through Dimensional Correlations,
+  #                                     Hayakawa et al., ICML 2025). Trains via its own loop
+  #                                     (LLaDA/di4c); tune under an optional top-level `di4c:`
+  #                                     section (n_lambda, consistency_weight, lr, mem_fraction).
   # Overridable at the CLI with --strategy.
   strategy: "halve"
 

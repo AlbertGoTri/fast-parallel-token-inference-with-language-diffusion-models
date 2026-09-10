@@ -633,37 +633,47 @@ def run_single_round(
     logger.log(f"Teacher: {teacher_steps} steps | Student: {student_steps} steps")
     logger.log(f"Teacher path: {teacher_path}")
 
-    # The strategy chooses which trajectory step exposes the teacher for caching.
-    target_step = strategy.cache_target_step(teacher_steps)
-
-    # Stage 1: Cache teacher trajectories
-    cache_dir = output_dirs['cache']
-    t0_cache = time.time()
-    if not cache_stage(config, round_num, teacher_path, teacher_steps, target_step, cache_dir, logger, strategy):
-        logger.log("ERROR: Cache stage failed")
-        return None
-    cache_duration = time.time() - t0_cache
-
-    # Stage 2: Train student
+    # Di4C (and any future strategy with custom_training) trains via its own loop instead of
+    # the cache -> per-position-KL path. Every other strategy takes the unchanged else-branch.
     checkpoint_dir = output_dirs['checkpoint']
-    t0_train = time.time()
-    if not train_stage(config, round_num, cache_dir, checkpoint_dir, student_steps, logger, strategy):
-        logger.log("ERROR: Train stage failed")
-        return None
-    train_duration = time.time() - t0_train
+    if getattr(strategy, "custom_training", False):
+        cache_duration = 0.0
+        t0_train = time.time()
+        if not strategy.train_round(config, checkpoint_dir, student_steps, logger):
+            logger.log("ERROR: Custom training failed")
+            return None
+        train_duration = time.time() - t0_train
+    else:
+        # The strategy chooses which trajectory step exposes the teacher for caching.
+        target_step = strategy.cache_target_step(teacher_steps)
 
-    # Cache files can exceed 100 MB each; deleting after training avoids disk
-    # exhaustion across rounds.
-    if os.path.exists(cache_dir):
-        cache_files = [f for f in os.listdir(cache_dir) if f.endswith('.pkl.gz')]
-        if cache_files:
-            logger.log(f"Cleaning up {len(cache_files)} cache files to free disk space...")
-            for f in cache_files:
-                try:
-                    os.remove(os.path.join(cache_dir, f))
-                except Exception as e:
-                    logger.log(f"WARNING: Could not remove cache file {f}: {e}")
-            logger.log(f"Freed ~{sum(os.path.getsize(os.path.join(cache_dir, f)) for f in os.listdir(cache_dir) if f.endswith('.pkl.gz')) / 1024**2:.0f} MB from cache dir")
+        # Stage 1: Cache teacher trajectories
+        cache_dir = output_dirs['cache']
+        t0_cache = time.time()
+        if not cache_stage(config, round_num, teacher_path, teacher_steps, target_step, cache_dir, logger, strategy):
+            logger.log("ERROR: Cache stage failed")
+            return None
+        cache_duration = time.time() - t0_cache
+
+        # Stage 2: Train student
+        t0_train = time.time()
+        if not train_stage(config, round_num, cache_dir, checkpoint_dir, student_steps, logger, strategy):
+            logger.log("ERROR: Train stage failed")
+            return None
+        train_duration = time.time() - t0_train
+
+        # Cache files can exceed 100 MB each; deleting after training avoids disk
+        # exhaustion across rounds.
+        if os.path.exists(cache_dir):
+            cache_files = [f for f in os.listdir(cache_dir) if f.endswith('.pkl.gz')]
+            if cache_files:
+                logger.log(f"Cleaning up {len(cache_files)} cache files to free disk space...")
+                for f in cache_files:
+                    try:
+                        os.remove(os.path.join(cache_dir, f))
+                    except Exception as e:
+                        logger.log(f"WARNING: Could not remove cache file {f}: {e}")
+                logger.log(f"Freed ~{sum(os.path.getsize(os.path.join(cache_dir, f)) for f in os.listdir(cache_dir) if f.endswith('.pkl.gz')) / 1024**2:.0f} MB from cache dir")
 
     # Stage 3 & 4: Evaluation
     logger.start_stage("evaluation")

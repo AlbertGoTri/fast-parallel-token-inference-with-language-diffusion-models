@@ -9,6 +9,7 @@ from .base import DistillationStrategy, TeacherState
 from .progressive_halving import ProgressiveHalvingStrategy
 from .sdtt import SDTTStrategy
 from .duo import DUOStrategy
+from .di4c import Di4CStrategy
 
 # "halve" is the historical config value for the original behavior; keep it as an
 # alias so existing config files select the same strategy they always have.
@@ -17,6 +18,7 @@ _STRATEGIES = {
     "halve": ProgressiveHalvingStrategy,
     SDTTStrategy.name: SDTTStrategy,
     DUOStrategy.name: DUOStrategy,
+    Di4CStrategy.name: Di4CStrategy,
 }
 
 
@@ -37,5 +39,6 @@ __all__ = [
     "ProgressiveHalvingStrategy",
     "SDTTStrategy",
     "DUOStrategy",
+    "Di4CStrategy",
     "get_strategy",
 ]
