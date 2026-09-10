@@ -18,7 +18,7 @@ schedule, and the loss weights are tuning knobs that need GPU iteration. Run:
 
 import os
 import sys
-import time
+import math
 import argparse
 
 import torch
@@ -28,7 +28,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspa
 from LLaDA.nested_distillation_utils import load_yaml_config, ensure_dir
 from LLaDA.generate_cache import _select_transfer
 from LLaDA.di4c.model import wrap_lambda_conditioned, set_lambda
-from LLaDA.di4c.losses import distillation_loss, consistency_loss
+from LLaDA.di4c.losses import distillation_loss, mixture_log_prob
 
 MASK_ID = 126336
 
@@ -67,44 +67,66 @@ def _load_model(config):
     return tok, model, state
 
 
-def di4c_train_step(model, state, x, block_end, n_lambda, consistency_weight):
-    """Compute the combined Di4C loss for one fully-masked batch ``x`` (prompt + masked gen)."""
-    mask_t = (x == MASK_ID)                              # positions to predict
-    device = x.device
-    lam = torch.rand(n_lambda, x.shape[0], device=device)
+def _seq_logprob(logits, tokens, mask):
+    """Sequence log-prob of `tokens` under one factorized student (over masked positions), [B]."""
+    return mixture_log_prob(logits.unsqueeze(0), tokens, mask)   # N=1 -> plain product
 
-    # --- teacher single step at x_t (shared base, adapters+lambda off) ---
+
+def di4c_train_step(model, state, x, block_end, n_lambda, consistency_weight):
+    """One Di4C step with a MEMORY-EFFICIENT mixture gradient.
+
+    Only one student forward graph is alive at a time, so peak VRAM ~= a single forward
+    (~6 GB, which the Phase 0 gate proved fits) regardless of ``n_lambda``. Backward is done
+    inside this function (gradients accumulate across lambdas); the caller runs the optimizer.
+
+    Uses d/dtheta[-logsumexp_i seq_logp_i] = -sum_i softmax_i(seq_logp) * d seq_logp_i, so we
+    compute the softmax weights once with no grad, then accumulate each lambda's weighted term.
+    """
+    mask_t = (x == MASK_ID)
+    B = x.shape[0]
+    lam = torch.rand(n_lambda, B, device=x.device)
+
+    # teacher single-step (no grad; shared base with adapters+lambda off)
     with torch.no_grad(), model.disable_adapter():
         set_lambda(state, None)
-        teacher_logits = model(x).logits.float()
+        teacher_logits = model(x).logits
 
-    # --- composed target x_s: teacher one step (x_t->x_u), then student finishes (x_u->x_s) ---
+    # composed target x_s (no grad): teacher one step x_t->x_u, then student finishes x_u->x_s
     with torch.no_grad():
-        # teacher unmasks ~half the generated tokens
         half = torch.clamp(mask_t.sum(dim=1) // 2, min=1)
-        transfer_u, x0_u = _select_transfer(x, teacher_logits, half, block_end, MASK_ID)
+        transfer_u, x0_u = _select_transfer(x, teacher_logits.float(), half, block_end, MASK_ID)
         x_u = x.clone()
         x_u[transfer_u] = x0_u[transfer_u]
-        # student (one lambda) finishes the rest, greedily
         set_lambda(state, lam[0])
-        s_logits = model(x_u).logits
         x_s = x_u.clone()
         still = (x_u == MASK_ID)
-        x_s[still] = s_logits.argmax(dim=-1)[still]
-        x_s = x_s.detach()
+        x_s[still] = model(x_u).logits.argmax(dim=-1)[still]
+        del x_u
 
-    # --- direct student mixture at x_t over N lambdas (gradients here) ---
-    direct = []
+    # mixture weights for the consistency gradient (no grad -> no graphs retained)
+    with torch.no_grad():
+        seq_logp = []
+        for i in range(n_lambda):
+            set_lambda(state, lam[i])
+            seq_logp.append(_seq_logprob(model(x).logits, x_s, mask_t))
+        seq_logp = torch.stack(seq_logp)                              # [N, B]
+        weights = torch.softmax(seq_logp, dim=0)                      # [N, B]
+        consis_val = (-(torch.logsumexp(seq_logp, dim=0) - math.log(n_lambda))).mean().item()
+
+    # accumulate gradients one lambda at a time (single graph alive); distillation on i=0
+    distil_val = 0.0
     for i in range(n_lambda):
         set_lambda(state, lam[i])
-        with torch.autocast(device_type="cuda", dtype=torch.float16):
-            direct.append(model(x).logits.float())
-    direct = torch.stack(direct)                        # [N, B, L, V]
-
-    loss_distil = distillation_loss(direct[0], teacher_logits, mask=mask_t)
-    loss_consis = consistency_loss(direct, x_s, mask=mask_t)
-    loss = loss_distil + consistency_weight * loss_consis
-    return loss, loss_distil.detach(), loss_consis.detach()
+        logits = model(x).logits
+        slp = _seq_logprob(logits, x_s, mask_t)                       # [B], carries grad
+        loss_i = consistency_weight * (-(weights[i] * slp).sum() / B)
+        if i == 0:
+            d = distillation_loss(logits.float(), teacher_logits.float(), mask=mask_t)
+            loss_i = loss_i + d
+            distil_val = d.item()
+        loss_i.backward()
+        del logits, slp
+    return distil_val, consis_val
 
 
 def main():
@@ -145,13 +167,11 @@ def main():
         block_end = plen + block_len
 
         opt.zero_grad()
-        loss, ld, lc = di4c_train_step(model, state, x, block_end, args.n_lambda, args.consistency_weight)
-        loss.backward()
+        ld, lc = di4c_train_step(model, state, x, block_end, args.n_lambda, args.consistency_weight)
         torch.nn.utils.clip_grad_norm_(trainable, max_norm=max_grad_norm)
         opt.step()
         vram = torch.cuda.max_memory_allocated() / 1024**3
-        print(f"[di4c-train] {i+1}/{len(texts)} | loss {loss.item():.4f} "
-              f"(distil {ld.item():.4f}, consis {lc.item():.4f}) | peakVRAM {vram:.2f}GB")
+        print(f"[di4c-train] {i+1}/{len(texts)} | distil {ld:.4f} | consis {lc:.4f} | peakVRAM {vram:.2f}GB")
 
     ensure_dir(args.checkpoint)
     model.save_pretrained(args.checkpoint)
