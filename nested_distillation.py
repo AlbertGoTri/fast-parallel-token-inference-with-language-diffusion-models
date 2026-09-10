@@ -635,6 +635,9 @@ def run_single_round(
 
     # Di4C (and any future strategy with custom_training) trains via its own loop instead of
     # the cache -> per-position-KL path. Every other strategy takes the unchanged else-branch.
+    # cache_dir/checkpoint_dir are defined before the branch because the RoundResult below
+    # records them on either path (Di4C simply never creates the cache dir).
+    cache_dir = output_dirs['cache']
     checkpoint_dir = output_dirs['checkpoint']
     if getattr(strategy, "custom_training", False):
         cache_duration = 0.0
