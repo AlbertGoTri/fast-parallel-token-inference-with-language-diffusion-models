@@ -254,6 +254,17 @@ if use_lora:
 else:
     print("No LoRA adapter found; using base model only.")
 
+# Di4C: if the checkpoint carries a lambda-conditioner, wrap the model and apply a sampled
+# lambda for generation. Non-Di4C checkpoints have no such file, so this block is skipped and
+# serving is byte-for-byte the same as before.
+_lambda_ckpt = os.path.join(CHECKPOINT_DIR, "lambda_conditioner.pt") if os.path.isdir(CHECKPOINT_DIR) else ""
+if _lambda_ckpt and os.path.exists(_lambda_ckpt):
+    from di4c.model import wrap_lambda_conditioned, set_lambda
+    model, _lam_state = wrap_lambda_conditioned(model)
+    model._lambda_conditioner.load_state_dict(torch.load(_lambda_ckpt, map_location="cpu"))
+    set_lambda(_lam_state, torch.rand(1, device=next(model.parameters()).device))
+    print("Di4C: applied lambda-conditioner for generation.")
+
 model.eval()
 print("Model loaded and ready to serve.")
 
