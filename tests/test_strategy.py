@@ -126,3 +126,11 @@ def test_di4c_build_target_raises():
     with pytest.raises(NotImplementedError):
         get_strategy("di4c").build_target(None, None, teacher_steps=8, target_step=4,
                                           gen_length=8, block_length=8)
+
+
+def test_all_strategy_names_are_distinct_and_exclude_aliases():
+    from LLaDA.distill import get_all_strategy_names
+    names = get_all_strategy_names()
+    assert names == ["progressive_halving", "sdtt", "duo", "di4c"]
+    assert "halve" not in names          # alias must not cause a duplicate run
+    assert len(names) == len(set(names))  # no duplicates

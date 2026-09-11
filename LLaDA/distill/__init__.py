@@ -33,6 +33,18 @@ def get_strategy(name: str) -> DistillationStrategy:
         )
 
 
+def get_all_strategy_names() -> list:
+    """Distinct canonical strategy names (aliases like 'halve' excluded), in registration order.
+
+    Used by `--strategy all` to run every method once for a full comparison.
+    """
+    names = []
+    for key, cls in _STRATEGIES.items():
+        if key == cls.name and cls.name not in names:
+            names.append(cls.name)
+    return names
+
+
 __all__ = [
     "DistillationStrategy",
     "TeacherState",
@@ -41,4 +53,5 @@ __all__ = [
     "DUOStrategy",
     "Di4CStrategy",
     "get_strategy",
+    "get_all_strategy_names",
 ]
