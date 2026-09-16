@@ -489,3 +489,83 @@ def check_ollama_running() -> bool:
             return response.status == 200
     except (urllib.error.URLError, Exception):
         return False
+
+
+# ---------------------------------------------------------------------------
+# Hardware-profile helpers: keep model loading config-driven so the same code
+# runs on an 8GB card (4-bit + CPU offload, the defaults) or a big-VRAM box
+# (full precision, whole model on GPU) just by swapping the config.
+# ---------------------------------------------------------------------------
+
+def apply_runtime_env(config) -> None:
+    """Set process-wide HF/CUDA env and the per-process memory fraction from config.
+
+    Call once before loading a model. ``system.cuda_alloc_conf`` set to "" disables the
+    PYTORCH_CUDA_ALLOC_CONF tuning (only needed to fight fragmentation on tight memory).
+    """
+    import os
+    import torch
+    system = config["system"]
+    os.environ["HF_HOME"] = os.path.expanduser(system["hf_home"])
+    os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
+    os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
+    os.environ["SAFETENSORS_FAST_GPU"] = "0"
+    alloc = system.get("cuda_alloc_conf", "max_split_size_mb:128")
+    if alloc:
+        os.environ["PYTORCH_CUDA_ALLOC_CONF"] = alloc
+    if torch.cuda.is_available():
+        torch.cuda.set_per_process_memory_fraction(system.get("cuda_memory_fraction", 0.85))
+
+
+def build_model_load_kwargs(config) -> dict:
+    """Return AutoModel.from_pretrained kwargs honoring config precision + memory.
+
+    - ``system.quantization.enabled`` False -> load in ``system.torch_dtype`` (e.g. bfloat16)
+      with NO 4-bit quantization (higher quality, needs the VRAM).
+    - ``system.gpu_max_memory_gb`` caps the GPU shard for device_map="auto"; a value large
+      enough for the whole model (e.g. 48) keeps everything on GPU with no slow CPU offload.
+    """
+    import torch
+    import psutil
+    system = config["system"]
+    quant = system.get("quantization", {})
+    kwargs = dict(device_map="auto", trust_remote_code=True, low_cpu_mem_usage=True)
+    if quant.get("enabled", True):
+        from transformers import BitsAndBytesConfig
+        kwargs["quantization_config"] = BitsAndBytesConfig(
+            load_in_4bit=quant["load_in_4bit"],
+            bnb_4bit_compute_dtype=getattr(torch, quant["compute_dtype"]),
+            bnb_4bit_quant_type=quant["quant_type"],
+            bnb_4bit_use_double_quant=quant["use_double_quant"],
+        )
+    else:
+        kwargs["torch_dtype"] = getattr(torch, system.get("torch_dtype", "bfloat16"))
+    ram_gb = int(psutil.virtual_memory().available / 1024**3) - 3
+    gpu_gb = system.get("gpu_max_memory_gb", 6)
+    kwargs["max_memory"] = {0: f"{gpu_gb}GiB", "cpu": f"{ram_gb}GiB"}
+    return kwargs
+
+
+def quantization_enabled(config) -> bool:
+    """Whether 4-bit quantization is on (drives fp16 optimizer/cache shortcuts)."""
+    return config["system"].get("quantization", {}).get("enabled", True)
+
+
+def server_load_profile(config) -> dict:
+    """Precision/memory profile for the eval server (so it serves at the training precision).
+
+    Passed to managed_server -> create_server_script. Mirrors build_model_load_kwargs but as a
+    plain dict of primitives (the server runs in a separate process from a generated script).
+    """
+    system = config["system"]
+    quant = system.get("quantization", {})
+    return {
+        "quantize": quant.get("enabled", True),
+        "load_in_4bit": quant.get("load_in_4bit", True),
+        "compute_dtype": quant.get("compute_dtype", "float16"),
+        "quant_type": quant.get("quant_type", "nf4"),
+        "use_double_quant": quant.get("use_double_quant", True),
+        "torch_dtype": system.get("torch_dtype", "bfloat16"),
+        "gpu_max_memory_gb": system.get("gpu_max_memory_gb", 6),
+        "cuda_alloc_conf": system.get("cuda_alloc_conf", "expandable_segments:True,max_split_size_mb:128"),
+    }

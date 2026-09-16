@@ -36,7 +36,8 @@ from LLaDA.nested_distillation_utils import (
     set_seed, ensure_dir, load_yaml_config, save_json, load_json,
     save_csv, format_timestamp, RoundResult, ExperimentState,
     StateManager, ProgressLogger, print_leaderboard, validate_step_reduction,
-    check_ollama_running, compute_latency_aggregates
+    check_ollama_running, compute_latency_aggregates,
+    apply_runtime_env, build_model_load_kwargs, quantization_enabled, server_load_profile
 )
 from LLaDA.nested_distillation_eval import (
     evaluate_round, EvaluationThresholds, check_continue
@@ -191,6 +192,7 @@ def _managed_or_external_server(
     timing_log_path: Optional[str] = None,
     gen_length: int = 128,
     block_length: int = 32,
+    load_profile: Optional[dict] = None,
 ):
     """Context manager that either reloads an external server or starts a managed one."""
     if use_external:
@@ -209,6 +211,7 @@ def _managed_or_external_server(
             timing_log_path=timing_log_path,
             gen_length=gen_length,
             block_length=block_length,
+            load_profile=load_profile,
         ) as mgr:
             yield mgr
 
@@ -241,31 +244,16 @@ def cache_stage(
         logger.log(f"ERROR: Failed to import required modules: {e}")
         return False
 
-    quant_config = config['system']['quantization']
-    # Same 4-bit config as 01_cache_teacher.py; mismatched compute_dtype causes
-    # subtle logit shifts.
-    quantization_config = BitsAndBytesConfig(
-        load_in_4bit=quant_config['load_in_4bit'],
-        bnb_4bit_compute_dtype=getattr(torch, quant_config['compute_dtype']),
-        bnb_4bit_quant_type=quant_config['quant_type'],
-        bnb_4bit_use_double_quant=quant_config['use_double_quant'],
-    )
-
-    os.environ["HF_HOME"] = os.path.expanduser(config['system']['hf_home'])
-    os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
-    os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
-    os.environ["SAFETENSORS_FAST_GPU"] = "0"
-    os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:128"
-
-    torch.cuda.set_per_process_memory_fraction(config['system']['cuda_memory_fraction'])
+    apply_runtime_env(config)
+    # Teacher-target precision for the cache: fp16 by default; full-precision profiles set
+    # student.cache_dtype: "float32" so the KL targets aren't down-cast.
+    import LLaDA.generate_cache as _gc
+    _gc.TARGET_STORE_DTYPE = getattr(torch, config['student'].get('cache_dtype', 'float16'))
 
     if os.path.exists(cache_dir):
         shutil.rmtree(cache_dir)
     os.makedirs(cache_dir, exist_ok=True)
     logger.log(f"Cache directory prepared: {cache_dir}")
-
-    # Leave 3 GB headroom for OS and dataset paging on machines with tight RAM.
-    ram_gb = int(psutil.virtual_memory().available / 1024**3) - 3
 
     base_model_path, adapter_path = resolve_teacher_model_paths(
         teacher_path,
@@ -277,14 +265,7 @@ def cache_stage(
         logger.log(f"Resolved LoRA adapter: {adapter_path}")
     try:
         tokenizer = AutoTokenizer.from_pretrained(base_model_path, trust_remote_code=True)
-        model = AutoModel.from_pretrained(
-            base_model_path,
-            quantization_config=quantization_config,
-            device_map="auto",
-            max_memory={0: "6GiB", "cpu": f"{ram_gb}GiB"},
-            trust_remote_code=True,
-            low_cpu_mem_usage=True,
-        )
+        model = AutoModel.from_pretrained(base_model_path, **build_model_load_kwargs(config))
         if adapter_path:
             from peft import PeftModel
             # LoRA adapters are merged at runtime, not permanently, so the base
@@ -422,20 +403,7 @@ def train_stage(
         logger.log(f"ERROR: Failed to import required modules: {e}")
         return False
 
-    quant_config = config['system']['quantization']
-    quantization_config = BitsAndBytesConfig(
-        load_in_4bit=quant_config['load_in_4bit'],
-        bnb_4bit_compute_dtype=getattr(torch, quant_config['compute_dtype']),
-        bnb_4bit_quant_type=quant_config['quant_type'],
-        bnb_4bit_use_double_quant=quant_config['use_double_quant'],
-    )
-
-    os.environ["HF_HOME"] = os.path.expanduser(config['system']['hf_home'])
-    os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
-    os.environ["SAFETENSORS_FAST_GPU"] = "0"
-    os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:128"
-
-    torch.cuda.set_per_process_memory_fraction(config['system']['cuda_memory_fraction'])
+    apply_runtime_env(config)
 
     cache_files = glob.glob(os.path.join(cache_dir, "*.pkl.gz"))
     if not cache_files:
@@ -445,18 +413,10 @@ def train_stage(
     logger.log(f"Found {len(cache_files)} cached trajectories")
 
     model_id = config['teacher']['model_path']
-    ram_gb = int(psutil.virtual_memory().available / 1024**3) - 3
 
     logger.log(f"Loading student base model: {model_id}")
     try:
-        student_base = AutoModel.from_pretrained(
-            model_id,
-            quantization_config=quantization_config,
-            device_map="auto",
-            max_memory={0: "6GiB", "cpu": f"{ram_gb}GiB"},
-            trust_remote_code=True,
-            low_cpu_mem_usage=True,
-        )
+        student_base = AutoModel.from_pretrained(model_id, **build_model_load_kwargs(config))
         if hasattr(student_base, "gradient_checkpointing_enable"):
             try:
                 # Checkpointing trades ~20% slowdown for enabling larger batch sizes;
@@ -489,11 +449,13 @@ def train_stage(
         )
         student_model = get_peft_model(student_base, peft_config)
 
-        # PEFT initializes adapters in f32; downcasting saves ~50% optimizer state
-        # VRAM with negligible impact on LoRA convergence.
-        for name, param in student_model.named_parameters():
-            if param.requires_grad:
-                param.data = param.data.to(torch.float16)
+        # PEFT initializes adapters in f32; downcasting saves ~50% optimizer state VRAM with
+        # negligible impact on LoRA convergence. Only do this in the quantized (8GB) profile;
+        # full-precision profiles keep fp32 LoRA for maximum training precision.
+        if quantization_enabled(config):
+            for name, param in student_model.named_parameters():
+                if param.requires_grad:
+                    param.data = param.data.to(torch.float16)
 
         student_model.train()
         log_memory_usage("lora_added")
@@ -524,8 +486,12 @@ def train_stage(
 
     logger.log(f"Starting training with temperature={temperature}")
 
+    epochs = int(config['student'].get('epochs', 1))
+    # fp16 autocast for the quantized profile; bf16 (or configured dtype) for full precision.
+    autocast_dtype = torch.float16 if quantization_enabled(config) else getattr(
+        torch, config['system'].get('torch_dtype', 'bfloat16'))
     try:
-        for epoch in range(1):
+        for epoch in range(epochs):
             for i, cache_file in enumerate(cache_files):
                 torch.cuda.empty_cache()
 
@@ -536,13 +502,13 @@ def train_stage(
                     continue
 
                 input_x = trajectory['input_x'].to("cuda")
-                target_logits = trajectory['target_logits'].to("cuda").to(torch.float16)
+                target_logits = trajectory['target_logits'].to("cuda").to(autocast_dtype)
                 attn_mask = trajectory['attn_mask'].to("cuda") if trajectory['attn_mask'] is not None else None
                 prompt_len = trajectory.get('prompt_len', 0)
 
                 optimizer.zero_grad()
 
-                with torch.autocast(device_type="cuda", dtype=torch.float16):
+                with torch.autocast(device_type="cuda", dtype=autocast_dtype):
                     student_output = student_model(input_x, attention_mask=attn_mask)
                     student_logits = student_output.logits
 
@@ -737,6 +703,7 @@ def run_single_round(
             timing_log_path=None if use_external_server else timing_log_path,
             gen_length=config['student']['gen_length'],
             block_length=config['student']['block_length'],
+            load_profile=server_load_profile(config),
         ) as server:
             if not use_external_server:
                 logger.log("Server is ready, running evaluations...")

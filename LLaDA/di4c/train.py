@@ -34,29 +34,19 @@ MASK_ID = 126336
 
 
 def _load_model(config, mem_fraction):
-    from transformers import AutoTokenizer, AutoModel, BitsAndBytesConfig
+    from transformers import AutoTokenizer, AutoModel
     from peft import get_peft_model, LoraConfig
-    import psutil
+    from LLaDA.nested_distillation_utils import apply_runtime_env, build_model_load_kwargs
 
-    os.environ["HF_HOME"] = os.path.expanduser(config["system"]["hf_home"])
+    apply_runtime_env(config)
     # Di4C training runs standalone (no concurrent Ollama/eval), so use more of the GPU than the
-    # eval-time default (config's cuda_memory_fraction, ~0.85). Overridable via --mem-fraction.
-    torch.cuda.set_per_process_memory_fraction(mem_fraction)
-    q = config["system"]["quantization"]
-    quant = BitsAndBytesConfig(
-        load_in_4bit=q["load_in_4bit"],
-        bnb_4bit_compute_dtype=getattr(torch, q["compute_dtype"]),
-        bnb_4bit_quant_type=q["quant_type"],
-        bnb_4bit_use_double_quant=q["use_double_quant"],
-    )
+    # eval-time default (config's cuda_memory_fraction). Overridable via --mem-fraction; on a
+    # full-precision profile the config fraction is already high so this rarely matters.
+    if torch.cuda.is_available():
+        torch.cuda.set_per_process_memory_fraction(mem_fraction)
     model_id = config["teacher"]["model_path"]
-    ram_gb = int(psutil.virtual_memory().available / 1024**3) - 3
     tok = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
-    base = AutoModel.from_pretrained(
-        model_id, quantization_config=quant, device_map="auto",
-        max_memory={0: "6GiB", "cpu": f"{ram_gb}GiB"},
-        trust_remote_code=True, low_cpu_mem_usage=True,
-    )
+    base = AutoModel.from_pretrained(model_id, **build_model_load_kwargs(config))
     base.tie_weights()
     for p in base.parameters():
         p.requires_grad = False

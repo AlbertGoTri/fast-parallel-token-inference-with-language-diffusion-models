@@ -1,0 +1,102 @@
+# Configuration for a HIGH-VRAM machine (e.g. 64 GB) with no tight time budget.
+# Same pipeline as nested_distillation_config.yaml, but the 8GB/consumer compromises are
+# relaxed: full bf16 precision, whole model on GPU (no CPU offload), bigger LoRA, far more
+# training data + epochs, and a GPU judge. Run with:
+#   python nested_distillation.py --config LLaDA/powerful_config.yaml --strategy all
+#
+# NOTE: relaxing precision/data/LoRA changes the numbers, so results here are NOT comparable to
+# the committed 8GB runs -- run all strategies with THIS config for an internally-fair set.
+
+experiment:
+  name: "nested_distillation_powerful"
+  description: "Full-precision, large-VRAM distillation comparison"
+
+teacher:
+  model_path: "GSAI-ML/LLaDA-8B-Instruct"
+  initial_steps: 128
+  target_step: 64
+
+student:
+  gen_length: 128          # was 64; longer generations (single block keeps Di4C's rollout valid)
+  block_length: 128
+  dataset_name: "wikitext"
+  dataset_config: "wikitext-2-raw-v1"   # ~10k+ paragraphs over the length filter; use wikitext-103-raw-v1 for 10k+
+  dataset_split: "train"
+  num_train_examples: 2000  # was 50
+  min_text_length: 80
+  epochs: 3                 # was 1 (implicit)
+  cache_dtype: "float32"    # A2: full-precision teacher targets (was fp16)
+  lora:
+    r: 64                   # was 16
+    alpha: 128              # was 32
+    target_modules: "all-linear"   # was ["q_proj","v_proj"]; adapt every linear layer
+    dropout: 0.05
+  temperature: 2.0
+  learning_rate: 5e-5
+  max_grad_norm: 1.0
+
+schedule:
+  min_steps: 1
+  strategy: "halve"
+
+# Di4C-specific knobs (used when --strategy di4c)
+di4c:
+  n_lambda: 4               # was 2; richer mixture now that VRAM allows it
+  consistency_weight: 1.0
+  lr: 5e-5
+  mem_fraction: 0.95
+
+evaluation:
+  promptfoo_threshold: 0.0
+  eval_steps: 0
+  server:
+    device: "cuda"
+    cuda_memory_fraction: 0.95
+    startup_timeout_seconds: 3600   # generous; no time budget
+  promptfoo:
+    config_path: "evaluation/promptfoo/promptfooconfig.yaml"
+    provider_path: "evaluation/promptfoo/llada_api_provider.py"
+    timeout_ms: 7200000
+    max_concurrency: 8       # F2: was 1 (parallel eval)
+    judge_num_predict: 1024
+    judge_num_gpu: 99        # F1: was 0 -> run the Ollama judge fully on GPU
+  perplexity:
+    reference_model: "gpt2"
+    device: "cuda"           # F3: was cpu
+
+execution:
+  sequential: true
+  memory_cleanup: true
+  verify_gpu_empty: true
+  num_workers: 8             # was 0
+  seed: 42
+
+checkpointing:
+  resume_enabled: true
+  force_rerun: false
+  keep_history: true
+
+paths:
+  base_output_dir: "../workspace/LLaDA_outputs/nested_distillation_powerful"
+  cache_dir: "../workspace/LLaDA_outputs/nested_distillation_powerful/cache"
+  checkpoint_dir: "../workspace/LLaDA_outputs/nested_distillation_powerful/checkpoints"
+  eval_dir: "../workspace/LLaDA_outputs/nested_distillation_powerful/evaluation"
+  leaderboard:
+    markdown: "../workspace/LLaDA_outputs/nested_distillation_powerful/leaderboard.md"
+    csv: "../workspace/LLaDA_outputs/nested_distillation_powerful/leaderboard.csv"
+    json: "../workspace/LLaDA_outputs/nested_distillation_powerful/leaderboard.json"
+  state_file: "../workspace/LLaDA_outputs/nested_distillation_powerful/state.json"
+
+system:
+  hf_home: "D:/fast-parallel-token-inference-with-language-diffusion-models/.cache"
+  # B: use most of the big GPU and fit the whole model on it (no CPU offload)
+  cuda_memory_fraction: 0.95
+  gpu_max_memory_gb: 48            # per-GPU cap for device_map; >= model size -> no offload
+  torch_dtype: "bfloat16"          # A1: full precision when quantization is off
+  cuda_alloc_conf: "expandable_segments:True"   # B3: drop the tight-memory split cap
+  quantization:
+    enabled: false                 # A1: NO 4-bit; load in bf16
+    load_in_4bit: true             # (ignored when enabled: false; kept for the 8GB profile)
+    compute_dtype: "float16"
+    quant_type: "nf4"
+    use_double_quant: true

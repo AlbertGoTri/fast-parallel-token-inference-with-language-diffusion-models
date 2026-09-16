@@ -2,6 +2,10 @@ import torch
 import numpy as np
 import torch.nn.functional as F
 
+# Dtype used to store cached teacher target logits (fp16 halves cache size on tight disk/VRAM;
+# the pipeline sets this to float32 for full-precision profiles). See cache_stage.
+TARGET_STORE_DTYPE = torch.float16
+
 def add_gumbel_noise(logits, temperature):
     if temperature == 0:
         return logits
@@ -47,7 +51,7 @@ def generate_and_cache_trajectory(model, prompt, attention_mask=None, steps=128,
                 # Capture the teacher's prediction at the midpoint; the student learns to recover
                 # this distribution in fewer steps than the full diffusion trajectory.
                 # Cast logits to float16 to halve cache size; KL divergence is robust to this precision loss.
-                return x.clone(), logits.clone().to(torch.float16), attention_mask.clone() if attention_mask is not None else None
+                return x.clone(), logits.clone().to(TARGET_STORE_DTYPE), attention_mask.clone() if attention_mask is not None else None
 
             logits_with_noise = add_gumbel_noise(logits, temperature=0.0)
             x0 = torch.argmax(logits_with_noise, dim=-1)
@@ -156,7 +160,7 @@ def generate_rollout_target(model, prompt, attention_mask=None, steps=128, gen_l
                 target_logits[still_masked] = last_logits[still_masked]
                 return (
                     x_t,
-                    target_logits.to(torch.float16),
+                    target_logits.to(TARGET_STORE_DTYPE),
                     attention_mask.clone() if attention_mask is not None else None,
                 )
 

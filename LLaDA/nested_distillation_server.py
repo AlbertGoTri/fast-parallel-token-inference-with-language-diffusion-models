@@ -139,8 +139,13 @@ def create_server_script(
     hf_home: Optional[str] = None,
     gen_length: int = 128,
     block_length: int = 32,
+    load_profile: Optional[dict] = None,
 ) -> str:
-    """Create a temporary server script for the specific checkpoint."""
+    """Create a temporary server script for the specific checkpoint.
+
+    ``load_profile`` (from the config) controls precision + memory so eval serves at the same
+    precision the student was trained in. Default None -> 4-bit + 6GiB GPU cap (the 8GB profile).
+    """
     # The generated script must import generate.py, so we inject the LLaDA source
     # directory into sys.path.
     llada_dir = os.path.dirname(os.path.abspath(__file__))
@@ -148,6 +153,16 @@ def create_server_script(
     checkpoint_dir_posix = checkpoint_doc_path
 
     hf_home = os.path.expanduser(hf_home or "")
+
+    lp = load_profile or {}
+    quantize = lp.get("quantize", True)
+    torch_dtype = lp.get("torch_dtype", "bfloat16")
+    gpu_max_memory_gb = lp.get("gpu_max_memory_gb", 6)
+    cuda_alloc_conf = lp.get("cuda_alloc_conf", "expandable_segments:True,max_split_size_mb:128")
+    load_in_4bit = lp.get("load_in_4bit", True)
+    compute_dtype = lp.get("compute_dtype", "float16")
+    quant_type = lp.get("quant_type", "nf4")
+    use_double_quant = lp.get("use_double_quant", True)
 
     script_content = f'''#!/usr/bin/env python3
 """
@@ -174,7 +189,7 @@ os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 os.environ["SAFETENSORS_FAST_GPU"] = "0"
 # expandable_segments:True is required on Ada Lovelace GPUs to avoid CUDA OOM
 # during long generations.
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True,max_split_size_mb:128"
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "{cuda_alloc_conf}"
 
 DEVICE = "{device}"
 CUDA_MEMORY_FRACTION = {cuda_memory_fraction}
@@ -216,21 +231,26 @@ print(f"Loading tokenizer from {{base_model_path}}...")
 tokenizer = AutoTokenizer.from_pretrained(base_model_path, trust_remote_code=True)
 
 print("Loading base model...")
+QUANTIZE = {quantize}
+TORCH_DTYPE = "{torch_dtype}"
+GPU_MAX_MEMORY_GB = {gpu_max_memory_gb}
 if DEVICE == "cuda":
-    quantization_config = BitsAndBytesConfig(
-        load_in_4bit=True,
-        bnb_4bit_compute_dtype=torch.float16,
-        bnb_4bit_quant_type="nf4",
-        bnb_4bit_use_double_quant=True,
-    )
-    model = AutoModel.from_pretrained(
-        base_model_path,
-        quantization_config=quantization_config,
+    load_kwargs = dict(
         device_map="auto",
-        max_memory={{0: "6GiB", "cpu": f"{{ram_gb}}GiB"}},
+        max_memory={{0: f"{{GPU_MAX_MEMORY_GB}}GiB", "cpu": f"{{ram_gb}}GiB"}},
         trust_remote_code=True,
         low_cpu_mem_usage=True,
     )
+    if QUANTIZE:
+        load_kwargs["quantization_config"] = BitsAndBytesConfig(
+            load_in_4bit={load_in_4bit},
+            bnb_4bit_compute_dtype=getattr(torch, "{compute_dtype}"),
+            bnb_4bit_quant_type="{quant_type}",
+            bnb_4bit_use_double_quant={use_double_quant},
+        )
+    else:
+        load_kwargs["torch_dtype"] = getattr(torch, TORCH_DTYPE)
+    model = AutoModel.from_pretrained(base_model_path, **load_kwargs)
 else:
     print("CUDA disabled for eval server; running generation on CPU")
     model = AutoModel.from_pretrained(
@@ -361,6 +381,7 @@ class ServerManager:
         timing_log_path: Optional[str] = None,
         gen_length: int = 128,
         block_length: int = 32,
+        load_profile: Optional[dict] = None,
     ):
         self.checkpoint_dir = checkpoint_dir
         self.steps = steps
@@ -372,6 +393,7 @@ class ServerManager:
         self.timing_log_path = timing_log_path
         self.gen_length = gen_length
         self.block_length = block_length
+        self.load_profile = load_profile
         self.process: Optional[subprocess.Popen] = None
         self.script_path: Optional[str] = None
         self.log_file: Optional[str] = None
@@ -401,6 +423,7 @@ class ServerManager:
             hf_home=self.hf_home,
             gen_length=self.gen_length,
             block_length=self.block_length,
+            load_profile=self.load_profile,
         )
 
         print(f"Starting LLaDA server on port {self.port}...")
@@ -507,6 +530,7 @@ def managed_server(
     timing_log_path: Optional[str] = None,
     gen_length: int = 128,
     block_length: int = 32,
+    load_profile: Optional[dict] = None,
 ):
     """Context manager for running the LLaDA server."""
     manager = ServerManager(
@@ -520,6 +544,7 @@ def managed_server(
         timing_log_path=timing_log_path,
         gen_length=gen_length,
         block_length=block_length,
+        load_profile=load_profile,
     )
     try:
         if not manager.start(timeout=timeout):
