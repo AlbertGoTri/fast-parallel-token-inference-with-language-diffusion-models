@@ -44,7 +44,7 @@ from LLaDA.nested_distillation_eval import (
 from LLaDA.nested_distillation_server import (
     managed_server, check_server_running, wait_for_server
 )
-from LLaDA.distill import get_strategy, DistillationStrategy
+from LLaDA.distill import get_strategy, get_all_strategy_names, DistillationStrategy
 
 
 def _save_cache_object(obj: Dict[str, Any], path: str) -> None:
@@ -1146,7 +1146,8 @@ def main():
     parser.add_argument(
         "--strategy",
         default=None,
-        help="Distillation strategy to use (overrides config schedule.strategy)"
+        help="Distillation strategy to use (overrides config schedule.strategy). "
+             "Use 'all' to run every strategy sequentially for a full comparison."
     )
 
     args = parser.parse_args()
@@ -1154,8 +1155,34 @@ def main():
     print(f"Loading configuration from {args.config}")
     config = load_yaml_config(args.config)
 
+    if args.strategy == "all":
+        if args.resume or args.status:
+            print("ERROR: --strategy all is for fresh runs; use a single --strategy with --resume/--status.")
+            return
+        names = get_all_strategy_names()
+        print(f"\nRunning all strategies sequentially: {', '.join(names)}\n")
+        for idx, name in enumerate(names, 1):
+            strat = get_strategy(name)
+            print("\n" + "#" * 70)
+            print(f"# STRATEGY {idx}/{len(names)}: {strat.name}")
+            print("#" * 70)
+            try:
+                _run_one_strategy(args, config, strat)
+            except Exception as exc:
+                import traceback
+                print(f"ERROR: strategy '{strat.name}' failed: {exc}")
+                traceback.print_exc()
+                print("Continuing with the remaining strategies...")
+        print("\n" + "#" * 70)
+        print("# ALL STRATEGIES COMPLETE")
+        print("#" * 70)
+        return
+
     strategy_name = args.strategy or config.get('schedule', {}).get('strategy', 'progressive_halving')
-    strategy = get_strategy(strategy_name)
+    _run_one_strategy(args, config, get_strategy(strategy_name))
+
+
+def _run_one_strategy(args, config, strategy):
     print(f"Distillation strategy: {strategy.name}")
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
