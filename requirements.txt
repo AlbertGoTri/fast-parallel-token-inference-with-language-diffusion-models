@@ -1,3 +1,7 @@
+# torch==2.5.1+cu121 is published on PyTorch's index, not PyPI. This line makes a plain
+# `pip install -r requirements.txt` resolve it (and everything else from PyPI) in one step.
+# For a different CUDA, swap cu121 -> cu124 etc. and match the torch build below.
+--extra-index-url https://download.pytorch.org/whl/cu121
 accelerate==1.13.0
 aiohappyeyeballs==2.6.1
 aiohttp==3.13.5
@@ -34,6 +38,7 @@ multidict==6.7.1
 multiprocess==0.70.19
 networkx==3.6.1
 numpy==1.26.4
+openpyxl==3.1.5
 packaging==26.0
 pandas==3.0.2
 peft==0.18.1
