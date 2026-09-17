@@ -54,7 +54,10 @@ evaluation:
     cuda_memory_fraction: 0.95
     startup_timeout_seconds: 3600   # generous; no time budget
   promptfoo:
-    config_path: "evaluation/promptfoo/promptfooconfig.yaml"
+    # 500 Alpaca prompts x 5 reference-grounded assertions (2500 total). Feasible here
+    # because this profile runs the Ollama judge on GPU (judge_num_gpu: 99) with
+    # max_concurrency: 8. The 8GB default config keeps the 10-prompt promptfooconfig.yaml.
+    config_path: "evaluation/promptfoo/promptfooconfig_alpaca500.yaml"
     provider_path: "evaluation/promptfoo/llada_api_provider.py"
     timeout_ms: 7200000
     max_concurrency: 8       # F2: was 1 (parallel eval)
