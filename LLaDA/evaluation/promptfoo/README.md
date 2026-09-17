@@ -26,19 +26,20 @@ the grade measures task capability — not just fluency — without hand-writing
 config. The judge (`llama3.1:8b` via Ollama) is called once per prompt with all 5 questions
 batched (the pipeline's `create_promptfoo_config_for_round` does this at render time).
 
-### Activate it
+### Which config uses it
 
-Point a hardware profile's config at it — one line, no code change:
+`powerful_config.yaml` already points at this file — that profile runs the Ollama judge on GPU
+(`judge_num_gpu: 99`, `max_concurrency: 8`), so 2500 assertions are feasible. The 8 GB default
+(`nested_distillation_config.yaml`) keeps the 10-prompt config, because 500 prompts × a
+CPU/low-VRAM judge at `max_concurrency: 1` would take days.
+
+To point any other profile at it, it's one line — no code change:
 
 ```yaml
 evaluation:
   promptfoo:
     config_path: "evaluation/promptfoo/promptfooconfig_alpaca500.yaml"
 ```
-
-The 8 GB default keeps the 10-prompt config (500 prompts × a CPU/low-VRAM Ollama judge is slow);
-use the 500-prompt config on a machine with a GPU judge (`judge_num_gpu` > 0, higher
-`max_concurrency`).
 
 ### Regenerate
 
